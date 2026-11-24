@@ -1,0 +1,19 @@
+[
+  {"team_id": 10, "team_name": "FC Astana", "lineup": [
+    {"player_id": 1001, "player_name": "Marin Tomasov", "player_nickname": null, "jersey_number": 10,
+     "country": {"name": "Croatia"},
+     "positions": [{"position": "Right Wing", "from": "00:00", "to": "70:00", "from_period": 1, "to_period": 2, "start_reason": "Starting XI", "end_reason": "Substitution - Off (Tactical)"}]},
+    {"player_id": 1002, "player_name": "Abzal Beysebekov", "player_nickname": null, "jersey_number": 4,
+     "country": {"name": "Kazakhstan"},
+     "positions": [{"position": "Center Back", "from": "00:00", "to": null, "from_period": 1, "to_period": null, "start_reason": "Starting XI", "end_reason": "Final Whistle"}]},
+    {"player_id": 1003, "player_name": "Stanislav Basmanov", "player_nickname": null, "jersey_number": 17,
+     "country": {"name": "Kazakhstan"},
+     "positions": [{"position": "Right Wing", "from": "70:00", "to": null, "from_period": 2, "to_period": null, "start_reason": "Substitution - On (Tactical)", "end_reason": "Final Whistle"}]},
+    {"player_id": 1004, "player_name": "Unused Sub", "player_nickname": null, "jersey_number": 30, "positions": []}
+  ]},
+  {"team_id": 20, "team_name": "Kairat Almaty", "lineup": [
+    {"player_id": 2001, "player_name": "Dastan Satpaev", "player_nickname": null, "jersey_number": 9,
+     "country": {"name": "Kazakhstan"},
+     "positions": [{"position": "Center Forward", "from": "00:00", "to": null, "from_period": 1, "to_period": null, "start_reason": "Starting XI", "end_reason": "Final Whistle"}]}
+  ]}
+]

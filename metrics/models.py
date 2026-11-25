@@ -75,6 +75,11 @@ class MetricDefinition(ClubOwnedModel):
         max_length=40, blank=True,
         help_text='Built-in load column this metric mirrors (total_distance_m …). Empty for catalogue metrics.',
     )
+    zero_is_missing = models.BooleanField(
+        default=False,
+        help_text='Providers report 0 when a metric was not computed (MDL on older files, RHIE means with no bouts). '
+                  'Treat 0 as "not measured" so it never drags an average down.',
+    )
     enabled = models.BooleanField(default=True, help_text='Requested from the provider on every sync.')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 

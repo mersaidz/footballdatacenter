@@ -72,3 +72,14 @@ def test_api_presets_and_install(make_member, club, full_catalogue):
     assert r.status_code == 201 and r.data['is_club'] and r.data['is_default'] and r.data['skipped'] == []
     assert sc.post(u(club, 'metric-sets/install_preset/'), {'preset': 'nope'}).status_code == 400
     assert coach.get(u(club, 'metric-sets/presets/')).data[3]['installed'] is True
+
+
+def test_zero_means_not_measured_for_mdl_and_rhie_means(club, full_catalogue):
+    from metrics.services import extract_metrics
+    install_preset(club, 'mdl')
+    install_preset(club, 'rhie')
+    defs = list(MetricDefinition.objects.filter(club=club).exclude(provider_slug=''))
+    out = extract_metrics({'total_multidirectional_load': 0, 'rhie_bout_count': 0, 'rhie_average_effort_recovery': 0,
+                           'lateral_load_left': 12.5}, defs)
+    # old file without MDL and a period without RHIE bouts: real zero only for the bout count
+    assert out == {'rhie-bout-count': 0.0, 'lateral-load-left': 12.5}

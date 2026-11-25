@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-210%20passing-green)
+![Tests](https://img.shields.io/badge/tests-211%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -116,6 +116,8 @@ Ready-made sets (`metrics/presets.py`) cover the usual coaching schools, each wi
 | **Mechanical / MDL** | MDL, lateral load L/R, high lateral load L/R, max multidirectional acc/dec, mechanical work (total, per min), max mechanical power |
 | **Metabolic** | Equivalent distance, EDI, HMLD, high metabolic power efforts, average metabolic power |
 | **RHIE** | HSR, sprint, RHIE bouts, efforts per bout (mean/max), effort duration, effort and bout recovery (s) |
+
+**Zero is not always zero.** OpenField returns 0 when a metric wasn't computed: MDL on files processed before it was enabled, RHIE means in a period with no bouts. Such metrics carry `zero_is_missing`, so they show as "—" and never drag an average down. A bout count of 0 stays a real 0.
 
 Metrics the account doesn't offer are skipped and reported. A metric staff already edited keeps their settings.
 

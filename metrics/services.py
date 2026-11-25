@@ -81,7 +81,10 @@ def guess_definition(pm: ProviderMetric) -> dict:
         decimals = 2
     if 'power' in text and unit_type not in SPEED_UNIT:
         unit, decimals = unit or 'W/kg', max(decimals, 1)
-    return dict(category=category, aggregation=aggregation, unit=unit, multiplier=multiplier, decimals=decimals)
+    # A mean or a peak of exactly 0 means "nothing to measure", not a real zero.
+    zero_is_missing = aggregation in (Aggregation.MEAN, Aggregation.MAX)
+    return dict(category=category, aggregation=aggregation, unit=unit, multiplier=multiplier, decimals=decimals,
+                zero_is_missing=zero_is_missing)
 
 
 def ensure_core_metrics(club) -> None:
@@ -151,9 +154,12 @@ def extract_metrics(extra: dict, definitions: list[MetricDefinition]) -> dict:
         if raw is None or raw == '':
             continue
         try:
-            out[d.key] = round(float(raw) * d.multiplier, max(d.decimals, 2))
+            value = float(raw)
         except (TypeError, ValueError):
             continue
+        if value == 0 and d.zero_is_missing:
+            continue
+        out[d.key] = round(value * d.multiplier, max(d.decimals, 2))
     return out
 
 

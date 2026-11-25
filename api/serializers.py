@@ -177,7 +177,8 @@ class MetricDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetricDefinition
         fields = ('id', 'key', 'label', 'short_label', 'unit', 'category', 'aggregation', 'higher_is_better',
-                  'decimals', 'multiplier', 'description', 'provider', 'provider_slug', 'is_core', 'enabled')
+                  'decimals', 'multiplier', 'zero_is_missing', 'description', 'provider', 'provider_slug', 'is_core',
+                  'enabled')
         read_only_fields = ('id', 'key', 'provider', 'provider_slug', 'is_core')
 
 

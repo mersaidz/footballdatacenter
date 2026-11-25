@@ -73,6 +73,7 @@ class ExternalIdentity(ClubOwnedModel):
         MATCH = 'match', 'Match'
         COMPETITION = 'competition', 'Competition'
         SEASON = 'season', 'Season'
+        TRAINING_SESSION = 'training_session', 'Training session'
 
     class Status(models.TextChoices):
         CONFIRMED = 'confirmed', 'Confirmed'      # exact or human-verified

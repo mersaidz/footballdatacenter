@@ -22,7 +22,7 @@ from core.models import AuditLog
 from core.sanitize import sanitize_payload
 from core.services.audit import log_event
 from football.models import Event, Match, MatchAppearance
-from providers.connectors.base import BaseConnector, FetchedResource, NormalizedMatch
+from providers.connectors.base import BaseConnector, EventDataConnector, FetchedResource, NormalizedMatch
 from providers.models import ExternalIdentity, RawPayload
 
 from . import identity
@@ -69,7 +69,7 @@ def store_raw(club: Club, connector: BaseConnector, resource: FetchedResource) -
     return raw
 
 
-def ingest_match(club: Club, connector: BaseConnector, normalized: NormalizedMatch) -> MatchIngestResult:
+def ingest_match(club: Club, connector: EventDataConnector, normalized: NormalizedMatch) -> MatchIngestResult:
     provider = connector.provider
     lineups_res = connector.fetch_lineups(normalized.external_id)
     events_res = connector.fetch_events(normalized.external_id)
@@ -147,7 +147,7 @@ def _player_identity_counts(club, provider) -> dict[str, int]:
 
 
 def ingest_season(
-    club: Club, connector: BaseConnector, competition_id: str, season_id: str, *,
+    club: Club, connector: EventDataConnector, competition_id: str, season_id: str, *,
     match_ids: set[str] | None = None, limit: int | None = None, own_team_name: str | None = None,
 ) -> IngestSummary:
     summary = IngestSummary()

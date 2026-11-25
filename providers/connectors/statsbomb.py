@@ -24,7 +24,7 @@ from football.models import PITCH_LENGTH_M, PITCH_WIDTH_M
 from providers.models import Provider
 
 from .base import (
-    BaseConnector,
+    EventDataConnector,
     FetchedResource,
     NormalizedAppearance,
     NormalizedCompetition,
@@ -98,7 +98,7 @@ def _snake(name: str) -> str:
     return name.strip().lower().replace(' ', '_').replace('-', '_')
 
 
-class StatsBombOpenConnector(BaseConnector):
+class StatsBombOpenConnector(EventDataConnector):
     provider = Provider.STATSBOMB_OPEN
     schema_version = 'sb-open-1'
 

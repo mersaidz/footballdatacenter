@@ -2,8 +2,8 @@
 
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
-![Status](https://img.shields.io/badge/status-v0.1%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-75%20passing-green)
+![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
+![Tests](https://img.shields.io/badge/tests-103%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -25,7 +25,7 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 
 ---
 
-## What's built (v0.1)
+## What's built (v0.2)
 
 | Area | What exists |
 |---|---|
@@ -33,6 +33,8 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 | **Staff & roles** | `StaffMembership` with 9 roles (club admin, sporting director, head/assistant coach, analyst, sports scientist, physio, doctor, scout). One user can work for several clubs. |
 | **Domain model** | `Competition`, `Season`, `Match`, `MatchAppearance` (lineups + minutes), `TrainingSession` (with MD-codes), `Event` (normalised on-ball events), `PlayerLoad` (GPS metrics, match **xor** session, enforced in the DB), `PlayerAvailability` (encrypted diagnosis). |
 | **Identity resolution** | `ExternalIdentity` maps any provider ID to an internal record. The resolver matches on DOB + name compatibility, falls back to accent/order-insensitive fuzzy matching, and refuses to guess when candidates are ambiguous. |
+| **OpenField connector** | Catapult Connect API v6 (read-only): athletes, activities and per-athlete stats via `POST /stats`. Retries on 429/5xx, token never logged. Velocity-band → HSR/sprint mapping is configurable per club. |
+| **Physical ingest** | Activities become training sessions with match-day codes (OpenField `DayCode` tag or computed). Match activities attach their loads to the event-data `Match` of the same day, which is the join between physical and technical data. |
 | **StatsBomb connector** | StatsBomb Open Data (free) over HTTP or from a local clone. Events are mapped to a common vocabulary and coordinates are rescaled to metres. |
 | **Ingest pipeline** | Idempotent (re-runs give identical rows), atomic per match, raw payloads deduplicated by SHA-256, one failing match doesn't stop a season, and every sync is audited. |
 | **API** | JWT auth; `/api/clubs/<id>/…` for teams, players, matches (+ lineups, filterable events), loads, availability and the identity review queue. |
@@ -51,6 +53,26 @@ Done: 7 matches, 27538 events, 0 errors
 ```
 
 Sanity checks against known facts: all 7 results and stages are correct. Messi has 7 appearances and **7 goals** (shoot-out kicks excluded via `period <= 4`). Re-running the command changes nothing.
+
+### OpenField: built from the real API
+
+Before writing the connector, `scripts/openfield_probe.py` (standard library only, read-only) mapped a live EU account. It recorded 16 endpoints with field names, types, units and rate limits (1001 requests per window, 150 for `/stats`), and wrote no tokens or personal data. The connector code is written against those recorded shapes, and the tests mock exactly them.
+
+```
+$ python manage.py sync_openfield --club demo --team "First Team" --days 90
+```
+
+| PlayerLoad field | OpenField slug(s) (default) |
+|---|---|
+| `total_distance_m` | `total_distance` |
+| `hsr_distance_m` | sum of `velocity_band5..8_total_distance` (assumes Band 5 starts at 19.8 km/h) |
+| `sprint_distance_m` | sum of `velocity_band6..8_total_distance` (Band 6 from 25.2 km/h) |
+| `accelerations` / `decelerations` | `gen2_acceleration_band7plus_…` / `gen2_acceleration_band2plus_total_effort_count` |
+| `max_speed_kmh` | `max_vel` (m/s × 3.6) |
+| `duration_min` | `field_time`, else `total_duration` (seconds / 60) |
+| `player_load` | `total_player_load` |
+
+Band thresholds are an account setting in OpenField. Override per club with `ProviderAccount.config = {"metric_map": {"hsr_distance_m": ["velocity_band4_total_distance", …]}}`. Slugs that don't exist on an account are skipped automatically.
 
 ---
 
@@ -125,7 +147,18 @@ POST /api/clubs/{id}/identities/{i}/reject/
 
 ## Quick start
 
-Requires Python 3.12+ and PostgreSQL 15+.
+**Fastest local setup (no Postgres needed).** [uv](https://docs.astral.sh/uv/) installs the right Python by itself:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh      # once
+uv venv --python 3.13 && source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+echo "DB_ENGINE=sqlite" >> .env                       # local file db.sqlite3
+python manage.py migrate
+python manage.py sync_openfield --club demo --create-club --team "First Team" --days 120
+```
+
+**Full setup.** Requires Python 3.12+ and PostgreSQL 15+.
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
@@ -151,15 +184,17 @@ config/       settings, URLs, JWT soft-delete rule
 core/         encryption, audit log, payload sanitiser (ported from Aurora)
 accounts/     email-based User with soft delete
 clubs/        Club, Team, Player, StaffMembership, role → capability matrix
-football/     provider-agnostic domain model
+football/     provider-agnostic domain model, match-day (MD) code service
 providers/    ProviderAccount, RawPayload, ExternalIdentity,
-              connectors/ (base contract + StatsBomb), services/ (identity, ingest)
+              connectors/ (contracts, StatsBomb, OpenField),
+              services/ (identity, event ingest, physical ingest)
+scripts/      openfield_probe.py — API discovery, stdlib only
 api/          DRF views, serializers, club-scoped permissions
 ```
 
 ## Roadmap
 
-- **Next:** Catapult OpenField connector (activities → `TrainingSession`/`PlayerLoad`) and IMPECT connector. Both slot into the existing contract.
+- **Next:** IMPECT connector (event data, slots into `EventDataConnector`). OpenField 10 Hz streams for custom thresholds and peak-intensity windows.
 - **Metrics layer:** weekly load and ACWR, physical output per 90 relative to position, readiness traffic light, load ↔ technical-output joins.
 - **Async sync:** Celery + scheduled pulls, provider webhooks.
 - **Frontend:** a Monday-morning post-match report for S&C and a squad availability board for the head coach.

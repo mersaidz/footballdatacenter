@@ -116,14 +116,17 @@ class TrainingSession(ClubOwnedModel):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='training_sessions')
     start = models.DateTimeField(db_index=True)
     end = models.DateTimeField(null=True, blank=True)
-    md_code = models.CharField(max_length=6, blank=True, help_text='e.g. MD-4, MD-1, MD+1')
+    md_code = models.CharField(max_length=12, blank=True, help_text='e.g. MD-4, MD-1, MD+1, MD+1/-2')
     session_type = models.CharField(
         max_length=20, blank=True,
         choices=[
             ('training', 'Team training'), ('recovery', 'Recovery'),
             ('rehab', 'Rehab / individual'), ('gym', 'Gym'),
+            # A match recorded by the tracking system that has no event-data Match to attach to yet.
+            ('match', 'Match (no event data linked)'),
         ],
     )
+    name = models.CharField(max_length=150, blank=True, help_text='Name in the source system.')
     notes = models.TextField(blank=True)
 
     _club_check_fields = ('team',)

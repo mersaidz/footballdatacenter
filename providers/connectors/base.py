@@ -5,8 +5,12 @@ A connector does two things only:
   1. fetch   — talk to the provider and return raw JSON (no DB access);
   2. normalise — turn raw JSON into the dataclasses below.
 
-The ingest service (providers.services.ingest) consumes the dataclasses and
-owns all database writes. Swapping StatsBomb Open Data for a club's real
+Two families share the base class:
+  - EventDataConnector    — matches, lineups, on-ball events (StatsBomb, IMPECT, Wyscout)
+  - PhysicalDataConnector — activities and per-athlete load (OpenField, see openfield.py)
+
+The ingest services (providers.services.ingest / physical_ingest) consume the
+dataclasses and own all database writes. Swapping StatsBomb Open Data for a club's real
 IMPECT/OpenField keys therefore means writing one new connector class;
 nothing downstream changes.
 """
@@ -113,6 +117,10 @@ class BaseConnector(abc.ABC):
     def __init__(self, account=None):
         self.account = account
 
+
+class EventDataConnector(BaseConnector):
+    """Match-centric providers: StatsBomb, IMPECT, Wyscout."""
+
     # --- fetch -----------------------------------------------------------------
     @abc.abstractmethod
     def fetch_matches(self, competition_id: str, season_id: str) -> FetchedResource: ...
@@ -132,3 +140,55 @@ class BaseConnector(abc.ABC):
 
     @abc.abstractmethod
     def normalize_events(self, payload: Any) -> Iterable[NormalizedEvent]: ...
+
+
+# --- physical data -------------------------------------------------------------
+
+@dataclass(frozen=True)
+class NormalizedActivity:
+    """One recorded session in a tracking system (training or match)."""
+    external_id: str
+    name: str
+    start: datetime
+    end: datetime | None
+    day_code: str = ''          # e.g. "MD-1", taken from the provider when it has one
+    is_match: bool = False
+    tags: dict[str, list[str]] = field(default_factory=dict)   # tag type → tag names
+
+
+@dataclass(frozen=True)
+class NormalizedLoad:
+    activity_external_id: str
+    athlete_external_id: str
+    duration_min: float | None = None
+    total_distance_m: float | None = None
+    hsr_distance_m: float | None = None
+    sprint_distance_m: float | None = None
+    sprint_count: int | None = None
+    accelerations: int | None = None
+    decelerations: int | None = None
+    max_speed_kmh: float | None = None
+    player_load: float | None = None
+    extra_metrics: dict[str, Any] = field(default_factory=dict)
+
+
+class PhysicalDataConnector(BaseConnector):
+    """Tracking providers: Catapult OpenField (GPS/LPS), later others."""
+
+    @abc.abstractmethod
+    def fetch_athletes(self) -> FetchedResource: ...
+
+    @abc.abstractmethod
+    def fetch_activities(self, start: datetime, end: datetime) -> FetchedResource: ...
+
+    @abc.abstractmethod
+    def fetch_activity_stats(self, activity_ids: list[str]) -> FetchedResource: ...
+
+    @abc.abstractmethod
+    def normalize_athletes(self, payload: Any) -> list[NormalizedPlayer]: ...
+
+    @abc.abstractmethod
+    def normalize_activities(self, payload: Any) -> list[NormalizedActivity]: ...
+
+    @abc.abstractmethod
+    def normalize_stats(self, payload: Any) -> list[NormalizedLoad]: ...

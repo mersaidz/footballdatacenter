@@ -10,7 +10,8 @@ from clubs.models import Player, StaffMembership, Team
 from clubs.permissions import Cap
 from core.models import AuditLog
 from core.services.audit import log_event
-from football.models import Event, Match, PlayerAvailability, PlayerLoad
+from football.models import ActivityPeriod, Event, Match, PeriodRoleMapping, PlayerAvailability, PlayerLoad
+from football.services.loads import is_match_context, recompute_loads
 from providers.models import ExternalIdentity
 
 from . import serializers as s
@@ -103,6 +104,8 @@ class PlayerLoadViewSet(ClubReadOnlyViewSet):
                 qs = qs.filter(**{f'{key}_id': val})
         if params.get('exclude_flagged') == 'true':
             qs = qs.filter(quality_flags=[])
+        if part := params.get('participation'):
+            qs = qs.filter(participation__in=part.split(','))
         return qs
 
 
@@ -228,3 +231,62 @@ class ExternalIdentityViewSet(ClubScopedMixin, viewsets.ReadOnlyModelViewSet):
                   provider=identity.provider,
                   extra_info={'identity_id': identity.pk, 'old_player': old_target, 'new_player': new_player.pk})
         return Response(self.get_serializer(identity).data, status=status.HTTP_200_OK)
+
+
+class ActivityPeriodViewSet(ClubScopedMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    Periods inside sessions and matches, with their resolved role.
+    GET  ?needs_review=true          — periods nobody could classify (shown to analysts / S&C)
+    POST {id}/assign_role/ {role, remember}
+         remember=true (default) teaches the club's vocabulary: every period with the same
+         name gets the role, now and in future syncs; match loads are recomputed.
+    """
+    permission_classes = (HasClubCapability,)
+    serializer_class = s.ActivityPeriodSerializer
+    required_cap = Cap.VIEW_PHYSICAL_LOAD
+    write_cap = Cap.MANAGE_PERIODS
+
+    def get_queryset(self):
+        qs = ActivityPeriod.objects.filter(club=self.club).select_related('training_session', 'match')
+        params = self.request.query_params
+        if params.get('needs_review') == 'true':
+            qs = qs.filter(role=ActivityPeriod.Role.UNKNOWN)
+        if role := params.get('role'):
+            qs = qs.filter(role=role)
+        if sid := params.get('training_session'):
+            qs = qs.filter(training_session_id=sid)
+        if mid := params.get('match'):
+            qs = qs.filter(match_id=mid)
+        return qs.order_by('start')
+
+    @action(detail=True, methods=['post'])
+    def assign_role(self, request, club_id=None, pk=None):
+        period = self.get_object()
+        body = s.AssignRoleSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        role, remember = body.validated_data['role'], body.validated_data['remember']
+        with transaction.atomic():
+            period.role, period.role_source, period.role_confidence = role, ActivityPeriod.Source.MANUAL, 1
+            period.save(update_fields=['role', 'role_source', 'role_confidence', 'updated_at'])
+            touched = [period]
+            if remember:
+                PeriodRoleMapping.objects.update_or_create(
+                    club=self.club, normalized_name=period.normalized_name,
+                    defaults={'role': role, 'created_by': request.user},
+                )
+                others = (ActivityPeriod.objects.filter(club=self.club, normalized_name=period.normalized_name)
+                          .exclude(pk=period.pk).exclude(role_source=ActivityPeriod.Source.MANUAL))
+                for other in others:
+                    other.role, other.role_source, other.role_confidence = role, ActivityPeriod.Source.CLUB, '0.95'
+                    other.save(update_fields=['role', 'role_source', 'role_confidence', 'updated_at'])
+                    touched.append(other)
+            contexts = {(p.match_id, p.training_session_id): p for p in touched}
+            recomputed = 0
+            for p in contexts.values():
+                if is_match_context(p.match, p.training_session):
+                    recomputed += recompute_loads(match=p.match, training_session=p.training_session)
+        log_event(action=AuditLog.Action.PERIOD_ROLE_CHANGED, request=request, club=self.club,
+                  extra_info={'period_id': period.pk, 'name': period.name, 'role': role, 'remember': remember,
+                              'periods_updated': len(touched), 'loads_recomputed': recomputed})
+        data = self.get_serializer(period).data
+        return Response({**data, 'periods_updated': len(touched), 'loads_recomputed': recomputed})

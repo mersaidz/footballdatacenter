@@ -31,6 +31,7 @@ class AuditLog(models.Model):
         MEDICAL_RECORD_VIEWED = 'medical_record_viewed', 'Medical record viewed'
         MEDICAL_RECORD_CHANGED = 'medical_record_changed', 'Medical record created/changed'
         MEMBERSHIP_CHANGED = 'membership_changed', 'Staff membership changed'
+        PERIOD_ROLE_CHANGED = 'period_role_changed', 'Period role set by staff'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     user_id_snapshot = models.PositiveBigIntegerField(null=True, blank=True)

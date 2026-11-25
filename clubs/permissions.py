@@ -27,6 +27,7 @@ class Cap(StrEnum):
     VIEW_MEDICAL_DETAILS = 'view_medical_details'  # diagnosis, clinical notes
     EDIT_MEDICAL = 'edit_medical'
     MANAGE_IDENTITIES = 'manage_identities'        # confirm / reject cross-provider ID links
+    MANAGE_PERIODS = 'manage_periods'              # say what a period is ("1 тайм" = 1st half)
     MANAGE_INTEGRATIONS = 'manage_integrations'    # provider API keys
     MANAGE_STAFF = 'manage_staff'
 
@@ -37,12 +38,13 @@ _MEDICAL_STAFF = _PERFORMANCE_STAFF | {Cap.VIEW_MEDICAL_DETAILS, Cap.EDIT_MEDICA
 ROLE_CAPABILITIES: dict[str, frozenset[Cap]] = {
     Role.CLUB_ADMIN: frozenset({
         Cap.VIEW_FOOTBALL_DATA, Cap.MANAGE_INTEGRATIONS, Cap.MANAGE_STAFF, Cap.MANAGE_IDENTITIES,
+        Cap.MANAGE_PERIODS,
     }),
     Role.SPORTING_DIRECTOR: frozenset(_PERFORMANCE_STAFF),
     Role.HEAD_COACH: frozenset(_PERFORMANCE_STAFF),
     Role.ASSISTANT_COACH: frozenset(_PERFORMANCE_STAFF),
-    Role.ANALYST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_IDENTITIES}),
-    Role.SPORTS_SCIENTIST: frozenset(_PERFORMANCE_STAFF),
+    Role.ANALYST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_IDENTITIES, Cap.MANAGE_PERIODS}),
+    Role.SPORTS_SCIENTIST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_PERIODS}),
     Role.PHYSIO: frozenset(_MEDICAL_STAFF),
     Role.DOCTOR: frozenset(_MEDICAL_STAFF),
     Role.SCOUT: frozenset({Cap.VIEW_FOOTBALL_DATA}),

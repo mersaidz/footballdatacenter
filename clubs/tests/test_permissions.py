@@ -7,19 +7,19 @@ from clubs.permissions import Cap, ROLE_CAPABILITIES, capabilities_for_role, has
 R = StaffMembership.Role
 
 EXPECTED = {
-    #                       football load  avail  med-det edit-med ident  integ  staff
-    R.CLUB_ADMIN:          (True,  False, False, False,  False,   True,  True,  True),
-    R.SPORTING_DIRECTOR:   (True,  True,  True,  False,  False,   False, False, False),
-    R.HEAD_COACH:          (True,  True,  True,  False,  False,   False, False, False),
-    R.ASSISTANT_COACH:     (True,  True,  True,  False,  False,   False, False, False),
-    R.ANALYST:             (True,  True,  True,  False,  False,   True,  False, False),
-    R.SPORTS_SCIENTIST:    (True,  True,  True,  False,  False,   False, False, False),
-    R.PHYSIO:              (True,  True,  True,  True,   True,    False, False, False),
-    R.DOCTOR:              (True,  True,  True,  True,   True,    False, False, False),
-    R.SCOUT:               (True,  False, False, False,  False,   False, False, False),
+    #                       football load  avail  med-det edit-med ident  integ  staff  periods
+    R.CLUB_ADMIN:          (True,  False, False, False,  False,   True,  True,  True,  True),
+    R.SPORTING_DIRECTOR:   (True,  True,  True,  False,  False,   False, False, False, False),
+    R.HEAD_COACH:          (True,  True,  True,  False,  False,   False, False, False, False),
+    R.ASSISTANT_COACH:     (True,  True,  True,  False,  False,   False, False, False, False),
+    R.ANALYST:             (True,  True,  True,  False,  False,   True,  False, False, True),
+    R.SPORTS_SCIENTIST:    (True,  True,  True,  False,  False,   False, False, False, True),
+    R.PHYSIO:              (True,  True,  True,  True,   True,    False, False, False, False),
+    R.DOCTOR:              (True,  True,  True,  True,   True,    False, False, False, False),
+    R.SCOUT:               (True,  False, False, False,  False,   False, False, False, False),
 }
 CAPS = [Cap.VIEW_FOOTBALL_DATA, Cap.VIEW_PHYSICAL_LOAD, Cap.VIEW_AVAILABILITY, Cap.VIEW_MEDICAL_DETAILS,
-        Cap.EDIT_MEDICAL, Cap.MANAGE_IDENTITIES, Cap.MANAGE_INTEGRATIONS, Cap.MANAGE_STAFF]
+        Cap.EDIT_MEDICAL, Cap.MANAGE_IDENTITIES, Cap.MANAGE_INTEGRATIONS, Cap.MANAGE_STAFF, Cap.MANAGE_PERIODS]
 
 
 def test_every_role_is_covered():

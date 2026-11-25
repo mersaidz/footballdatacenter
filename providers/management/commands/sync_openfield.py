@@ -80,6 +80,10 @@ class Command(BaseCommand):
             f'{summary.sessions_updated} updated, {summary.linked_to_matches} linked to matches, '
             f'{summary.loads} player loads ({summary.flagged} with GPS speed outliers flagged)'
         )
+        self.stdout.write(
+            f'{summary.periods} periods stored, {summary.period_loads} period loads, '
+            f'{summary.periods_to_review} periods need review (GET /api/clubs/<id>/periods/?needs_review=true)'
+        )
         cfg = account.config
         if cfg.get('hsr_threshold_kmh'):
             self.stdout.write(f"Thresholds: HSR > {cfg['hsr_threshold_kmh']} km/h, "

@@ -204,10 +204,9 @@ class Event(ClubOwnedModel):
         ]
 
 
-class PlayerLoad(ClubOwnedModel):
+class LoadMetrics(ClubOwnedModel):
     """
-    Physical output of one player in one match OR one training session.
-    Typically from Catapult OpenField (GPS/LPS).
+    Physical metrics shared by whole-session loads and per-period loads.
 
     Speed thresholds differ between clubs (19.8/25.2 km/h in English
     literature, 21/24 km/h common in Iberian football), so every row stores
@@ -221,12 +220,6 @@ class PlayerLoad(ClubOwnedModel):
     class Flag:
         MAX_SPEED_OUTLIER = 'max_speed_outlier'
 
-
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='loads')
-    match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name='loads')
-    training_session = models.ForeignKey(
-        TrainingSession, on_delete=models.CASCADE, null=True, blank=True, related_name='loads',
-    )
     provider = models.CharField(max_length=40)
 
     duration_min = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
@@ -243,19 +236,52 @@ class PlayerLoad(ClubOwnedModel):
     player_load = models.DecimalField(
         max_digits=7, decimal_places=1, null=True, blank=True, help_text='Catapult PlayerLoad™ (AU)',
     )
-    rpe = models.PositiveSmallIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(10)],
-        help_text='Session RPE (CR-10) collected from the player',
-    )
     extra_metrics = models.JSONField(default=dict, blank=True)
     quality_flags = models.JSONField(default=list, blank=True)
 
-    _club_check_fields = ('player', 'match', 'training_session')
+    class Meta:
+        abstract = True
 
     @property
     def max_speed_for_reports(self):
         """Max speed, or None when it's a flagged GPS spike."""
         return None if self.Flag.MAX_SPEED_OUTLIER in (self.quality_flags or []) else self.max_speed_kmh
+
+
+class PlayerLoad(LoadMetrics):
+    """
+    Physical output of one player in one match OR one training session.
+
+    `load_basis` says what the numbers cover: the whole recorded activity, or
+    for matches only the playing periods (halves, extra time) — warm-up and
+    anything else recorded around the game excluded.
+    `participation` is the provider's tag for how the player took part:
+    only "full" rows feed team averages and match-day norms.
+    """
+
+    class Participation(models.TextChoices):
+        FULL = 'full', 'Full'
+        PARTIAL = 'partial', 'Partial'
+        ALTERNATE = 'alternate', 'Alternate (individual / RTP)'
+        OTHER = 'other', 'Other'
+
+    class Basis(models.TextChoices):
+        ACTIVITY = 'activity', 'Whole activity'
+        MATCH_PERIODS = 'match_periods', 'Match playing periods only'
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='loads')
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name='loads')
+    training_session = models.ForeignKey(
+        TrainingSession, on_delete=models.CASCADE, null=True, blank=True, related_name='loads',
+    )
+    rpe = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text='Session RPE (CR-10) collected from the player',
+    )
+    participation = models.CharField(max_length=12, choices=Participation.choices, blank=True, db_index=True)
+    load_basis = models.CharField(max_length=16, choices=Basis.choices, default=Basis.ACTIVITY)
+
+    _club_check_fields = ('player', 'match', 'training_session')
 
     class Meta:
         constraints = [
@@ -276,6 +302,106 @@ class PlayerLoad(ClubOwnedModel):
                 name='unique_session_load_per_provider',
             ),
         ]
+
+
+class ActivityPeriod(ClubOwnedModel):
+    """
+    A period inside a recorded activity: "1st Half", "Warm Up", "Rondo 19v3"…
+    Staff name periods however they like, so the `role` is resolved by
+    football.services.period_roles and `role_source` records how sure we are.
+    """
+
+    class Role(models.TextChoices):
+        WARM_UP = 'warm_up', 'Warm-up'
+        FIRST_HALF = 'first_half', '1st half'
+        SECOND_HALF = 'second_half', '2nd half'
+        EXTRA_TIME_1 = 'extra_time_1', 'Extra time 1'
+        EXTRA_TIME_2 = 'extra_time_2', 'Extra time 2'
+        PENALTIES = 'penalties', 'Penalty shoot-out'
+        SEGMENT = 'segment', 'Segment inside another period'
+        TOP_UP = 'top_up', 'Top-up / compensatory'
+        RECOVERY = 'recovery', 'Recovery'
+        REHAB = 'rehab', 'Rehab / return to play'
+        DRILL = 'drill', 'Drill'
+        UNKNOWN = 'unknown', 'Needs review'
+
+    class Source(models.TextChoices):
+        TAG = 'tag', 'Provider tag'
+        CLUB = 'club', 'Club mapping'
+        DICTIONARY = 'dictionary', 'Name dictionary'
+        STRUCTURE = 'structure', 'Match structure'
+        DEFAULT = 'default', 'Default for training'
+        MANUAL = 'manual', 'Set by staff'
+        NONE = 'none', 'Not resolved'
+
+    PLAYING_ROLES = (Role.FIRST_HALF, Role.SECOND_HALF, Role.EXTRA_TIME_1, Role.EXTRA_TIME_2)
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name='periods')
+    training_session = models.ForeignKey(
+        TrainingSession, on_delete=models.CASCADE, null=True, blank=True, related_name='periods',
+    )
+    provider = models.CharField(max_length=40)
+    external_id = models.CharField(max_length=64)
+    name = models.CharField(max_length=150)
+    normalized_name = models.CharField(max_length=150, db_index=True)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    sequence = models.PositiveSmallIntegerField(default=0)
+    role = models.CharField(max_length=16, choices=Role.choices, default=Role.UNKNOWN, db_index=True)
+    role_source = models.CharField(max_length=12, choices=Source.choices, default=Source.NONE)
+    role_confidence = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+
+    _club_check_fields = ('match', 'training_session')
+
+    class Meta:
+        ordering = ['start']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(match__isnull=False, training_session__isnull=True)
+                    | Q(match__isnull=True, training_session__isnull=False)
+                ),
+                name='period_has_exactly_one_context',
+            ),
+            models.UniqueConstraint(fields=['club', 'provider', 'external_id'], name='unique_period_per_provider'),
+        ]
+
+    @property
+    def duration_min(self) -> float:
+        return round((self.end - self.start).total_seconds() / 60, 1)
+
+    def __str__(self):
+        return f'{self.name} ({self.get_role_display()})'
+
+
+class PeriodLoad(LoadMetrics):
+    """One player's output inside one period (half, drill, warm-up…)."""
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='period_loads')
+    period = models.ForeignKey(ActivityPeriod, on_delete=models.CASCADE, related_name='loads')
+
+    _club_check_fields = ('player', 'period')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['player', 'period', 'provider'], name='unique_period_load_per_provider'),
+        ]
+
+
+class PeriodRoleMapping(ClubOwnedModel):
+    """A club's own vocabulary: "1 тайм" → first_half. Learned from staff decisions."""
+
+    normalized_name = models.CharField(max_length=150)
+    role = models.CharField(max_length=16, choices=ActivityPeriod.Role.choices)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['club', 'normalized_name'], name='one_role_per_period_name'),
+        ]
+
+    def __str__(self):
+        return f'{self.normalized_name} → {self.role}'
 
 
 class PlayerAvailability(ClubOwnedModel):

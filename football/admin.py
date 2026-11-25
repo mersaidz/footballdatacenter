@@ -1,6 +1,9 @@
 from django.contrib import admin
 
-from .models import Competition, Match, MatchAppearance, PlayerAvailability, PlayerLoad, Season, TrainingSession
+from .models import (
+    ActivityPeriod, Competition, Match, MatchAppearance, PeriodLoad, PeriodRoleMapping, PlayerAvailability, PlayerLoad,
+    Season, TrainingSession,
+)
 
 
 @admin.register(Competition)
@@ -43,3 +46,21 @@ class PlayerAvailabilityAdmin(admin.ModelAdmin):
     list_display = ('player', 'status', 'reason', 'start_date', 'expected_return', 'actual_return')
     exclude = ('diagnosis', 'clinical_notes')
     raw_id_fields = ('player',)
+
+
+@admin.register(ActivityPeriod)
+class ActivityPeriodAdmin(admin.ModelAdmin):
+    list_display = ('name', 'role', 'role_source', 'role_confidence', 'start', 'training_session', 'match')
+    list_filter = ('role', 'role_source')
+    search_fields = ('name',)
+
+
+@admin.register(PeriodLoad)
+class PeriodLoadAdmin(admin.ModelAdmin):
+    list_display = ('player', 'period', 'duration_min', 'total_distance_m', 'hsr_distance_m')
+    raw_id_fields = ('player', 'period')
+
+
+@admin.register(PeriodRoleMapping)
+class PeriodRoleMappingAdmin(admin.ModelAdmin):
+    list_display = ('normalized_name', 'role', 'club', 'created_by')

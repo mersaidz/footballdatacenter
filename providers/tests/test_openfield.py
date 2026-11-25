@@ -3,6 +3,7 @@ OpenField connector + physical ingest. HTTP is mocked with `responses`;
 payload shapes mirror what scripts/openfield_probe.py recorded on a live account.
 """
 import json
+import re
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
@@ -11,7 +12,7 @@ import responses
 
 from clubs.models import Player, Team
 from core.models import AuditLog
-from football.models import Match, PlayerLoad, TrainingSession
+from football.models import ActivityPeriod, Match, PeriodLoad, PeriodRoleMapping, PlayerLoad, TrainingSession
 from football.services.matchday import md_code_for
 from providers.connectors.openfield import OpenFieldClient, OpenFieldConnector, OpenFieldError
 from providers.models import ExternalIdentity
@@ -38,11 +39,41 @@ ATHLETES = [
     {'id': 'ath-old', 'first_name': 'Gone', 'last_name': 'Player', 'is_deleted': 1, 'date_of_birth': 0},
 ]
 
+def tsm(y, m, d, h, mi):
+    return int(datetime(y, m, d, h, mi, tzinfo=timezone.utc).timestamp())
+
+
+def period(pid, act, name, start, end, tags=None):
+    return {'id': pid, 'activity_id': act, 'name': name, 'start_time': start, 'start_centiseconds': 0,
+            'end_time': end, 'end_centiseconds': 0, 'is_deleted': 0, 'tag_list': [], 'tags': tags or []}
+
+
+# J01 recorded like the real account: warm-up, then two halves with a break.
+MATCH_PERIODS = [
+    period('p-wu', 'act-md', 'Warm Up', tsm(2026, 11, 14, 14, 40), tsm(2026, 11, 14, 14, 57)),
+    period('p-h1', 'act-md', '1st Half', tsm(2026, 11, 14, 15, 0), tsm(2026, 11, 14, 15, 47)),
+    period('p-h2', 'act-md', '2nd Half', tsm(2026, 11, 14, 16, 2), tsm(2026, 11, 14, 16, 50)),
+]
+TRAINING_PERIODS = [
+    period('t-wu', 'act-md1', 'Warm Up', tsm(2026, 11, 13, 10, 0), tsm(2026, 11, 13, 10, 10)),
+    period('t-ro', 'act-md1', 'Rondo_19v3_centercircle', tsm(2026, 11, 13, 10, 10), tsm(2026, 11, 13, 10, 25)),
+    period('t-rtp', 'act-md1', 'Return to Play session', tsm(2026, 11, 13, 10, 5), tsm(2026, 11, 13, 10, 35)),
+]
+DETAIL_PERIODS = {'act-md': MATCH_PERIODS, 'act-md1': TRAINING_PERIODS, 'act-untagged': []}
+ACTIVITY_ATHLETES = {
+    'act-md': [{'id': 'ath-1', 'tags': [tag('Participation', 'Full')]},
+               {'id': 'ath-2', 'tags': [tag('Participation', 'Part')]}],
+    'act-md1': [{'id': 'ath-1', 'tags': [tag('Participation', 'Full')]},
+                {'id': 'ath-2', 'tags': [tag('Participation', 'Alternate')]}],
+    'act-untagged': [{'id': 'ath-1', 'tags': []}],
+}
+
 ACTIVITIES = [
-    {'id': 'act-md', 'name': '26_27_J01_Rebordosa', 'start_time': ts(2026, 11, 14, 15), 'end_time': ts(2026, 11, 14, 17),
-     'tag_list': [tag('DayCode', 'MD'), tag('Device', 'GPS')], 'tags': ['MD', 'GPS'], 'athlete_count': 2},
+    {'id': 'act-md', 'name': '26_27_J01_Rebordosa', 'start_time': ts(2026, 11, 14, 14), 'end_time': ts(2026, 11, 14, 17),
+     'tag_list': [tag('DayCode', 'MD'), tag('Device', 'GPS')], 'tags': ['MD', 'GPS'], 'athlete_count': 2,
+     'periods': MATCH_PERIODS},
     {'id': 'act-md1', 'name': '26_27_UT015', 'start_time': ts(2026, 11, 13), 'end_time': ts(2026, 11, 13, 11),
-     'tag_list': [tag('DayCode', 'MD-1')], 'tags': ['MD-1'], 'athlete_count': 2},
+     'tag_list': [tag('DayCode', 'MD-1')], 'tags': ['MD-1'], 'athlete_count': 2, 'periods': TRAINING_PERIODS},
     {'id': 'act-untagged', 'name': 'Activity 202611169223', 'start_time': ts(2026, 11, 16), 'end_time': None,
      'tag_list': [tag('Device', 'GPS')], 'tags': ['GPS'], 'athlete_count': 1},
 ]
@@ -75,6 +106,27 @@ STATS = [
 ]
 
 
+def pstat(activity, athlete, pid, secs, dist, b5=0, b6=0, b7=0, vmax=6.0, acc=0, dec=0, pl=100.0):
+    return stat_row(activity, athlete, period_id=pid, field_time=float(secs), total_duration=secs,
+                    total_distance=dist, velocity_band5_total_distance=b5, velocity_band6_total_distance=b6,
+                    velocity_band7_total_distance=b7, velocity_band8_total_distance=0, max_vel=vmax,
+                    gen2_acceleration_band7plus_total_effort_count=acc,
+                    gen2_acceleration_band2plus_total_effort_count=dec, total_player_load=pl)
+
+
+PERIOD_STATS = [
+    # Tomasov: warm-up + both halves.
+    pstat('act-md', 'ath-1', 'p-wu', 1020, 1500, pl=150.0),
+    pstat('act-md', 'ath-1', 'p-h1', 2820, 4800, b5=200, b6=80, b7=10, vmax=8.75, acc=14, dec=18, pl=420.0),
+    pstat('act-md', 'ath-1', 'p-h2', 2880, 4500, b5=200, b6=80, b7=10, vmax=8.5, acc=12, dec=16, pl=400.0),
+    # Beysebekov: warm-up, came on for the second half.
+    pstat('act-md', 'ath-2', 'p-wu', 1020, 1200, pl=120.0),
+    pstat('act-md', 'ath-2', 'p-h2', 1500, 2600, b5=150, b6=40, vmax=8.75, acc=8, dec=9, pl=230.0),
+    pstat('act-md1', 'ath-1', 't-wu', 600, 900), pstat('act-md1', 'ath-1', 't-ro', 900, 1700),
+    pstat('act-md1', 'ath-2', 't-rtp', 1800, 2400),
+]
+
+
 @pytest.fixture
 def api():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
@@ -85,10 +137,23 @@ def api():
         def stats_cb(request):
             body = json.loads(request.body)
             ids = set(body['filters'][0]['values'])
-            return 200, {}, json.dumps([r for r in STATS if r['activity_id'] in ids])
+            source = PERIOD_STATS if 'period' in body['group_by'] else STATS
+            return 200, {}, json.dumps([r for r in source if r['activity_id'] in ids])
+
+        def detail_cb(request):
+            act, kind = re.search(r'/activities/([^/]+)/(periods|athletes)$', request.url).groups()
+            data = DETAIL_PERIODS.get(act, []) if kind == 'periods' else ACTIVITY_ATHLETES.get(act, [])
+            return 200, {}, json.dumps(data)
 
         rsps.add_callback(responses.POST, f'{BASE}/stats', callback=stats_cb, content_type='application/json')
+        rsps.add_callback(responses.GET, re.compile(BASE + r'/activities/[^/]+/(periods|athletes)$'),
+                          callback=detail_cb, content_type='application/json')
         yield rsps
+
+
+@pytest.fixture(autouse=True)
+def no_sleep(monkeypatch):
+    monkeypatch.setattr('providers.connectors.openfield.time.sleep', lambda s: None)
 
 
 @pytest.fixture
@@ -152,7 +217,8 @@ class TestNormalize:
         assert acts['act-md'].is_match and acts['act-md'].day_code == 'MD'
         assert not acts['act-md1'].is_match and acts['act-md1'].day_code == 'MD-1'
         assert acts['act-untagged'].day_code == '' and acts['act-untagged'].end is None
-        assert acts['act-md'].start == datetime(2026, 11, 14, 15, tzinfo=timezone.utc)
+        assert acts['act-md'].start == datetime(2026, 11, 14, 14, tzinfo=timezone.utc)
+        assert [p.name for p in acts['act-md'].periods] == ['Warm Up', '1st Half', '2nd Half']
 
     def test_detail_endpoint_tag_shape(self, connector):
         # /activities/{id} has tag_list = ["MD"] and tags = [objects]
@@ -250,10 +316,11 @@ def test_athlete_removed_upstream_loses_load(api, connector, club, own_team):
 
 def test_stored_values(api, connector, club, own_team):
     ingest_physical(club, connector, own_team, *RANGE)
-    load = PlayerLoad.objects.get(training_session__name='26_27_J01_Rebordosa', player__full_name='Marin Tomasov')
-    assert load.total_distance_m == 10450 and load.hsr_distance_m == 740 and load.sprint_distance_m == 220
+    load = PlayerLoad.objects.get(training_session__name='26_27_UT015', player__full_name='Marin Tomasov')
+    assert load.total_distance_m == 4300 and load.hsr_distance_m == 740 and load.sprint_distance_m == 220
     assert float(load.max_speed_kmh) == 31.5 and float(load.duration_min) == 90.0
     assert load.extra_metrics['player_load_per_minute'] == 10.9
+    assert load.load_basis == 'activity'   # training keeps the whole session, warm-up included
 
 
 def test_sync_is_audited_without_secrets(api, connector, club, own_team):
@@ -369,3 +436,77 @@ def test_api_can_exclude_flagged_loads(api, connector, club, own_team, make_memb
     clean = c.get(f'/api/clubs/{club.pk}/loads/?exclude_flagged=true').data['results']
     assert len(all_rows) == 5 and len(clean) == 3
     assert all(r['quality_flags'] == [] for r in clean)
+
+
+
+# --- periods & participation ----------------------------------------------------------
+
+def test_match_load_counts_playing_periods_only(api, connector, club, own_team):
+    ingest_physical(club, connector, own_team, *RANGE)
+    load = PlayerLoad.objects.get(training_session__name='26_27_J01_Rebordosa', player__full_name='Marin Tomasov')
+    assert load.load_basis == 'match_periods'
+    assert load.total_distance_m == 4800 + 4500          # warm-up's 1500 m excluded
+    assert float(load.duration_min) == 95.0              # 47' + 48', not the 119' of the whole recording
+    assert load.hsr_distance_m == 2 * (200 + 80 + 10) and load.sprint_distance_m == 2 * (80 + 10)
+    assert float(load.max_speed_kmh) == 31.5 and load.accelerations == 26 and float(load.player_load) == 820.0
+    assert load.extra_metrics['activity_total']['total_distance_m'] == 10450   # whole recording kept for audit
+
+
+def test_substitute_minutes_come_from_his_periods(api, connector, club, own_team):
+    ingest_physical(club, connector, own_team, *RANGE)
+    load = PlayerLoad.objects.get(training_session__name='26_27_J01_Rebordosa', player__full_name='Abzal Beysebekov')
+    assert float(load.duration_min) == 25.0 and load.total_distance_m == 2600
+
+
+def test_periods_stored_with_roles(api, connector, club, own_team):
+    summary = ingest_physical(club, connector, own_team, *RANGE)
+    roles = dict(ActivityPeriod.objects.values_list('external_id', 'role'))
+    assert roles == {'p-wu': 'warm_up', 'p-h1': 'first_half', 'p-h2': 'second_half',
+                     't-wu': 'warm_up', 't-ro': 'drill', 't-rtp': 'rehab'}
+    assert summary.periods == 6 and summary.periods_to_review == 0
+    assert PeriodLoad.objects.count() == len(PERIOD_STATS)
+
+
+def test_participation_stored(api, connector, club, own_team):
+    ingest_physical(club, connector, own_team, *RANGE)
+    part = {(l.training_session.name, l.player.full_name): l.participation
+            for l in PlayerLoad.objects.select_related('training_session', 'player')}
+    assert part[('26_27_J01_Rebordosa', 'Marin Tomasov')] == 'full'
+    assert part[('26_27_J01_Rebordosa', 'Abzal Beysebekov')] == 'partial'
+    assert part[('26_27_UT015', 'Abzal Beysebekov')] == 'alternate'
+
+
+def test_unnamed_halves_resolved_by_structure_and_review_queue(api, connector, club, own_team):
+    saved = [dict(p) for p in MATCH_PERIODS]
+    try:
+        MATCH_PERIODS[1]['name'], MATCH_PERIODS[2]['name'] = '1', '2'
+        MATCH_PERIODS[0]['name'] = 'Pre'
+        ingest_physical(club, connector, own_team, *RANGE)
+    finally:
+        for p, orig in zip(MATCH_PERIODS, saved):
+            p.update(orig)
+    roles = {p.external_id: (p.role, p.role_source) for p in ActivityPeriod.objects.filter(external_id__startswith='p-')}
+    assert roles['p-h1'] == ('first_half', 'structure') and roles['p-h2'] == ('second_half', 'structure')
+    assert roles['p-wu'] == ('warm_up', 'structure')
+
+
+def test_manual_role_survives_resync(api, connector, club, own_team):
+    ingest_physical(club, connector, own_team, *RANGE)
+    ActivityPeriod.objects.filter(external_id='t-ro').update(role='top_up', role_source='manual')
+    ingest_physical(club, connector, own_team, *RANGE)
+    p = ActivityPeriod.objects.get(external_id='t-ro')
+    assert (p.role, p.role_source) == ('top_up', 'manual')
+
+
+def test_club_mapping_applies_on_next_sync(api, connector, club, own_team):
+    PeriodRoleMapping.objects.create(club=club, normalized_name='rondo 19 v 3 centercircle', role='warm_up')
+    ingest_physical(club, connector, own_team, *RANGE)
+    p = ActivityPeriod.objects.get(external_id='t-ro')
+    assert (p.role, p.role_source) == ('warm_up', 'club')
+
+
+def test_resync_keeps_period_tables_stable(api, connector, club, own_team):
+    ingest_physical(club, connector, own_team, *RANGE)
+    before = (ActivityPeriod.objects.count(), PeriodLoad.objects.count(), PlayerLoad.objects.count())
+    ingest_physical(club, connector, own_team, *RANGE)
+    assert before == (ActivityPeriod.objects.count(), PeriodLoad.objects.count(), PlayerLoad.objects.count())

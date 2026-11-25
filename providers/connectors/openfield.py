@@ -37,6 +37,7 @@ from .base import (
     FetchedResource,
     NormalizedActivity,
     NormalizedLoad,
+    NormalizedPeriod,
     NormalizedPlayer,
     PhysicalDataConnector,
 )
@@ -77,6 +78,9 @@ EXTRA_SLUGS = [
 CONTEXT_FIELDS = ['athlete_id', 'activity_id', 'date', 'start_time', 'end_time']
 
 DAY_CODE_TAG_TYPE = 'DayCode'
+PARTICIPATION_TAG_TYPE = 'Participation'
+DEFAULT_PERIOD_ROLE_TAG_TYPE = 'Period Type'
+PERIOD_STATS_CHUNK = 10
 MATCH_DAY_CODES = {'MD'}
 
 INTEGER_FIELDS = {'sprint_count', 'accelerations', 'decelerations'}
@@ -90,7 +94,7 @@ class OpenFieldClient:
     """Thin HTTP client: bearer auth, retries on 429/5xx, token never in errors or logs."""
 
     def __init__(self, base_url: str, token: str, *, timeout: int | None = None, max_retries: int = 4,
-                 session: requests.Session | None = None, sleep: Callable[[float], None] = time.sleep):
+                 session: requests.Session | None = None, sleep: Callable[[float], None] | None = None):
         if not token:
             raise OpenFieldError('OpenField API token is missing (OPENFIELD_API_TOKEN or ProviderAccount.api_key)')
         self.base_url = base_url.rstrip('/')
@@ -98,7 +102,7 @@ class OpenFieldClient:
         self.timeout = timeout or settings.PROVIDER_HTTP_TIMEOUT
         self.max_retries = max_retries
         self.session = session or requests.Session()
-        self._sleep = sleep
+        self._sleep = sleep or (lambda seconds: time.sleep(seconds))
 
     def get(self, path: str, params: dict | None = None) -> Any:
         return self._request('GET', path, params=params)
@@ -188,6 +192,7 @@ class OpenFieldConnector(PhysicalDataConnector):
         self.sprint_threshold_kmh = _num(config.get('sprint_threshold_kmh'))
         if config.get('max_speed_cap_kmh'):
             self.max_speed_cap_kmh = float(config['max_speed_cap_kmh'])
+        self.period_role_tag_type = config.get('period_role_tag_type', DEFAULT_PERIOD_ROLE_TAG_TYPE)
 
     # --- fetch -----------------------------------------------------------------
     def available_parameters(self) -> set[str]:
@@ -213,14 +218,27 @@ class OpenFieldConnector(PhysicalDataConnector):
         payload = self.client.get('/activities', params=params) or []
         return FetchedResource('activities', f'{params["startTime"]}-{params["endTime"]}', payload, 'v6')
 
-    def fetch_activity_stats(self, activity_ids: list[str]) -> FetchedResource:
+    def _stats(self, activity_ids: list[str], group_by: list[str], resource: str) -> FetchedResource:
         body = {
-            'parameters': self.requested_slugs(),
+            'parameters': self.requested_slugs() + (['period_id', 'period_name'] if 'period' in group_by else []),
             'filters': [{'name': 'activity_id', 'comparison': '=', 'values': list(activity_ids)}],
-            'group_by': ['athlete', 'activity'],
+            'group_by': group_by,
         }
         key = hashlib.sha1(','.join(sorted(activity_ids)).encode()).hexdigest()[:16]
-        return FetchedResource('stats', key, self.client.post('/stats', body) or [], 'v6')
+        return FetchedResource(resource, key, self.client.post('/stats', body) or [], 'v6')
+
+    def fetch_activity_stats(self, activity_ids: list[str]) -> FetchedResource:
+        return self._stats(activity_ids, ['athlete', 'activity'], 'stats')
+
+    def fetch_period_stats(self, activity_ids: list[str]) -> FetchedResource:
+        return self._stats(activity_ids, ['athlete', 'period'], 'period_stats')
+
+    def fetch_activity_periods(self, activity_id: str) -> FetchedResource:
+        return FetchedResource('periods', activity_id, self.client.get(f'/activities/{activity_id}/periods') or [], 'v6')
+
+    def fetch_activity_athletes(self, activity_id: str) -> FetchedResource:
+        return FetchedResource('activity_athletes', activity_id,
+                               self.client.get(f'/activities/{activity_id}/athletes') or [], 'v6')
 
     # --- normalise -------------------------------------------------------------
     def normalize_athletes(self, payload: list[dict]) -> list[NormalizedPlayer]:
@@ -265,13 +283,50 @@ class OpenFieldConnector(PhysicalDataConnector):
                 day_code=day_code,
                 is_match=is_match,
                 tags=tags,
+                periods=tuple(self.normalize_periods(a.get('periods') or [])),
             ))
         return activities
 
-    def normalize_stats(self, payload: list[dict]) -> list[NormalizedLoad]:
+    def normalize_periods(self, payload: list[dict]) -> list[NormalizedPeriod]:
+        periods = []
+        for p in payload or []:
+            if p.get('is_deleted') or not p.get('start_time') or not p.get('end_time'):
+                continue
+            candidates = [p.get('tags') or [], p.get('tag_list') or []]
+            tag_src = next((c for c in candidates if c and isinstance(c[0], dict)), [])
+            periods.append(NormalizedPeriod(
+                external_id=str(p['id']),
+                name=(p.get('name') or '').strip() or 'Unnamed period',
+                start=_epoch_to_dt(p['start_time'] + (p.get('start_centiseconds') or 0) / 100),
+                end=_epoch_to_dt(p['end_time'] + (p.get('end_centiseconds') or 0) / 100),
+                tags=_tags(tag_src),
+            ))
+        return periods
+
+    def normalize_participation(self, payload: list[dict]) -> dict[str, str]:
+        out = {}
+        for a in payload or []:
+            tags = _tags(next((c for c in (a.get('tags') or [], a.get('tag_list') or [])
+                               if c and isinstance(c[0], dict)), []))
+            value = ((tags.get(PARTICIPATION_TAG_TYPE) or [''])[0]).strip().lower()
+            if not value:
+                continue
+            if value == 'full':
+                out[str(a['id'])] = 'full'
+            elif value.startswith('part'):
+                out[str(a['id'])] = 'partial'
+            elif value.startswith('alt'):
+                out[str(a['id'])] = 'alternate'
+            else:
+                out[str(a['id'])] = 'other'
+        return out
+
+    def normalize_stats(self, payload: list[dict], by_period: bool = False) -> list[NormalizedLoad]:
         loads = []
         for row in payload:
             if not row.get('athlete_id') or not row.get('activity_id'):
+                continue
+            if by_period and not row.get('period_id'):
                 continue
             values: dict[str, Any] = {}
             for field_name, slugs in self.metric_map.items():
@@ -294,6 +349,8 @@ class OpenFieldConnector(PhysicalDataConnector):
             loads.append(NormalizedLoad(
                 activity_external_id=str(row['activity_id']),
                 athlete_external_id=str(row['athlete_id']),
+                # Activity-level rows also carry a period_id (the first period): only trust it when grouped by period.
+                period_external_id=str(row['period_id']) if by_period else None,
                 extra_metrics=extra,
                 **values,
             ))

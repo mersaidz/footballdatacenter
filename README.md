@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-109%20passing-green)
+![Tests](https://img.shields.io/badge/tests-166%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -25,7 +25,7 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 
 ---
 
-## What's built (v0.2)
+## What's built (v0.3)
 
 | Area | What exists |
 |---|---|
@@ -35,6 +35,7 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 | **Identity resolution** | `ExternalIdentity` maps any provider ID to an internal record. The resolver matches on DOB + name compatibility, falls back to accent/order-insensitive fuzzy matching, and refuses to guess when candidates are ambiguous. |
 | **OpenField connector** | Catapult Connect API v6 (read-only): athletes, activities and per-athlete stats via `POST /stats`. Retries on 429/5xx, token never logged. Velocity-band → HSR/sprint mapping is configurable per club. |
 | **Physical ingest** | Activities become training sessions with match-day codes (OpenField `DayCode` tag or computed). Match activities attach their loads to the event-data `Match` of the same day, which is the join between physical and technical data. |
+| **Periods & participation** | Every activity is split into its periods (warm-up, halves, drills) with per-player load. A match's load counts **playing periods only**, so warm-up never inflates match demands or per-90. OpenField participation tags (Full / Part / Alternate) are stored so only full participants feed team norms. |
 | **StatsBomb connector** | StatsBomb Open Data (free) over HTTP or from a local clone. Events are mapped to a common vocabulary and coordinates are rescaled to metres. |
 | **Ingest pipeline** | Idempotent (re-runs give identical rows), atomic per match, raw payloads deduplicated by SHA-256, one failing match doesn't stop a season, and every sync is audited. |
 | **API** | JWT auth; `/api/clubs/<id>/…` for teams, players, matches (+ lineups, filterable events), loads, availability and the identity review queue. |
@@ -77,6 +78,22 @@ $ python manage.py sync_openfield --club demo --team "First Team" --days 90
 **GPS spikes are flagged, not deleted.** A max speed above the player's personal best (OpenField `velocity_max`) + 10 %, or above 38 km/h for anyone, gets `quality_flags = ["max_speed_outlier"]`. The raw value stays for audit. Reports use `max_speed_for_reports` / `GET …/loads/?exclude_flagged=true`. On the demo account this flagged 11 of 442 loads: ten 47–53 km/h spikes, plus a 36 km/h reading from a player whose personal best is 27.8 km/h. A fixed cap alone would have missed that one. Clean values top out at 33.8 km/h. The flagged rows show 0 m of sprint distance, so OpenField's dwell-time filter had already kept the spikes out of the distance totals. Only the max-speed value was affected.
 
 Slug mapping is also an account setting. Override per club with `ProviderAccount.config = {"metric_map": {"hsr_distance_m": ["velocity_band4_total_distance", …]}}`. Slugs that don't exist on an account are skipped automatically.
+
+### Period roles: any naming, any language
+
+Staff name periods however they like: "1st Half", "1half", "1 тайм", "Primeira parte", or just "1". `football/services/period_roles.py` resolves each period to a role. The first rule that answers wins:
+
+| # | Source | Example |
+|---|---|---|
+| 1 | **Tag** on the period (tag type configurable, default `Period Type`) | tag "1st Half" → first half, whatever the name |
+| 2 | **Club vocabulary**, learned from staff decisions | "Блок 1" → top-up, because an analyst said so once |
+| 3 | **Dictionary** (EN, RU, PT, ES, DE, IT, FR) | `2ª Parte`, `Второй тайм`, `Halbzeit 2` → second half |
+| 4 | **Match structure** | two consecutive 35–65' periods → halves, a short one before → warm-up, two ~15' after → extra time |
+| 5 | **Default** (training only) | anything else in a session is a drill |
+
+What is still unknown in a match goes to a review queue (`GET /periods/?needs_review=true`). One click (`POST /periods/{id}/assign_role/`) sets the role, teaches the club vocabulary, re-labels every period with the same name and recomputes the affected match loads. Staff decisions survive re-syncs. Sub-periods inside a half ("1st Half 0–15") become `segment` and are never counted twice.
+
+On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Half 52.3'. Match load now covers 102', not 119'.
 
 ---
 

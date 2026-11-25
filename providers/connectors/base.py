@@ -145,6 +145,16 @@ class EventDataConnector(BaseConnector):
 # --- physical data -------------------------------------------------------------
 
 @dataclass(frozen=True)
+class NormalizedPeriod:
+    """A named slice of an activity: "1st Half", "Warm Up", "Rondo 19v3"…"""
+    external_id: str
+    name: str
+    start: datetime
+    end: datetime
+    tags: dict[str, list[str]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class NormalizedActivity:
     """One recorded session in a tracking system (training or match)."""
     external_id: str
@@ -154,12 +164,14 @@ class NormalizedActivity:
     day_code: str = ''          # e.g. "MD-1", taken from the provider when it has one
     is_match: bool = False
     tags: dict[str, list[str]] = field(default_factory=dict)   # tag type → tag names
+    periods: tuple[NormalizedPeriod, ...] = ()
 
 
 @dataclass(frozen=True)
 class NormalizedLoad:
     activity_external_id: str
     athlete_external_id: str
+    period_external_id: str | None = None      # set when the row is one period, not the whole activity
     duration_min: float | None = None
     total_distance_m: float | None = None
     hsr_distance_m: float | None = None
@@ -183,8 +195,28 @@ class PhysicalDataConnector(BaseConnector):
     # Allowed margin over a player's recorded personal best before a value is flagged.
     personal_max_tolerance: float = 1.10
 
+    # Tag type whose value names a period's role (e.g. "Period Type": "1st Half"), if the club uses one.
+    period_role_tag_type: str | None = None
+
     def athlete_max_speeds(self, athletes_payload: Any) -> dict[str, float]:
         """Personal best speed per athlete external id, km/h. Empty if the provider has none."""
+        return {}
+
+    # Optional per-activity detail. Providers without periods / participation return None.
+    def fetch_activity_periods(self, activity_id: str) -> FetchedResource | None:
+        return None
+
+    def fetch_activity_athletes(self, activity_id: str) -> FetchedResource | None:
+        return None
+
+    def fetch_period_stats(self, activity_ids: list[str]) -> FetchedResource | None:
+        return None
+
+    def normalize_periods(self, payload: Any) -> list[NormalizedPeriod]:
+        return []
+
+    def normalize_participation(self, payload: Any) -> dict[str, str]:
+        """athlete external id → 'full' | 'partial' | 'alternate' | 'other'."""
         return {}
 
     @abc.abstractmethod

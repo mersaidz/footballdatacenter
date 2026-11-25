@@ -7,8 +7,14 @@ Activity → where its loads attach:
   - match activity without such a Match → TrainingSession(session_type="match")
   - anything else → TrainingSession, MD code from the provider tag or computed
 
+Inside each activity:
+  - periods are stored with a resolved role (football.services.period_roles);
+  - per-period load is stored for every athlete;
+  - for matches, PlayerLoad = playing periods only (football.services.loads);
+  - the provider's participation tag (full / partial / alternate) is kept.
+
 Same guarantees as the event ingest: idempotent, atomic per activity, raw
-payloads kept, audited.
+payloads kept, audited. Staff decisions (a period role set by hand) survive re-syncs.
 """
 from __future__ import annotations
 
@@ -26,7 +32,9 @@ from django.utils import timezone
 from clubs.models import Club, Team
 from core.models import AuditLog
 from core.services.audit import log_event
-from football.models import Match, PlayerLoad, TrainingSession
+from football.models import ActivityPeriod, Match, PeriodLoad, PeriodRoleMapping, PlayerLoad, TrainingSession
+from football.services import period_roles
+from football.services.loads import is_match_context, recompute_loads, snapshot
 from football.services.matchday import match_dates, md_code_for
 from providers.connectors.base import NormalizedActivity, NormalizedLoad, NormalizedPlayer, PhysicalDataConnector
 from providers.models import ExternalIdentity
@@ -50,6 +58,9 @@ class PhysicalIngestSummary:
     linked_to_matches: int = 0
     loads: int = 0
     flagged: int = 0
+    periods: int = 0
+    periods_to_review: int = 0
+    period_loads: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -77,7 +88,7 @@ def _load_values(load: NormalizedLoad, connector, personal_best: float | None = 
             values[name] = Decimal(str(round(v, 2 if name == 'duration_min' else 1)))
         else:
             values[name] = int(round(v))
-    values['extra_metrics'] = load.extra_metrics
+    values['extra_metrics'] = dict(load.extra_metrics)
     values['quality_flags'] = _speed_flags(load.max_speed_kmh, personal_best, connector)
     for name in ('hsr_threshold_kmh', 'sprint_threshold_kmh'):
         v = getattr(connector, name, None)
@@ -128,32 +139,101 @@ def _resolve_context(club, team, provider, act: NormalizedActivity, tz, summary)
     return None, session
 
 
-def _ingest_activity(club, connector, team, act, loads, athletes, speed_bests, tz, summary):
+def _store_periods(club, connector, act, periods, ctx, is_match, summary) -> dict[str, ActivityPeriod]:
+    provider = connector.provider
+    existing = {p.external_id: p for p in ActivityPeriod.objects.filter(club=club, provider=provider, **ctx)}
+    club_map = dict(PeriodRoleMapping.objects.filter(club=club).values_list('normalized_name', 'role'))
+    inputs = [
+        period_roles.PeriodInput(
+            key=p.external_id, name=p.name, start=p.start, end=p.end, tags=p.tags,
+            manual_role=(existing[p.external_id].role
+                         if p.external_id in existing and existing[p.external_id].role_source == 'manual' else None),
+        ) for p in periods
+    ]
+    decisions = period_roles.classify(inputs, is_match=is_match, club_map=club_map,
+                                      tag_type=connector.period_role_tag_type)
+    stored = {}
+    for seq, p in enumerate(sorted(periods, key=lambda x: x.start)):
+        d = decisions[p.external_id]
+        defaults = {'match': None, 'training_session': None, **ctx,
+                    'name': p.name[:150], 'normalized_name': period_roles.normalize(p.name)[:150],
+                    'start': p.start, 'end': p.end, 'sequence': seq, 'role': d.role, 'role_source': d.source,
+                    'role_confidence': Decimal(str(round(d.confidence, 2)))}
+        obj, _ = ActivityPeriod.objects.update_or_create(
+            club=club, provider=provider, external_id=p.external_id, defaults=defaults,
+        )
+        stored[p.external_id] = obj
+        summary.periods += 1
+        if d.role == ActivityPeriod.Role.UNKNOWN:
+            summary.periods_to_review += 1
+    ActivityPeriod.objects.filter(club=club, provider=provider, **ctx).exclude(external_id__in=stored).delete()
+    return stored
+
+
+def _ingest_activity(club, connector, team, act, loads, period_loads, periods, participation,
+                     athletes, speed_bests, tz, summary):
     provider = connector.provider
     with transaction.atomic():
         match, session = _resolve_context(club, team, provider, act, tz, summary)
-        context = {'match': match} if match else {'training_session': session}
+        ctx = {'match': match} if match else {'training_session': session}
+        is_match = is_match_context(match, session)
+
+        players = {}
+
+        def player_for(ext_id):
+            if ext_id not in players:
+                incoming = athletes.get(ext_id) or NormalizedPlayer(
+                    external_id=ext_id, full_name=f'OpenField athlete {ext_id[:8]}')
+                players[ext_id] = identity.resolve_player(club, provider, incoming, team=team)
+            return players[ext_id]
+
         kept = []
         for load in loads:
-            incoming = athletes.get(load.athlete_external_id) or NormalizedPlayer(
-                external_id=load.athlete_external_id, full_name=f'OpenField athlete {load.athlete_external_id[:8]}',
-            )
-            player = identity.resolve_player(club, provider, incoming, team=team)
+            values = _load_values(load, connector, speed_bests.get(load.athlete_external_id))
+            values['extra_metrics']['activity_total'] = snapshot(values)
+            values['extra_metrics']['activity_flags'] = values['quality_flags']
+            values['participation'] = participation.get(load.athlete_external_id, '')
+            values['load_basis'] = PlayerLoad.Basis.ACTIVITY
             obj, _ = PlayerLoad.objects.update_or_create(
-                club=club, player=player, provider=provider, **context,
-                defaults=_load_values(load, connector, speed_bests.get(load.athlete_external_id)),
+                club=club, player=player_for(load.athlete_external_id), provider=provider, **ctx, defaults=values,
             )
             kept.append(obj.pk)
-            if obj.quality_flags:
-                summary.flagged += 1
         # Athletes removed from the activity upstream disappear here too.
-        PlayerLoad.objects.filter(club=club, provider=provider, **context).exclude(pk__in=kept).delete()
+        PlayerLoad.objects.filter(club=club, provider=provider, **ctx).exclude(pk__in=kept).delete()
+
+        stored_periods = _store_periods(club, connector, act, periods, ctx, is_match, summary)
+        kept_pl = []
+        for pl in period_loads:
+            period = stored_periods.get(pl.period_external_id)
+            if period is None:
+                continue
+            values = _load_values(pl, connector, speed_bests.get(pl.athlete_external_id))
+            obj, _ = PeriodLoad.objects.update_or_create(
+                club=club, player=player_for(pl.athlete_external_id), period=period, provider=provider,
+                defaults=values,
+            )
+            kept_pl.append(obj.pk)
+        PeriodLoad.objects.filter(club=club, provider=provider, period__in=stored_periods.values()) \
+            .exclude(pk__in=kept_pl).delete()
+        summary.period_loads += len(kept_pl)
+
+        if is_match:
+            recompute_loads(match=match, training_session=session)
         summary.loads += len(kept)
+        summary.flagged += PlayerLoad.objects.filter(pk__in=kept).exclude(quality_flags=[]).count()
+
+
+def _safe(fn, *args):
+    try:
+        return fn(*args)
+    except Exception:  # noqa: BLE001 — optional detail; the activity still ingests without it
+        logger.exception('Optional fetch %s failed', getattr(fn, '__name__', fn))
+        return None
 
 
 def ingest_physical(
     club: Club, connector: PhysicalDataConnector, team: Team, start: datetime, end: datetime,
-    *, chunk_size: int = 25,
+    *, chunk_size: int = 25, period_chunk_size: int = 10,
 ) -> PhysicalIngestSummary:
     summary = PhysicalIngestSummary()
     tz = ZoneInfo(club.timezone or 'UTC')
@@ -180,10 +260,32 @@ def ingest_physical(
         for load in connector.normalize_stats(stats_res.payload):
             loads_by_activity[load.activity_external_id].append(load)
 
+    period_loads_by_activity: dict[str, list[NormalizedLoad]] = defaultdict(list)
+    for chunk in _chunks(activities, period_chunk_size):
+        res = _safe(connector.fetch_period_stats, [a.external_id for a in chunk])
+        if res is None:
+            continue
+        store_raw(club, connector, res)
+        for load in connector.normalize_stats(res.payload, by_period=True):
+            period_loads_by_activity[load.activity_external_id].append(load)
+
     # Matches first, so MD codes of training days can count back from them.
     for act in sorted(activities, key=lambda a: (not a.is_match, a.start)):
+        periods = list(act.periods)
+        periods_res = _safe(connector.fetch_activity_periods, act.external_id)
+        if periods_res is not None:
+            store_raw(club, connector, periods_res)
+            detailed = connector.normalize_periods(periods_res.payload)
+            if detailed:
+                periods = detailed   # the detail endpoint carries period tags
+        athletes_res = _safe(connector.fetch_activity_athletes, act.external_id)
+        participation = {}
+        if athletes_res is not None:
+            store_raw(club, connector, athletes_res)
+            participation = connector.normalize_participation(athletes_res.payload)
         try:
             _ingest_activity(club, connector, team, act, loads_by_activity.get(act.external_id, []),
+                             period_loads_by_activity.get(act.external_id, []), periods, participation,
                              athletes, speed_bests, tz, summary)
         except Exception as exc:  # noqa: BLE001
             logger.exception('Ingest failed for activity %s', act.external_id)
@@ -198,6 +300,7 @@ def ingest_physical(
         club=club, provider=connector.provider,
         extra_info={'from': start.isoformat(), 'to': end.isoformat(), 'activities': summary.activities,
                     'loads': summary.loads, 'flagged': summary.flagged, 'linked_to_matches': summary.linked_to_matches,
+                    'periods': summary.periods, 'periods_to_review': summary.periods_to_review,
                     'errors': summary.errors[:20]},
     )
     return summary

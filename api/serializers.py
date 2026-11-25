@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from clubs.models import Club, Player, StaffMembership, Team
-from football.models import Event, Match, MatchAppearance, PlayerAvailability, PlayerLoad
+from football.models import ActivityPeriod, Event, Match, MatchAppearance, PlayerAvailability, PlayerLoad
 from providers.models import ExternalIdentity
 
 
@@ -77,7 +77,7 @@ class PlayerLoadSerializer(serializers.ModelSerializer):
             'id', 'player_id', 'match_id', 'training_session_id', 'provider', 'duration_min',
             'total_distance_m', 'hsr_distance_m', 'sprint_distance_m', 'hsr_threshold_kmh',
             'sprint_threshold_kmh', 'sprint_count', 'accelerations', 'decelerations', 'max_speed_kmh',
-            'player_load', 'rpe', 'quality_flags', 'extra_metrics',
+            'player_load', 'rpe', 'participation', 'load_basis', 'quality_flags', 'extra_metrics',
         )
 
 
@@ -133,3 +133,23 @@ class ExternalIdentitySerializer(serializers.ModelSerializer):
     def get_target_name(self, obj):
         target = obj.target
         return str(target) if target is not None else None
+
+
+class ActivityPeriodSerializer(serializers.ModelSerializer):
+    duration_min = serializers.FloatField(read_only=True)
+    session_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityPeriod
+        fields = ('id', 'name', 'role', 'role_source', 'role_confidence', 'start', 'end', 'duration_min',
+                  'match_id', 'training_session_id', 'session_name')
+
+    def get_session_name(self, obj):
+        if obj.training_session_id:
+            return obj.training_session.name
+        return str(obj.match) if obj.match_id else None
+
+
+class AssignRoleSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=[r for r in ActivityPeriod.Role.values if r != 'unknown'])
+    remember = serializers.BooleanField(default=True)

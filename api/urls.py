@@ -11,6 +11,7 @@ club_router.register('matches', views.MatchViewSet, basename='match')
 club_router.register('loads', views.PlayerLoadViewSet, basename='load')
 club_router.register('availability', views.AvailabilityViewSet, basename='availability')
 club_router.register('identities', views.ExternalIdentityViewSet, basename='identity')
+club_router.register('periods', views.ActivityPeriodViewSet, basename='period')
 
 urlpatterns = [
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain'),

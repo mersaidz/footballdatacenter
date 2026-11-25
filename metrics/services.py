@@ -127,7 +127,8 @@ def _norm(text: str) -> str:
 
 def search_catalogue(club, query: str, provider: str | None = None) -> list[ProviderMetric]:
     """
-    Every word must appear in the name or slug. Best matches first: the exact name,
+    Every word starts a word of the name or slug; numbers match whole ("band 4" never finds
+    "band 24"). Best matches first: the exact name,
     then names that contain the whole phrase, then the shortest names
     ("Velocity Band 4 Total Distance" before "... Distance Band 7 Total # Efforts").
     """
@@ -141,8 +142,8 @@ def search_catalogue(club, query: str, provider: str | None = None) -> list[Prov
     hits = []
     for pm in qs.only('id', 'provider', 'slug', 'name', 'unit_type'):
         name = _norm(pm.name)
-        text = f'{name} {_norm(pm.slug)}'
-        if all(w in text for w in words):
+        tokens = f'{name} {_norm(pm.slug)}'.split()
+        if all(any(t == w if w.isdigit() else t.startswith(w) for t in tokens) for w in words):
             rank = 0 if name == q else 1 if name.startswith(q) else 2 if q in name else 3
             hits.append((rank, len(name), pm.name, pm))
     return [h[-1] for h in sorted(hits, key=lambda h: h[:3])]

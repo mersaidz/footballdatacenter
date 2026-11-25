@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-217%20passing-green)
+![Tests](https://img.shields.io/badge/tests-218%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 

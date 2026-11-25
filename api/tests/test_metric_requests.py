@@ -15,7 +15,7 @@ BAND4 = [
 
 @pytest.fixture
 def catalogue(club):
-    sync_catalogue(club, 'catapult_openfield', BAND4)
+    sync_catalogue(club, 'catapult_openfield', BAND4 + [{'slug': 'tackle_band24_count', 'name': 'Tackle Band 24 Count'}])
 
 
 def u(club, path):
@@ -26,6 +26,11 @@ def u(club, path):
 def test_search_ranks_the_exact_name_first(club, catalogue, query):
     slugs = [pm.slug for pm in search_catalogue(club, query)]
     assert slugs[0] == 'velocity_band4_total_distance' and 'acceleration_band4_total_distance' not in slugs
+
+
+def test_numbers_match_whole(club, catalogue):
+    assert 'tackle_band24_count' not in [pm.slug for pm in search_catalogue(club, 'band 4')]
+    assert [pm.slug for pm in search_catalogue(club, 'band 24')] == ['tackle_band24_count']
 
 
 def test_coach_asks_sc_approves_and_tracking_starts(make_member, club, catalogue):

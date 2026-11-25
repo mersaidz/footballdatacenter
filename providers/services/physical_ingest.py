@@ -49,6 +49,7 @@ class PhysicalIngestSummary:
     sessions_updated: int = 0
     linked_to_matches: int = 0
     loads: int = 0
+    flagged: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -57,7 +58,16 @@ def _chunks(items, size):
         yield items[i:i + size]
 
 
-def _load_values(load: NormalizedLoad) -> dict:
+def _speed_flags(max_speed: float | None, personal_best: float | None, connector) -> list[str]:
+    if max_speed is None:
+        return []
+    limit = connector.max_speed_cap_kmh
+    if personal_best:
+        limit = min(limit, personal_best * connector.personal_max_tolerance)
+    return [PlayerLoad.Flag.MAX_SPEED_OUTLIER] if max_speed > limit else []
+
+
+def _load_values(load: NormalizedLoad, connector, personal_best: float | None = None) -> dict:
     values = {}
     for name in LOAD_FIELDS:
         v = getattr(load, name)
@@ -68,6 +78,10 @@ def _load_values(load: NormalizedLoad) -> dict:
         else:
             values[name] = int(round(v))
     values['extra_metrics'] = load.extra_metrics
+    values['quality_flags'] = _speed_flags(load.max_speed_kmh, personal_best, connector)
+    for name in ('hsr_threshold_kmh', 'sprint_threshold_kmh'):
+        v = getattr(connector, name, None)
+        values[name] = Decimal(str(round(v, 1))) if v is not None else None
     return values
 
 
@@ -114,7 +128,7 @@ def _resolve_context(club, team, provider, act: NormalizedActivity, tz, summary)
     return None, session
 
 
-def _ingest_activity(club, connector, team, act, loads, athletes, tz, summary):
+def _ingest_activity(club, connector, team, act, loads, athletes, speed_bests, tz, summary):
     provider = connector.provider
     with transaction.atomic():
         match, session = _resolve_context(club, team, provider, act, tz, summary)
@@ -126,9 +140,12 @@ def _ingest_activity(club, connector, team, act, loads, athletes, tz, summary):
             )
             player = identity.resolve_player(club, provider, incoming, team=team)
             obj, _ = PlayerLoad.objects.update_or_create(
-                club=club, player=player, provider=provider, **context, defaults=_load_values(load),
+                club=club, player=player, provider=provider, **context,
+                defaults=_load_values(load, connector, speed_bests.get(load.athlete_external_id)),
             )
             kept.append(obj.pk)
+            if obj.quality_flags:
+                summary.flagged += 1
         # Athletes removed from the activity upstream disappear here too.
         PlayerLoad.objects.filter(club=club, provider=provider, **context).exclude(pk__in=kept).delete()
         summary.loads += len(kept)
@@ -144,6 +161,7 @@ def ingest_physical(
     athletes_res = connector.fetch_athletes()
     store_raw(club, connector, athletes_res)
     athletes = {p.external_id: p for p in connector.normalize_athletes(athletes_res.payload)}
+    speed_bests = connector.athlete_max_speeds(athletes_res.payload)
 
     acts_res = connector.fetch_activities(start, end)
     store_raw(club, connector, acts_res)
@@ -166,7 +184,7 @@ def ingest_physical(
     for act in sorted(activities, key=lambda a: (not a.is_match, a.start)):
         try:
             _ingest_activity(club, connector, team, act, loads_by_activity.get(act.external_id, []),
-                             athletes, tz, summary)
+                             athletes, speed_bests, tz, summary)
         except Exception as exc:  # noqa: BLE001
             logger.exception('Ingest failed for activity %s', act.external_id)
             summary.errors.append(f'{act.external_id}: {exc}')
@@ -179,7 +197,7 @@ def ingest_physical(
         action=AuditLog.Action.SYNC_FAILED if summary.errors and not summary.loads else AuditLog.Action.SYNC_SUCCESS,
         club=club, provider=connector.provider,
         extra_info={'from': start.isoformat(), 'to': end.isoformat(), 'activities': summary.activities,
-                    'loads': summary.loads, 'linked_to_matches': summary.linked_to_matches,
+                    'loads': summary.loads, 'flagged': summary.flagged, 'linked_to_matches': summary.linked_to_matches,
                     'errors': summary.errors[:20]},
     )
     return summary

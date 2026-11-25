@@ -175,6 +175,18 @@ class NormalizedLoad:
 class PhysicalDataConnector(BaseConnector):
     """Tracking providers: Catapult OpenField (GPS/LPS), later others."""
 
+    # Speed thresholds the provider's HSR / sprint numbers were computed with (km/h).
+    hsr_threshold_kmh: float | None = None
+    sprint_threshold_kmh: float | None = None
+    # No footballer reaches this; anything above is a GPS artefact.
+    max_speed_cap_kmh: float = 38.0
+    # Allowed margin over a player's recorded personal best before a value is flagged.
+    personal_max_tolerance: float = 1.10
+
+    def athlete_max_speeds(self, athletes_payload: Any) -> dict[str, float]:
+        """Personal best speed per athlete external id, km/h. Empty if the provider has none."""
+        return {}
+
     @abc.abstractmethod
     def fetch_athletes(self) -> FetchedResource: ...
 

@@ -101,6 +101,8 @@ class PlayerLoadViewSet(ClubReadOnlyViewSet):
         for key in ('player', 'match', 'training_session'):
             if val := params.get(key):
                 qs = qs.filter(**{f'{key}_id': val})
+        if params.get('exclude_flagged') == 'true':
+            qs = qs.filter(quality_flags=[])
         return qs
 
 

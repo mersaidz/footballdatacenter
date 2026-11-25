@@ -51,9 +51,10 @@ REGION_BASE_URLS = {
 
 STATS_CHUNK = 25
 
-# field on PlayerLoad → OpenField slugs (summed). Assumes the common football
-# band setup: Band 5 starts at 19.8 km/h (HSR), Band 6 at 25.2 km/h (sprint).
-# Override per club: ProviderAccount.config = {"metric_map": {"hsr_distance_m": [...]}}
+# field on PlayerLoad → OpenField slugs (summed). HSR = Band 5 and above,
+# sprint = Band 6 and above; the km/h those bands start at is the club's own
+# setting and is recorded via ProviderAccount.config["hsr_threshold_kmh"] /
+# ["sprint_threshold_kmh"]. Override slugs per club with config["metric_map"].
 DEFAULT_METRIC_MAP: dict[str, list[str]] = {
     'total_distance_m': ['total_distance'],
     'hsr_distance_m': ['velocity_band5_total_distance', 'velocity_band6_total_distance',
@@ -182,6 +183,11 @@ class OpenFieldConnector(PhysicalDataConnector):
         pattern = match_name_pattern or config.get('match_name_pattern')
         self.match_name_re = re.compile(pattern, re.I) if pattern else None
         self._available: set[str] | None = None
+        # Band setup of this account (OpenField → Settings → Bands), e.g. 21 / 24 km/h.
+        self.hsr_threshold_kmh = _num(config.get('hsr_threshold_kmh'))
+        self.sprint_threshold_kmh = _num(config.get('sprint_threshold_kmh'))
+        if config.get('max_speed_cap_kmh'):
+            self.max_speed_cap_kmh = float(config['max_speed_cap_kmh'])
 
     # --- fetch -----------------------------------------------------------------
     def available_parameters(self) -> set[str]:
@@ -230,6 +236,15 @@ class OpenFieldConnector(PhysicalDataConnector):
                 date_of_birth=_epoch_to_date(a.get('date_of_birth')),
             ))
         return players
+
+    def athlete_max_speeds(self, athletes_payload: list[dict]) -> dict[str, float]:
+        # velocity_max is the athlete's max speed in m/s (shown as "Max" in Settings → Bands).
+        out = {}
+        for a in athletes_payload or []:
+            v = _num(a.get('velocity_max'))
+            if v and v > 0:
+                out[str(a['id'])] = round(v * 3.6 if v < 15 else v, 1)
+        return out
 
     def normalize_activities(self, payload: list[dict]) -> list[NormalizedActivity]:
         activities = []

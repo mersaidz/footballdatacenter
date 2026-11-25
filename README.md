@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-103%20passing-green)
+![Tests](https://img.shields.io/badge/tests-109%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -65,14 +65,18 @@ $ python manage.py sync_openfield --club demo --team "First Team" --days 90
 | PlayerLoad field | OpenField slug(s) (default) |
 |---|---|
 | `total_distance_m` | `total_distance` |
-| `hsr_distance_m` | sum of `velocity_band5..8_total_distance` (assumes Band 5 starts at 19.8 km/h) |
-| `sprint_distance_m` | sum of `velocity_band6..8_total_distance` (Band 6 from 25.2 km/h) |
+| `hsr_distance_m` | sum of `velocity_band5..8_total_distance` |
+| `sprint_distance_m` | sum of `velocity_band6..8_total_distance` |
 | `accelerations` / `decelerations` | `gen2_acceleration_band7plus_…` / `gen2_acceleration_band2plus_total_effort_count` |
 | `max_speed_kmh` | `max_vel` (m/s × 3.6) |
 | `duration_min` | `field_time`, else `total_duration` (seconds / 60) |
 | `player_load` | `total_player_load` |
 
-Band thresholds are an account setting in OpenField. Override per club with `ProviderAccount.config = {"metric_map": {"hsr_distance_m": ["velocity_band4_total_distance", …]}}`. Slugs that don't exist on an account are skipped automatically.
+**Speed thresholds travel with the data.** Where Band 5 and Band 6 start is an account setting in OpenField. The demo account uses 21 / 24 km/h, common in Iberian football. English literature uses 19.8 / 25.2. Every `PlayerLoad` stores the `hsr_threshold_kmh` / `sprint_threshold_kmh` it was measured with, set once per club via `sync_openfield --hsr-threshold 21 --sprint-threshold 24`. Comparing HSR across clubs or seasons without this is comparing different things.
+
+**GPS spikes are flagged, not deleted.** A max speed above the player's personal best (OpenField `velocity_max`) + 10 %, or above 38 km/h for anyone, gets `quality_flags = ["max_speed_outlier"]`. The raw value stays for audit. Reports use `max_speed_for_reports` / `GET …/loads/?exclude_flagged=true`. On the demo account this caught 10 sessions with "53 km/h" readings.
+
+Slug mapping is also an account setting. Override per club with `ProviderAccount.config = {"metric_map": {"hsr_distance_m": ["velocity_band4_total_distance", …]}}`. Slugs that don't exist on an account are skipped automatically.
 
 ---
 

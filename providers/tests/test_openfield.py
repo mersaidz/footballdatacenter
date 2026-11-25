@@ -4,6 +4,7 @@ payload shapes mirror what scripts/openfield_probe.py recorded on a live account
 """
 import json
 from datetime import date, datetime, timezone
+from decimal import Decimal
 
 import pytest
 import responses
@@ -30,9 +31,10 @@ def tag(type_name, name):
 
 ATHLETES = [
     {'id': 'ath-1', 'first_name': 'Marin', 'last_name': 'Tomasov', 'nickname': '', 'is_deleted': 0,
-     'date_of_birth': ts(1987, 8, 31, 0), 'jersey': '10', 'position_name': 'W', 'current_team_id': 't-1'},
+     'date_of_birth': ts(1987, 8, 31, 0), 'jersey': '10', 'position_name': 'W', 'current_team_id': 't-1',
+     'velocity_max': 8.75},                       # personal best 31.5 km/h
     {'id': 'ath-2', 'first_name': 'Abzal', 'last_name': 'Beysebekov', 'nickname': '', 'is_deleted': 0,
-     'date_of_birth': 0, 'jersey': '4'},
+     'date_of_birth': 0, 'jersey': '4', 'velocity_max': 7.5},   # personal best 27.0 km/h
     {'id': 'ath-old', 'first_name': 'Gone', 'last_name': 'Player', 'is_deleted': 1, 'date_of_birth': 0},
 ]
 
@@ -303,3 +305,67 @@ def test_sync_command_unknown_club(club):
     from django.core.management.base import CommandError
     with pytest.raises(CommandError, match='not found'):
         call_command('sync_openfield', '--club', 'nope')
+
+
+
+# --- thresholds & data quality -----------------------------------------------------
+
+def test_personal_bests_read_from_athletes(connector):
+    assert connector.athlete_max_speeds(ATHLETES) == {'ath-1': 31.5, 'ath-2': 27.0}
+
+
+def test_speed_outliers_flagged(api, connector, club, own_team):
+    summary = ingest_physical(club, connector, own_team, *RANGE)
+    by_key = {(l.training_session.name, l.player.full_name): l
+              for l in PlayerLoad.objects.select_related('training_session', 'player')}
+    tomasov = by_key[('26_27_J01_Rebordosa', 'Marin Tomasov')]
+    beysebekov = by_key[('26_27_J01_Rebordosa', 'Abzal Beysebekov')]
+    assert tomasov.quality_flags == []                      # 31.5 = his personal best, fine
+    assert beysebekov.quality_flags == ['max_speed_outlier']  # 31.5 > 27.0 * 1.1
+    assert float(beysebekov.max_speed_kmh) == 31.5          # value kept, only flagged
+    assert beysebekov.max_speed_for_reports is None
+    assert summary.flagged == 2   # Beysebekov in both sessions (all rows run 31.5 km/h)
+
+
+def test_hard_cap_without_personal_best(club, own_team, connector):
+    athletes = [{**ATHLETES[0], 'velocity_max': None}]
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.get(f'{BASE}/athletes', json=athletes)
+        rsps.get(f'{BASE}/activities', json=[ACTIVITIES[1]])
+        rsps.get(f'{BASE}/parameters', json=PARAMETERS)
+        rsps.post(f'{BASE}/stats', json=[stat_row('act-md1', 'ath-1', max_vel=14.7)])   # 52.9 km/h
+        ingest_physical(club, connector, own_team, *RANGE)
+    assert PlayerLoad.objects.get().quality_flags == ['max_speed_outlier']
+
+
+def test_thresholds_recorded_on_each_load(api, club, own_team):
+    from providers.models import ProviderAccount
+    acc = ProviderAccount.objects.create(club=club, provider='catapult_openfield', api_key=TOKEN,
+                                         config={'hsr_threshold_kmh': 21, 'sprint_threshold_kmh': 24})
+    ingest_physical(club, OpenFieldConnector(acc), own_team, *RANGE)
+    assert set(PlayerLoad.objects.values_list('hsr_threshold_kmh', 'sprint_threshold_kmh')) == \
+        {(Decimal('21.0'), Decimal('24.0'))}
+
+
+def test_command_saves_thresholds(api, club, monkeypatch):
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    from providers.models import ProviderAccount
+    monkeypatch.setenv('OPENFIELD_API_TOKEN', TOKEN)
+    out = StringIO()
+    call_command('sync_openfield', '--club', club.slug, '--from', '2026-11-01', '--to', '2026-11-30',
+                 '--hsr-threshold', '21', '--sprint-threshold', '24', stdout=out)
+    acc = ProviderAccount.objects.get(club=club)
+    assert acc.config['hsr_threshold_kmh'] == 21 and acc.config['sprint_threshold_kmh'] == 24
+    assert 'HSR > 21.0 km/h' in out.getvalue() and 'outliers flagged' in out.getvalue()
+
+
+def test_api_can_exclude_flagged_loads(api, connector, club, own_team, make_member):
+    ingest_physical(club, connector, own_team, *RANGE)
+    _, c = make_member(club, 'sports_scientist')
+    all_rows = c.get(f'/api/clubs/{club.pk}/loads/').data['results']
+    clean = c.get(f'/api/clubs/{club.pk}/loads/?exclude_flagged=true').data['results']
+    assert len(all_rows) == 5 and len(clean) == 3
+    assert all(r['quality_flags'] == [] for r in clean)

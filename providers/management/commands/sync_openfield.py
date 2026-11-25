@@ -2,6 +2,7 @@
 Pull activities and per-athlete load from Catapult OpenField.
 
   python manage.py sync_openfield --club demo --team "First Team" --days 90
+  python manage.py sync_openfield --club demo --hsr-threshold 21 --sprint-threshold 24   # once
   python manage.py sync_openfield --club demo --team "First Team" --from 2026-09-01 --to 2026-11-30
 
 Token: ProviderAccount.api_key for the club, else OPENFIELD_API_TOKEN from .env.
@@ -33,6 +34,10 @@ class Command(BaseCommand):
         parser.add_argument('--from', dest='date_from', help='YYYY-MM-DD')
         parser.add_argument('--to', dest='date_to', help='YYYY-MM-DD (default today)')
         parser.add_argument('--region', help='eu / us / au (default from account or OPENFIELD_REGION)')
+        parser.add_argument('--hsr-threshold', type=float,
+                            help='km/h where OpenField Band 5 starts (saved for the club, e.g. 21)')
+        parser.add_argument('--sprint-threshold', type=float,
+                            help='km/h where OpenField Band 6 starts (saved for the club, e.g. 24)')
 
     def handle(self, *args, **opts):
         club = Club.objects.filter(slug=opts['club']).first()
@@ -49,6 +54,17 @@ class Command(BaseCommand):
             self.stdout.write(f'Created own team "{team.name}"')
 
         account, _ = ProviderAccount.objects.get_or_create(club=club, provider=Provider.CATAPULT_OPENFIELD)
+        changed = False
+        for opt, key in (('hsr_threshold', 'hsr_threshold_kmh'), ('sprint_threshold', 'sprint_threshold_kmh')):
+            if opts[opt] is not None:
+                account.config[key] = opts[opt]
+                changed = True
+        if changed:
+            account.save(update_fields=['config', 'updated_at'])
+        if not account.config.get('hsr_threshold_kmh'):
+            self.stdout.write(self.style.WARNING(
+                'Speed thresholds unknown: pass --hsr-threshold/--sprint-threshold once '
+                '(values from OpenField → Settings → Bands).'))
 
         end = _day(opts['date_to'], end_of_day=True) if opts['date_to'] else datetime.now(timezone.utc)
         start = _day(opts['date_from']) if opts['date_from'] else end - timedelta(days=opts['days'])
@@ -62,8 +78,12 @@ class Command(BaseCommand):
         self.stdout.write(
             f'{summary.activities} activities → {summary.sessions_created} sessions created, '
             f'{summary.sessions_updated} updated, {summary.linked_to_matches} linked to matches, '
-            f'{summary.loads} player loads'
+            f'{summary.loads} player loads ({summary.flagged} with GPS speed outliers flagged)'
         )
+        cfg = account.config
+        if cfg.get('hsr_threshold_kmh'):
+            self.stdout.write(f"Thresholds: HSR > {cfg['hsr_threshold_kmh']} km/h, "
+                              f"sprint > {cfg.get('sprint_threshold_kmh', '?')} km/h")
         for err in summary.errors:
             self.stderr.write(self.style.ERROR(err))
         style = self.style.SUCCESS if not summary.errors else self.style.WARNING

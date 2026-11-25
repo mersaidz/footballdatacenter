@@ -75,8 +75,9 @@ class PlayerLoadSerializer(serializers.ModelSerializer):
         model = PlayerLoad
         fields = (
             'id', 'player_id', 'match_id', 'training_session_id', 'provider', 'duration_min',
-            'total_distance_m', 'hsr_distance_m', 'sprint_distance_m', 'sprint_count',
-            'accelerations', 'decelerations', 'max_speed_kmh', 'player_load', 'rpe', 'extra_metrics',
+            'total_distance_m', 'hsr_distance_m', 'sprint_distance_m', 'hsr_threshold_kmh',
+            'sprint_threshold_kmh', 'sprint_count', 'accelerations', 'decelerations', 'max_speed_kmh',
+            'player_load', 'rpe', 'quality_flags', 'extra_metrics',
         )
 
 

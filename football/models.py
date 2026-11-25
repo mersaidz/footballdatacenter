@@ -207,9 +207,20 @@ class Event(ClubOwnedModel):
 class PlayerLoad(ClubOwnedModel):
     """
     Physical output of one player in one match OR one training session.
-    Typically from Catapult OpenField (GPS/LPS); thresholds follow common
-    practice: HSR > 19.8 km/h, sprint > 25.2 km/h.
+    Typically from Catapult OpenField (GPS/LPS).
+
+    Speed thresholds differ between clubs (19.8/25.2 km/h in English
+    literature, 21/24 km/h common in Iberian football), so every row stores
+    the thresholds its HSR / sprint distances were computed with. A number is
+    only comparable to another number measured the same way.
+
+    `quality_flags` marks values that are stored but should not drive reports,
+    e.g. "max_speed_outlier" for a GPS spike above the player's realistic max.
     """
+
+    class Flag:
+        MAX_SPEED_OUTLIER = 'max_speed_outlier'
+
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='loads')
     match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name='loads')
@@ -220,14 +231,15 @@ class PlayerLoad(ClubOwnedModel):
 
     duration_min = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     total_distance_m = models.PositiveIntegerField(null=True, blank=True, validators=[MaxValueValidator(25000)])
-    hsr_distance_m = models.PositiveIntegerField(null=True, blank=True, help_text='> 19.8 km/h')
-    sprint_distance_m = models.PositiveIntegerField(null=True, blank=True, help_text='> 25.2 km/h')
+    hsr_distance_m = models.PositiveIntegerField(null=True, blank=True, help_text='Above hsr_threshold_kmh')
+    sprint_distance_m = models.PositiveIntegerField(null=True, blank=True, help_text='Above sprint_threshold_kmh')
+    hsr_threshold_kmh = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    sprint_threshold_kmh = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     sprint_count = models.PositiveSmallIntegerField(null=True, blank=True)
-    accelerations = models.PositiveSmallIntegerField(null=True, blank=True, help_text='> 3 m/s²')
-    decelerations = models.PositiveSmallIntegerField(null=True, blank=True, help_text='< -3 m/s²')
-    max_speed_kmh = models.DecimalField(
-        max_digits=4, decimal_places=1, null=True, blank=True, validators=[MaxValueValidator(45)],
-    )
+    accelerations = models.PositiveSmallIntegerField(null=True, blank=True)
+    decelerations = models.PositiveSmallIntegerField(null=True, blank=True)
+    # No upper validator: raw provider values are stored as received and flagged instead.
+    max_speed_kmh = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     player_load = models.DecimalField(
         max_digits=7, decimal_places=1, null=True, blank=True, help_text='Catapult PlayerLoad™ (AU)',
     )
@@ -236,8 +248,14 @@ class PlayerLoad(ClubOwnedModel):
         help_text='Session RPE (CR-10) collected from the player',
     )
     extra_metrics = models.JSONField(default=dict, blank=True)
+    quality_flags = models.JSONField(default=list, blank=True)
 
     _club_check_fields = ('player', 'match', 'training_session')
+
+    @property
+    def max_speed_for_reports(self):
+        """Max speed, or None when it's a flagged GPS spike."""
+        return None if self.Flag.MAX_SPEED_OUTLIER in (self.quality_flags or []) else self.max_speed_kmh
 
     class Meta:
         constraints = [

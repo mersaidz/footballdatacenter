@@ -24,6 +24,10 @@ def p(key, name, start_min, length_min, **kw):
     ('Warm Up', 'warm_up'), ('Разминка', 'warm_up'), ('Aquecimento', 'warm_up'), ('Échauffement', 'warm_up'),
     ('Return to Play session', 'rehab'), ('Top up', 'top_up'), ('Добор', 'top_up'), ('Cool down', 'recovery'),
     ('Rondo_19v3_centercircle', None), ('Set Pieces', None), ('1', None), ('Running', None),
+    # Real drill names from the demo account that fooled the first version:
+    ('Game_10v10+gks_2-3Pitch', None), ('BuildUp_2nd&3rdphase_10v10+GKs_2-3pitch', None),
+    ('Crossandshoot_3v0_Penaltybox', None), ('Finishing penalty box 3v2', None), ('Rondo_4v1_ 2x20sec', None),
+    ('Penalty shootout', 'penalties'), ('Period 2', 'second_half'), ('1 Тайм', 'first_half'),
 ])
 def test_dictionary(name, role):
     assert dictionary_role(name) == role
@@ -90,3 +94,16 @@ def test_precedence_manual_tag_club_dictionary():
     assert d['t'].source == 'tag'
     assert (d['c'].role, d['c'].source) == ('top_up', 'club')
     assert (d['d'].role, d['d'].source) == ('warm_up', 'dictionary')
+
+
+def test_parallel_warm_up_and_top_up_keep_their_role():
+    """Subs warm up and do top-ups while the half is played: separate work, not a segment of the half."""
+    d = classify([p('h1', '1st half', 0, 52), p('wu2', 'Warm up', 39, 12), p('h2', '2nd half', 52, 50),
+                  p('tu', 'Top ups', 58, 3)], is_match=True)
+    assert d['wu2'].role == 'warm_up' and d['tu'].role == 'top_up'
+
+
+def test_training_never_has_segments_or_halves():
+    d = classify([p('a', 'Game 10v10', 0, 30), p('b', 'Game 10v10', 5, 10), p('c', 'Penalty shootout', 40, 10)],
+                 is_match=False)
+    assert {v.role for v in d.values()} == {'drill'}

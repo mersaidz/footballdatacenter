@@ -37,14 +37,19 @@ SECOND_WORDS = {'2', 'second', 'ii', 'segunda', 'segundo', 'seconda', 'secondo',
 FIRST_STEMS = ('перв',)
 SECOND_STEMS = ('втор',)
 HALF_WORDS = {'half', 'halves', 'h', 'ht', 'parte', 'tempo', 'mitad', 'tiempo', 'halbzeit', 'hz', 'period',
-              'periodo', 'p', 't', 'temps', 'mi', 'game'}
+              'periodo', 'p', 't', 'temps', 'mi'}
+TIME_WORDS = {'time', 'tiempo', 'tempo'}
+# Ordinal suffixes split off by normalize(): '1st' → '1 st', '2ª' → '2 a'.
+SUFFIX_TOKENS = {'st', 'nd', 'rd', 'th', 'a', 'o', 'er', 'eme', 'e', 'й', 'ый', 'ой'}
 HALF_STEMS = ('тайм', 'полов', 'период')
 EXTRA_WORDS = {'extra', 'et', 'aet', 'prolongacion', 'prolongamento', 'prorroga', 'prorrogacao', 'overtime',
                'ot', 'verlangerung', 'prolongation', 'supplementari', 'supplementare'}
 EXTRA_STEMS = ('дополн', 'овертайм', 'экстра')
 
 PATTERNS = [
-    (PENALTIES, re.compile(r'penalt|пенальт|shoot ?out|elfmeter|rigori|tirs au but')),
+    # 'penalty' / 'penalties' as a word, but not 'penaltybox' or 'penalty box' (a drill area).
+    (PENALTIES, re.compile(r'\bpenalt(?:y|ies|is|i)\b(?! ?(?:box|area|spot))|пенальт|shoot ?out|elfmeter|'
+                           r'\brigori\b|tirs au but')),
     (WARM_UP, re.compile(r'warm ?up|warming|warmup|\bwu\b|разминк|aquecimento|calentamiento|activaci|'
                          r'activation|aufwarm|riscaldamento|echauffement|pre ?match')),
     (REHAB, re.compile(r'return to play|\brtp\b|rehab|реабил|reintegr|individual return')),
@@ -78,6 +83,18 @@ def _has(tokens: list[str], words: set[str], stems: tuple[str, ...] = ()) -> boo
     return any(t in words or t.startswith(stems) for t in tokens) if stems else any(t in words for t in tokens)
 
 
+def _is(token: str, words: set[str], stems: tuple[str, ...] = ()) -> bool:
+    return token in words or (bool(stems) and token.startswith(stems))
+
+
+def _ordinal(token: str) -> int:
+    if _is(token, FIRST_WORDS, FIRST_STEMS):
+        return 1
+    if _is(token, SECOND_WORDS, SECOND_STEMS):
+        return 2
+    return 0
+
+
 def dictionary_role(name: str) -> str | None:
     n = normalize(name)
     if not n:
@@ -85,16 +102,25 @@ def dictionary_role(name: str) -> str | None:
     for role, rx in PATTERNS:
         if rx.search(n):
             return role
-    tokens = n.split()
-    first = _has(tokens, FIRST_WORDS, FIRST_STEMS)
-    second = _has(tokens, SECOND_WORDS, SECOND_STEMS)
-    if first == second:          # neither, or ambiguous ("1st half 2nd part")
+    tokens = [t for t in n.split() if t not in SUFFIX_TOKENS]
+    extra = any(_is(t, EXTRA_WORDS, EXTRA_STEMS) for t in tokens)
+    # The ordinal must sit right next to a half word: "1 тайм", "half 2", "segundo tiempo".
+    # A digit elsewhere ("Game 10v10 2-3 pitch") says nothing about halves.
+    found = set()
+    for a, b in zip(tokens, tokens[1:]):
+        for num_tok, word in ((a, b), (b, a)):
+            k = _ordinal(num_tok)
+            if not k:
+                continue
+            if _is(word, HALF_WORDS, HALF_STEMS) or (extra and (_is(word, EXTRA_WORDS, EXTRA_STEMS)
+                                                                or word in TIME_WORDS)):
+                found.add(k)
+    if len(found) != 1:          # none, or ambiguous ("1st half 2nd part")
         return None
-    if _has(tokens, EXTRA_WORDS, EXTRA_STEMS):
-        return ET1 if first else ET2
-    if _has(tokens, HALF_WORDS, HALF_STEMS):
-        return FIRST if first else SECOND
-    return None
+    k = found.pop()
+    if extra:
+        return ET1 if k == 1 else ET2
+    return FIRST if k == 1 else SECOND
 
 
 @dataclass
@@ -148,8 +174,8 @@ def classify(periods: list[PeriodInput], *, is_match: bool, club_map: dict[str, 
             out[p.key] = RoleDecision(UNKNOWN, 'none', 0.0)
 
     ordered = sorted(periods, key=lambda p: p.start)
-    _demote_nested_halves(ordered, out)
     if is_match:
+        _demote_nested_halves(ordered, out)
         _apply_structure(ordered, out)
         _demote_nested_halves(ordered, out)
     else:
@@ -157,7 +183,7 @@ def classify(periods: list[PeriodInput], *, is_match: bool, club_map: dict[str, 
             d = out[p.key]
             # Training has no halves: "1st half" of a game drill is just that drill.
             # Explicit staff signals (manual, tag, club mapping) are left alone.
-            if d.role == UNKNOWN or (d.role in HALVES and d.source == 'dictionary'):
+            if d.role == UNKNOWN or (d.role in HALVES + (PENALTIES,) and d.source == 'dictionary'):
                 out[p.key] = RoleDecision(DRILL, 'default', 0.5)
     return out
 
@@ -171,10 +197,11 @@ def _demote_nested_halves(ordered: list[PeriodInput], out: dict[str, RoleDecisio
             for p in same:
                 if p is not keep and out[p.key].source != 'manual':
                     out[p.key] = RoleDecision(SEGMENT, out[p.key].source, out[p.key].confidence)
-    # Any other period fully inside a playing period is a segment of it.
+    # An unnamed period fully inside a playing period is a segment of it. Named parallel work
+    # ("Warm up" of the subs during the 1st half, "Top ups") keeps its own role.
     halves = [p for p in ordered if out[p.key].role in HALVES]
     for p in ordered:
-        if out[p.key].role in HALVES or out[p.key].source == 'manual':
+        if out[p.key].role not in (UNKNOWN, DRILL) or out[p.key].source == 'manual':
             continue
         if any(h.start <= p.start and p.end <= h.end and h is not p for h in halves):
             out[p.key] = RoleDecision(SEGMENT, 'structure', 0.8)

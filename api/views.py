@@ -319,7 +319,7 @@ class ActivityPeriodViewSet(ClubScopedMixin, viewsets.ReadOnlyModelViewSet):
 from rest_framework.exceptions import PermissionDenied  # noqa: E402
 
 from clubs.permissions import has_cap  # noqa: E402
-from metrics.models import MetricDefinition, MetricSet, ProviderMetric  # noqa: E402
+from metrics.models import MetricDefinition, MetricRequest, MetricSet, ProviderMetric  # noqa: E402
 from metrics.presets import PRESETS, install_preset  # noqa: E402
 from metrics.services import (  # noqa: E402
     CORE_METRICS, enable_from_catalogue, ensure_core_metrics, search_catalogue, value_of,
@@ -344,14 +344,15 @@ class MetricCatalogueView(ClubScopedMixin, generics.ListAPIView):
 
     def get_queryset(self):
         q = self.request.query_params.get('search', '').strip()
-        qs = search_catalogue(self.club, q) if q else ProviderMetric.objects.filter(club=self.club)
-        return qs.order_by('name')
+        return search_catalogue(self.club, q) if q else ProviderMetric.objects.filter(club=self.club).order_by('name')
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         if self.membership is not None:
             ctx['tracked'] = {(d.provider, d.provider_slug): d.key for d in
                               MetricDefinition.objects.filter(club=self.club, enabled=True).exclude(provider_slug='')}
+            ctx['requested'] = set(MetricRequest.objects.filter(club=self.club, status=MetricRequest.Status.PENDING)
+                                   .values_list('provider', 'provider_slug'))
         return ctx
 
 
@@ -390,6 +391,72 @@ class MetricDefinitionViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.Ret
         if serializer.instance.is_core and 'enabled' in serializer.validated_data:
             serializer.validated_data.pop('enabled')     # core metrics are always available
         serializer.save()
+
+
+class MetricRequestViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
+                           viewsets.GenericViewSet):
+    """
+    "Ask S&C to track this": any staff member with load access asks for a catalogue parameter.
+    S&C / analysts see every request and approve (tracking starts, values arrive with the next sync)
+    or decline. Everyone else sees only their own requests.
+    """
+    permission_classes = (HasClubCapability,)
+    serializer_class = s.MetricRequestSerializer
+    required_cap = Cap.VIEW_PHYSICAL_LOAD
+    write_cap = Cap.VIEW_PHYSICAL_LOAD
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = MetricRequest.objects.filter(club=self.club).select_related('requested_by', 'metric')
+        if not self.has_cap(Cap.MANAGE_METRICS):
+            qs = qs.filter(requested_by=self.request.user)
+        if st := self.request.query_params.get('status'):
+            qs = qs.filter(status=st)
+        return qs
+
+    def create(self, request, club_id=None):
+        body = s.MetricRequestCreateSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        data = body.validated_data
+        pm = ProviderMetric.objects.filter(club=self.club, provider=data['provider'], slug=data['provider_slug']).first()
+        if pm is None:
+            raise ValidationError({'provider_slug': 'Not in this club\'s provider catalogue.'})
+        tracked = MetricDefinition.objects.filter(club=self.club, provider=pm.provider, provider_slug=pm.slug,
+                                                  enabled=True).first()
+        if tracked:
+            raise ValidationError({'provider_slug': f'Already tracked as "{tracked.label}".'})
+        existing = MetricRequest.objects.filter(club=self.club, provider=pm.provider, provider_slug=pm.slug,
+                                                status=MetricRequest.Status.PENDING).first()
+        if existing:                         # someone already asked: no duplicate in the S&C inbox
+            return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+        mr = MetricRequest.objects.create(club=self.club, provider=pm.provider, provider_slug=pm.slug,
+                                          provider_name=pm.name, note=data.get('note', ''), requested_by=request.user)
+        return Response(self.get_serializer(mr).data, status=status.HTTP_201_CREATED)
+
+    def _decide(self, request, pk, approve: bool):
+        if not self.has_cap(Cap.MANAGE_METRICS):
+            raise PermissionDenied('Only S&C, analysts and club admins decide which metrics the club tracks.')
+        mr = get_object_or_404(MetricRequest, club=self.club, pk=pk)
+        if mr.status != MetricRequest.Status.PENDING:
+            raise ValidationError({'status': f'Already {mr.status}.'})
+        with transaction.atomic():
+            if approve:
+                pm = ProviderMetric.objects.filter(club=self.club, provider=mr.provider, slug=mr.provider_slug).first()
+                if pm is None:
+                    raise ValidationError({'provider_slug': 'No longer in the provider catalogue.'})
+                mr.metric = enable_from_catalogue(self.club, pm, user=request.user)
+            mr.status = MetricRequest.Status.APPROVED if approve else MetricRequest.Status.DECLINED
+            mr.decided_by, mr.decided_at = request.user, timezone.now()
+            mr.save()
+        return Response(self.get_serializer(mr).data)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, club_id=None, pk=None):
+        return self._decide(request, pk, True)
+
+    @action(detail=True, methods=['post'])
+    def decline(self, request, club_id=None, pk=None):
+        return self._decide(request, pk, False)
 
 
 class MetricSetViewSet(ClubScopedMixin, viewsets.ModelViewSet):

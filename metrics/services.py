@@ -118,13 +118,34 @@ def sync_catalogue(club, provider: str, parameters: Iterable[dict]) -> int:
     return ProviderMetric.objects.filter(club=club, provider=provider).count()
 
 
-def search_catalogue(club, query: str, provider: str | None = None):
+def _norm(text: str) -> str:
+    """'Velocity_Band4 Total-Distance' → 'velocity band 4 total distance' (so 'band4' finds 'Band 4')."""
+    text = re.sub(r'[_\-/()#%]+', ' ', text.lower())
+    text = re.sub(r'(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])', ' ', text)
+    return ' '.join(text.split())
+
+
+def search_catalogue(club, query: str, provider: str | None = None) -> list[ProviderMetric]:
+    """
+    Every word must appear in the name or slug. Best matches first: the exact name,
+    then names that contain the whole phrase, then the shortest names
+    ("Velocity Band 4 Total Distance" before "... Distance Band 7 Total # Efforts").
+    """
     qs = ProviderMetric.objects.filter(club=club)
     if provider:
         qs = qs.filter(provider=provider)
-    for word in query.split():
-        qs = qs.filter(name__icontains=word) | qs.filter(slug__icontains=word.replace(' ', '_'))
-    return qs.order_by('name')
+    q = _norm(query)
+    words = q.split()
+    if not words:
+        return list(qs.order_by('name'))
+    hits = []
+    for pm in qs.only('id', 'provider', 'slug', 'name', 'unit_type'):
+        name = _norm(pm.name)
+        text = f'{name} {_norm(pm.slug)}'
+        if all(w in text for w in words):
+            rank = 0 if name == q else 1 if name.startswith(q) else 2 if q in name else 3
+            hits.append((rank, len(name), pm.name, pm))
+    return [h[-1] for h in sorted(hits, key=lambda h: h[:3])]
 
 
 def enable_from_catalogue(club, pm: ProviderMetric, user=None, **overrides) -> MetricDefinition:

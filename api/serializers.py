@@ -157,7 +157,7 @@ class AssignRoleSerializer(serializers.Serializer):
 
 # --- metrics ---------------------------------------------------------------------------------
 
-from metrics.models import MetricDefinition, MetricSet, ProviderMetric  # noqa: E402
+from metrics.models import MetricDefinition, MetricRequest, MetricSet, ProviderMetric  # noqa: E402
 
 
 class CatalogueEntrySerializer(serializers.ModelSerializer):
@@ -165,10 +165,15 @@ class CatalogueEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProviderMetric
-        fields = ('id', 'provider', 'slug', 'name', 'unit_type', 'tracked_as')
+        fields = ('id', 'provider', 'slug', 'name', 'unit_type', 'tracked_as', 'requested')
+
+    requested = serializers.SerializerMethodField()
 
     def get_tracked_as(self, obj):
         return self.context.get('tracked', {}).get((obj.provider, obj.slug))
+
+    def get_requested(self, obj):
+        return (obj.provider, obj.slug) in self.context.get('requested', set())
 
 
 class MetricDefinitionSerializer(serializers.ModelSerializer):
@@ -218,3 +223,23 @@ class MetricSetSerializer(serializers.ModelSerializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict)
         return attrs
+
+
+class MetricRequestCreateSerializer(serializers.Serializer):
+    provider_slug = serializers.CharField(max_length=150)
+    provider = serializers.CharField(max_length=40, default='catapult_openfield')
+    note = serializers.CharField(max_length=300, required=False, allow_blank=True)
+
+
+class MetricRequestSerializer(serializers.ModelSerializer):
+    requested_by = serializers.SerializerMethodField()
+    metric_key = serializers.CharField(source='metric.key', default=None, read_only=True)
+
+    class Meta:
+        model = MetricRequest
+        fields = ('id', 'provider', 'provider_slug', 'provider_name', 'note', 'status', 'requested_by',
+                  'created_at', 'decided_at', 'metric_key')
+
+    def get_requested_by(self, obj):
+        u = obj.requested_by
+        return (u.full_name or u.email) if u else None

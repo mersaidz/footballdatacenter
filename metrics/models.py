@@ -144,3 +144,33 @@ class MetricSet(ClubOwnedModel):
 
     def __str__(self):
         return self.name
+
+
+class MetricRequest(ClubOwnedModel):
+    """A coach asks S&C to track a catalogue parameter; S&C approves (tracking starts) or declines."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        APPROVED = 'approved', 'Approved'
+        DECLINED = 'declined', 'Declined'
+
+    provider = models.CharField(max_length=40)
+    provider_slug = models.CharField(max_length=150)
+    provider_name = models.CharField(max_length=200)
+    note = models.CharField(max_length=300, blank=True)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                                     related_name='metric_requests')
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='+')
+    decided_at = models.DateTimeField(null=True, blank=True)
+    metric = models.ForeignKey(MetricDefinition, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [models.UniqueConstraint(
+            fields=['club', 'provider', 'provider_slug'], condition=Q(status='pending'),
+            name='one_pending_request_per_metric')]
+
+    def __str__(self):
+        return f'{self.provider_name} ({self.status})'

@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-211%20passing-green)
+![Tests](https://img.shields.io/badge/tests-217%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -121,7 +121,9 @@ Ready-made sets (`metrics/presets.py`) cover the usual coaching schools, each wi
 
 Metrics the account doesn't offer are skipped and reported. A metric staff already edited keeps their settings.
 
-API: `GET /metric-sets/presets/`, `POST /metric-sets/install_preset/ {preset, make_default}`, `GET /metrics/catalogue/?search=`, `POST /metrics/definitions/ {provider_slug}`, `/metric-sets/` (CRUD, `default/`, `{id}/make_default/`), `GET /loads/?metric_set=<id|default>&display=per_90`.
+**Any OpenField parameter, found by its OpenField name.** Search ranks the exact name first (`velocity band 4 total distance`, `band4` and `velocity_band4` all find *Velocity Band 4 Total Distance*). S&C and analysts start tracking it directly. Coaches press *Ask S&C*: a `MetricRequest` lands in the S&C inbox, and approving it starts tracking from the next sync.
+
+API: `POST /metrics/requests/ {provider_slug, note}`, `POST /metrics/requests/{id}/approve|decline/`, `GET /metric-sets/presets/`, `POST /metric-sets/install_preset/ {preset, make_default}`, `GET /metrics/catalogue/?search=`, `POST /metrics/definitions/ {provider_slug}`, `/metric-sets/` (CRUD, `default/`, `{id}/make_default/`), `GET /loads/?metric_set=<id|default>&display=per_90`.
 
 ---
 

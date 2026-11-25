@@ -13,6 +13,7 @@ club_router.register('availability', views.AvailabilityViewSet, basename='availa
 club_router.register('identities', views.ExternalIdentityViewSet, basename='identity')
 club_router.register('periods', views.ActivityPeriodViewSet, basename='period')
 club_router.register('metrics/definitions', views.MetricDefinitionViewSet, basename='metric-definition')
+club_router.register('metrics/requests', views.MetricRequestViewSet, basename='metric-request')
 club_router.register('metric-sets', views.MetricSetViewSet, basename='metric-set')
 
 urlpatterns = [

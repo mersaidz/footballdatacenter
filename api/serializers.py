@@ -153,3 +153,67 @@ class ActivityPeriodSerializer(serializers.ModelSerializer):
 class AssignRoleSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=[r for r in ActivityPeriod.Role.values if r != 'unknown'])
     remember = serializers.BooleanField(default=True)
+
+
+# --- metrics ---------------------------------------------------------------------------------
+
+from metrics.models import MetricDefinition, MetricSet, ProviderMetric  # noqa: E402
+
+
+class CatalogueEntrySerializer(serializers.ModelSerializer):
+    tracked_as = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProviderMetric
+        fields = ('id', 'provider', 'slug', 'name', 'unit_type', 'tracked_as')
+
+    def get_tracked_as(self, obj):
+        return self.context.get('tracked', {}).get((obj.provider, obj.slug))
+
+
+class MetricDefinitionSerializer(serializers.ModelSerializer):
+    is_core = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = MetricDefinition
+        fields = ('id', 'key', 'label', 'short_label', 'unit', 'category', 'aggregation', 'higher_is_better',
+                  'decimals', 'multiplier', 'description', 'provider', 'provider_slug', 'is_core', 'enabled')
+        read_only_fields = ('id', 'key', 'provider', 'provider_slug', 'is_core')
+
+
+class EnableMetricSerializer(serializers.Serializer):
+    provider_slug = serializers.CharField(max_length=150)
+    provider = serializers.CharField(max_length=40, default='catapult_openfield')
+    label = serializers.CharField(max_length=120, required=False)
+    short_label = serializers.CharField(max_length=24, required=False)
+    category = serializers.CharField(max_length=20, required=False)
+    aggregation = serializers.CharField(max_length=16, required=False)
+    unit = serializers.CharField(max_length=20, required=False)
+
+
+class MetricSetSerializer(serializers.ModelSerializer):
+    scope = serializers.ChoiceField(choices=['club', 'personal'], write_only=True, default='personal')
+    is_club = serializers.SerializerMethodField()
+    metrics = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MetricSet
+        fields = ('id', 'name', 'metric_keys', 'display', 'is_default', 'is_club', 'scope', 'metrics')
+
+    def get_is_club(self, obj):
+        return obj.owner_id is None
+
+    def get_metrics(self, obj):
+        defs = {d.key: d for d in MetricDefinition.objects.filter(club_id=obj.club_id, key__in=obj.metric_keys)}
+        return [{'key': k, 'label': defs[k].label, 'short_label': defs[k].short_label or defs[k].label,
+                 'unit': defs[k].unit, 'category': defs[k].category} for k in obj.metric_keys if k in defs]
+
+    def validate(self, attrs):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        candidate = MetricSet(club=self.context['club'], name=attrs.get('name', getattr(self.instance, 'name', '')),
+                              metric_keys=attrs.get('metric_keys', getattr(self.instance, 'metric_keys', [])))
+        try:
+            candidate.clean()
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict)
+        return attrs

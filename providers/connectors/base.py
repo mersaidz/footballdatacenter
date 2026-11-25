@@ -197,6 +197,12 @@ class PhysicalDataConnector(BaseConnector):
 
     # Tag type whose value names a period's role (e.g. "Period Type": "1st Half"), if the club uses one.
     period_role_tag_type: str | None = None
+    # Extra provider parameters the club chose to track (metrics.MetricDefinition.provider_slug).
+    extra_slugs: tuple[str, ...] = ()
+
+    def fetch_catalogue(self) -> FetchedResource | None:
+        """The provider's full parameter list, if it has one ([{slug, name, unit_type}, …])."""
+        return None
 
     def athlete_max_speeds(self, athletes_payload: Any) -> dict[str, float]:
         """Personal best speed per athlete external id, km/h. Empty if the provider has none."""

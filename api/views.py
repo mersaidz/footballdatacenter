@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, mixins, status, viewsets
@@ -107,6 +108,27 @@ class PlayerLoadViewSet(ClubReadOnlyViewSet):
         if part := params.get('participation'):
             qs = qs.filter(participation__in=part.split(','))
         return qs
+
+    def list(self, request, *args, **kwargs):
+        """?metric_set=<id|default> adds `values`: the set's metrics in its display mode (?display= overrides)."""
+        response = super().list(request, *args, **kwargs)
+        set_param = request.query_params.get('metric_set')
+        if not set_param:
+            return response
+        ms = resolve_metric_set(self.club, request.user, None if set_param == 'default' else set_param)
+        ensure_core_metrics(self.club)
+        keys = ms.metric_keys if ms else [m['key'] for m in CORE_METRICS]
+        display = request.query_params.get('display') or (ms.display if ms else 'absolute')
+        defs = {d.key: d for d in MetricDefinition.objects.filter(club=self.club, key__in=keys)}
+        ordered = [defs[k] for k in keys if k in defs]
+        by_id = {l.pk: l for l in PlayerLoad.objects.filter(pk__in=[r['id'] for r in response.data['results']])}
+        for row in response.data['results']:
+            load = by_id[row['id']]
+            row['values'] = [{'key': d.key, 'label': d.short_label or d.label, 'unit': d.unit,
+                              'value': value_of(load, d, display)} for d in ordered]
+        response.data['metric_set'] = {'id': ms.pk if ms else None, 'name': ms.name if ms else 'Core',
+                                       'display': display}
+        return response
 
 
 class AvailabilityViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
@@ -290,3 +312,154 @@ class ActivityPeriodViewSet(ClubScopedMixin, viewsets.ReadOnlyModelViewSet):
                               'periods_updated': len(touched), 'loads_recomputed': recomputed})
         data = self.get_serializer(period).data
         return Response({**data, 'periods_updated': len(touched), 'loads_recomputed': recomputed})
+
+
+# --- metrics ---------------------------------------------------------------------------------
+
+from rest_framework.exceptions import PermissionDenied  # noqa: E402
+
+from clubs.permissions import has_cap  # noqa: E402
+from metrics.models import MetricDefinition, MetricSet, ProviderMetric  # noqa: E402
+from metrics.services import (  # noqa: E402
+    CORE_METRICS, enable_from_catalogue, ensure_core_metrics, search_catalogue, value_of,
+)
+
+
+def resolve_metric_set(club, user, set_id=None) -> MetricSet | None:
+    """Explicit set → my default → club default → first club set → None (core metrics)."""
+    qs = MetricSet.objects.filter(club=club).filter(Q(owner__isnull=True) | Q(owner=user))
+    if set_id:
+        return qs.filter(pk=set_id).first()
+    return (qs.filter(owner=user, is_default=True).first()
+            or qs.filter(owner__isnull=True, is_default=True).first()
+            or qs.filter(owner__isnull=True).order_by('pk').first())
+
+
+class MetricCatalogueView(ClubScopedMixin, generics.ListAPIView):
+    """GET /metrics/catalogue/?search=multidirectional — every parameter the provider offers this club."""
+    permission_classes = (HasClubCapability,)
+    serializer_class = s.CatalogueEntrySerializer
+    required_cap = Cap.VIEW_PHYSICAL_LOAD
+
+    def get_queryset(self):
+        q = self.request.query_params.get('search', '').strip()
+        qs = search_catalogue(self.club, q) if q else ProviderMetric.objects.filter(club=self.club)
+        return qs.order_by('name')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        if self.membership is not None:
+            ctx['tracked'] = {(d.provider, d.provider_slug): d.key for d in
+                              MetricDefinition.objects.filter(club=self.club, enabled=True).exclude(provider_slug='')}
+        return ctx
+
+
+class MetricDefinitionViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
+                              mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """
+    The club's metrics. POST {provider_slug} starts tracking a catalogue parameter
+    (it arrives on the next sync); PATCH fixes label, unit, category or aggregation.
+    """
+    permission_classes = (HasClubCapability,)
+    serializer_class = s.MetricDefinitionSerializer
+    required_cap = Cap.VIEW_PHYSICAL_LOAD
+    write_cap = Cap.MANAGE_METRICS
+    pagination_class = None
+
+    def get_queryset(self):
+        if self.membership is not None:
+            ensure_core_metrics(self.club)
+        qs = MetricDefinition.objects.filter(club=self.club)
+        if cat := self.request.query_params.get('category'):
+            qs = qs.filter(category=cat)
+        return qs
+
+    def create(self, request, club_id=None):
+        body = s.EnableMetricSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        data = dict(body.validated_data)
+        pm = ProviderMetric.objects.filter(club=self.club, provider=data.pop('provider'),
+                                           slug=data.pop('provider_slug')).first()
+        if pm is None:
+            raise ValidationError({'provider_slug': 'Not in this club\'s provider catalogue (run a sync first).'})
+        md = enable_from_catalogue(self.club, pm, user=request.user, **data)
+        return Response(self.get_serializer(md).data, status=status.HTTP_201_CREATED)
+
+    def perform_update(self, serializer):
+        if serializer.instance.is_core and 'enabled' in serializer.validated_data:
+            serializer.validated_data.pop('enabled')     # core metrics are always available
+        serializer.save()
+
+
+class MetricSetViewSet(ClubScopedMixin, viewsets.ModelViewSet):
+    """
+    Metric sets: club-wide (published by S&C / analysts) and personal (anyone with load access).
+    GET  default/            the set this user sees unless they pick another
+    POST {id}/make_default/  becomes my default (club default for club sets, MANAGE_METRICS only)
+    """
+    permission_classes = (HasClubCapability,)
+    serializer_class = s.MetricSetSerializer
+    required_cap = Cap.VIEW_PHYSICAL_LOAD
+    write_cap = Cap.VIEW_PHYSICAL_LOAD          # personal sets; club scope checked below
+    pagination_class = None
+
+    def get_queryset(self):
+        return MetricSet.objects.filter(club=self.club).filter(Q(owner__isnull=True) | Q(owner=self.request.user))
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        if self.membership is not None:
+            ctx['club'] = self.club
+        return ctx
+
+    def _check_can_edit(self, metric_set):
+        if metric_set.owner_id is None and not self.has_cap(Cap.MANAGE_METRICS):
+            raise PermissionDenied('Only S&C, analysts and club admins change club-wide metric sets.')
+        if metric_set.owner_id not in (None, self.request.user.pk):
+            raise PermissionDenied
+
+    def perform_create(self, serializer):
+        scope = serializer.validated_data.pop('scope', 'personal')
+        if scope == 'club' and not self.has_cap(Cap.MANAGE_METRICS):
+            raise PermissionDenied('Only S&C, analysts and club admins publish club-wide metric sets.')
+        is_default = serializer.validated_data.pop('is_default', False)
+        obj = serializer.save(club=self.club, owner=None if scope == 'club' else self.request.user)
+        if is_default:
+            self._make_default(obj)
+
+    def perform_update(self, serializer):
+        self._check_can_edit(serializer.instance)
+        serializer.validated_data.pop('scope', None)
+        is_default = serializer.validated_data.pop('is_default', None)
+        obj = serializer.save()
+        if is_default:
+            self._make_default(obj)
+
+    def perform_destroy(self, instance):
+        self._check_can_edit(instance)
+        instance.delete()
+
+    def _make_default(self, obj):
+        with transaction.atomic():
+            MetricSet.objects.filter(club=self.club, owner_id=obj.owner_id, is_default=True) \
+                .exclude(pk=obj.pk).update(is_default=False)
+            obj.is_default = True
+            obj.save(update_fields=['is_default', 'updated_at'])
+
+    @action(detail=False)
+    def default(self, request, club_id=None):
+        ms = resolve_metric_set(self.club, request.user)
+        if ms is None:
+            ensure_core_metrics(self.club)
+            return Response({'id': None, 'name': 'Core', 'display': 'absolute', 'is_default': True, 'is_club': True,
+                             'metric_keys': [m['key'] for m in CORE_METRICS],
+                             'metrics': [{'key': m['key'], 'label': m['label'], 'short_label': m['short_label'],
+                                          'unit': m['unit'], 'category': m['category']} for m in CORE_METRICS]})
+        return Response(self.get_serializer(ms).data)
+
+    @action(detail=True, methods=['post'])
+    def make_default(self, request, club_id=None, pk=None):
+        ms = self.get_object()
+        self._check_can_edit(ms)
+        self._make_default(ms)
+        return Response(self.get_serializer(ms).data)

@@ -195,15 +195,19 @@ class OpenFieldConnector(PhysicalDataConnector):
         self.period_role_tag_type = config.get('period_role_tag_type', DEFAULT_PERIOD_ROLE_TAG_TYPE)
 
     # --- fetch -----------------------------------------------------------------
+    def fetch_catalogue(self) -> FetchedResource:
+        payload = self.client.get('/parameters') or []
+        self._available = {p['slug'] for p in payload if isinstance(p, dict) and p.get('slug')}
+        return FetchedResource('parameters', 'all', payload, 'v6')
+
     def available_parameters(self) -> set[str]:
         if self._available is None:
-            payload = self.client.get('/parameters') or []
-            self._available = {p['slug'] for p in payload if isinstance(p, dict) and p.get('slug')}
+            self.fetch_catalogue()
         return self._available
 
     def requested_slugs(self) -> list[str]:
         wanted = {s for slugs in self.metric_map.values() for s in slugs}
-        wanted |= set(DURATION_SLUGS) | {MAX_SPEED_SLUG} | set(EXTRA_SLUGS)
+        wanted |= set(DURATION_SLUGS) | {MAX_SPEED_SLUG} | set(EXTRA_SLUGS) | set(self.extra_slugs)
         available = self.available_parameters()
         missing = sorted(wanted - available)
         if missing:
@@ -345,7 +349,7 @@ class OpenFieldConnector(PhysicalDataConnector):
                 # API returns m/s. Guard: nobody runs 15 m/s (54 km/h), so a larger value is already km/h.
                 values['max_speed_kmh'] = round(vmax * 3.6 if vmax < 15 else vmax, 1)
 
-            extra = {s: row[s] for s in EXTRA_SLUGS if s in row}
+            extra = {s: row[s] for s in (*EXTRA_SLUGS, *self.extra_slugs) if s in row}
             loads.append(NormalizedLoad(
                 activity_external_id=str(row['activity_id']),
                 athlete_external_id=str(row['athlete_id']),

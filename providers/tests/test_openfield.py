@@ -83,6 +83,7 @@ PARAMETERS = [{'slug': s, 'name': s} for s in (
     'velocity_band5_total_distance', 'velocity_band6_total_distance', 'velocity_band7_total_distance',
     'velocity_band8_total_distance', 'gen2_acceleration_band7plus_total_effort_count',
     'gen2_acceleration_band2plus_total_effort_count', 'player_load_per_minute',
+    'rhie_total_bouts', 'total_multidirectional_load',
 )]
 
 
@@ -94,7 +95,7 @@ def stat_row(activity, athlete, **metrics):
            'velocity_band7_total_distance': 40, 'velocity_band8_total_distance': 0,
            'gen2_acceleration_band7plus_total_effort_count': 31,
            'gen2_acceleration_band2plus_total_effort_count': 37, 'high_speed_distance': 700,
-           'player_load_per_minute': 10.9}
+           'player_load_per_minute': 10.9, 'rhie_total_bouts': 6, 'total_multidirectional_load': 300.0}
     row.update(metrics)
     return row
 
@@ -106,8 +107,9 @@ STATS = [
 ]
 
 
-def pstat(activity, athlete, pid, secs, dist, b5=0, b6=0, b7=0, vmax=6.0, acc=0, dec=0, pl=100.0):
+def pstat(activity, athlete, pid, secs, dist, b5=0, b6=0, b7=0, vmax=6.0, acc=0, dec=0, pl=100.0, rhie=2, mdl=100.0):
     return stat_row(activity, athlete, period_id=pid, field_time=float(secs), total_duration=secs,
+                    rhie_total_bouts=rhie, total_multidirectional_load=mdl,
                     total_distance=dist, velocity_band5_total_distance=b5, velocity_band6_total_distance=b6,
                     velocity_band7_total_distance=b7, velocity_band8_total_distance=0, max_vel=vmax,
                     gen2_acceleration_band7plus_total_effort_count=acc,
@@ -510,3 +512,24 @@ def test_resync_keeps_period_tables_stable(api, connector, club, own_team):
     before = (ActivityPeriod.objects.count(), PeriodLoad.objects.count(), PlayerLoad.objects.count())
     ingest_physical(club, connector, own_team, *RANGE)
     assert before == (ActivityPeriod.objects.count(), PeriodLoad.objects.count(), PlayerLoad.objects.count())
+
+
+
+# --- configurable metrics ---------------------------------------------------------------
+
+def test_catalogue_synced_and_chosen_metrics_flow_through(api, connector, club, own_team):
+    from metrics.models import ProviderMetric
+    from metrics.services import enable_from_catalogue
+    summary = ingest_physical(club, connector, own_team, *RANGE)
+    assert summary.catalogue == len(PARAMETERS) and summary.custom_metrics == 0
+    for slug in ('rhie_total_bouts', 'total_multidirectional_load'):
+        enable_from_catalogue(club, ProviderMetric.objects.get(club=club, slug=slug))
+    summary = ingest_physical(club, connector, own_team, *RANGE)
+    assert summary.custom_metrics == 2
+    match = PlayerLoad.objects.get(training_session__name='26_27_J01_Rebordosa', player__full_name='Marin Tomasov')
+    # halves only (2 + 2 bouts, 100 + 100), the warm-up's values are not match load
+    assert match.metrics == {'rhie-total-bouts': 4.0, 'total-multidirectional-load': 200.0}
+    training = PlayerLoad.objects.get(training_session__name='26_27_UT015', player__full_name='Marin Tomasov')
+    assert training.metrics == {'rhie-total-bouts': 6.0, 'total-multidirectional-load': 300.0}
+    assert PeriodLoad.objects.filter(period__external_id='p-h1', player__full_name='Marin Tomasov') \
+        .get().metrics['rhie-total-bouts'] == 2.0

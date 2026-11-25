@@ -13,6 +13,7 @@ from decimal import Decimal
 from django.db.models import QuerySet
 
 from football.models import ActivityPeriod, LoadMetrics, PlayerLoad, PeriodLoad
+from metrics.services import aggregate_metrics, custom_definitions
 
 SUM_INT = ('total_distance_m', 'hsr_distance_m', 'sprint_distance_m', 'sprint_count', 'accelerations',
            'decelerations')
@@ -52,14 +53,19 @@ def recompute_loads(*, match=None, training_session=None) -> int:
     loads: QuerySet[PlayerLoad] = PlayerLoad.objects.filter(**ctx)
     playing = list(ActivityPeriod.objects.filter(**ctx, role__in=ActivityPeriod.PLAYING_ROLES))
     use_periods = is_match_context(match, training_session) and bool(playing)
+    defs_by_provider: dict[str, list] = {}
     changed = 0
     for load in loads:
+        if load.provider not in defs_by_provider:
+            defs_by_provider[load.provider] = custom_definitions(load.club_id, load.provider)
+        defs = defs_by_provider[load.provider]
         if use_periods:
             rows = list(PeriodLoad.objects.filter(player=load.player, period__in=playing, provider=load.provider))
             values = aggregate(rows)
+            values['metrics'] = aggregate_metrics(rows, defs)
             if not rows:  # in the squad file but never on the pitch (unused substitute who warmed up)
                 values = {**{f: 0 for f in SUM_INT}, 'duration_min': Decimal('0'), 'player_load': Decimal('0'),
-                          'max_speed_kmh': None, 'quality_flags': []}
+                          'max_speed_kmh': None, 'quality_flags': [], 'metrics': {}}
             basis = PlayerLoad.Basis.MATCH_PERIODS
         else:
             total = (load.extra_metrics or {}).get('activity_total')
@@ -68,6 +74,7 @@ def recompute_loads(*, match=None, training_session=None) -> int:
             values = {f: (Decimal(str(total[f])) if f in SUM_DEC + ('max_speed_kmh',) and total.get(f) is not None
                           else total.get(f)) for f in METRIC_FIELDS}
             values['quality_flags'] = (load.extra_metrics or {}).get('activity_flags', [])
+            values['metrics'] = (load.extra_metrics or {}).get('activity_metrics', load.metrics or {})
             basis = PlayerLoad.Basis.ACTIVITY
         for k, v in values.items():
             setattr(load, k, v)

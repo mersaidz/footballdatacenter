@@ -237,6 +237,8 @@ class LoadMetrics(ClubOwnedModel):
         max_digits=7, decimal_places=1, null=True, blank=True, help_text='Catapult PlayerLoad™ (AU)',
     )
     extra_metrics = models.JSONField(default=dict, blank=True)
+    # Club-chosen metrics (metrics.MetricDefinition.key → value): RHIE, metabolic power, MDL…
+    metrics = models.JSONField(default=dict, blank=True)
     quality_flags = models.JSONField(default=list, blank=True)
 
     class Meta:

@@ -36,6 +36,7 @@ from football.models import ActivityPeriod, Match, PeriodLoad, PeriodRoleMapping
 from football.services import period_roles
 from football.services.loads import is_match_context, recompute_loads, snapshot
 from football.services.matchday import match_dates, md_code_for
+from metrics.services import custom_definitions, ensure_core_metrics, extract_metrics, sync_catalogue
 from providers.connectors.base import NormalizedActivity, NormalizedLoad, NormalizedPlayer, PhysicalDataConnector
 from providers.models import ExternalIdentity
 
@@ -61,6 +62,8 @@ class PhysicalIngestSummary:
     periods: int = 0
     periods_to_review: int = 0
     period_loads: int = 0
+    catalogue: int = 0
+    custom_metrics: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -78,8 +81,8 @@ def _speed_flags(max_speed: float | None, personal_best: float | None, connector
     return [PlayerLoad.Flag.MAX_SPEED_OUTLIER] if max_speed > limit else []
 
 
-def _load_values(load: NormalizedLoad, connector, personal_best: float | None = None) -> dict:
-    values = {}
+def _load_values(load: NormalizedLoad, connector, personal_best: float | None = None, defs=()) -> dict:
+    values = {'metrics': extract_metrics(load.extra_metrics, list(defs))}
     for name in LOAD_FIELDS:
         v = getattr(load, name)
         if v is None:
@@ -171,7 +174,7 @@ def _store_periods(club, connector, act, periods, ctx, is_match, summary) -> dic
 
 
 def _ingest_activity(club, connector, team, act, loads, period_loads, periods, participation,
-                     athletes, speed_bests, tz, summary):
+                     athletes, speed_bests, tz, summary, defs=()):
     provider = connector.provider
     with transaction.atomic():
         match, session = _resolve_context(club, team, provider, act, tz, summary)
@@ -189,9 +192,10 @@ def _ingest_activity(club, connector, team, act, loads, period_loads, periods, p
 
         kept = []
         for load in loads:
-            values = _load_values(load, connector, speed_bests.get(load.athlete_external_id))
+            values = _load_values(load, connector, speed_bests.get(load.athlete_external_id), defs)
             values['extra_metrics']['activity_total'] = snapshot(values)
             values['extra_metrics']['activity_flags'] = values['quality_flags']
+            values['extra_metrics']['activity_metrics'] = values['metrics']
             values['participation'] = participation.get(load.athlete_external_id, '')
             values['load_basis'] = PlayerLoad.Basis.ACTIVITY
             obj, _ = PlayerLoad.objects.update_or_create(
@@ -207,7 +211,7 @@ def _ingest_activity(club, connector, team, act, loads, period_loads, periods, p
             period = stored_periods.get(pl.period_external_id)
             if period is None:
                 continue
-            values = _load_values(pl, connector, speed_bests.get(pl.athlete_external_id))
+            values = _load_values(pl, connector, speed_bests.get(pl.athlete_external_id), defs)
             obj, _ = PeriodLoad.objects.update_or_create(
                 club=club, player=player_for(pl.athlete_external_id), period=period, provider=provider,
                 defaults=values,
@@ -237,6 +241,16 @@ def ingest_physical(
 ) -> PhysicalIngestSummary:
     summary = PhysicalIngestSummary()
     tz = ZoneInfo(club.timezone or 'UTC')
+
+    # Metric catalogue: refresh the provider's parameter list, then ask for every metric the club enabled.
+    ensure_core_metrics(club)
+    catalogue = _safe(connector.fetch_catalogue)
+    if catalogue is not None and catalogue.payload:
+        store_raw(club, connector, catalogue)
+        summary.catalogue = sync_catalogue(club, connector.provider, catalogue.payload)
+    defs = custom_definitions(club, connector.provider)
+    connector.extra_slugs = tuple(d.provider_slug for d in defs)
+    summary.custom_metrics = len(defs)
 
     athletes_res = connector.fetch_athletes()
     store_raw(club, connector, athletes_res)
@@ -286,7 +300,7 @@ def ingest_physical(
         try:
             _ingest_activity(club, connector, team, act, loads_by_activity.get(act.external_id, []),
                              period_loads_by_activity.get(act.external_id, []), periods, participation,
-                             athletes, speed_bests, tz, summary)
+                             athletes, speed_bests, tz, summary, defs)
         except Exception as exc:  # noqa: BLE001
             logger.exception('Ingest failed for activity %s', act.external_id)
             summary.errors.append(f'{act.external_id}: {exc}')

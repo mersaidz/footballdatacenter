@@ -84,6 +84,8 @@ class Command(BaseCommand):
             f'{summary.periods} periods stored, {summary.period_loads} period loads, '
             f'{summary.periods_to_review} periods need review (GET /api/clubs/<id>/periods/?needs_review=true)'
         )
+        self.stdout.write(f'Metric catalogue: {summary.catalogue} parameters available, '
+                          f'{summary.custom_metrics} extra metrics tracked (python manage.py metrics --help)')
         cfg = account.config
         if cfg.get('hsr_threshold_kmh'):
             self.stdout.write(f"Thresholds: HSR > {cfg['hsr_threshold_kmh']} km/h, "

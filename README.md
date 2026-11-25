@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-166%20passing-green)
+![Tests](https://img.shields.io/badge/tests-201%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -25,7 +25,7 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 
 ---
 
-## What's built (v0.3)
+## What's built (v0.4)
 
 | Area | What exists |
 |---|---|
@@ -36,6 +36,7 @@ Big clubs solve this with an in-house data centre built on the providers' APIs. 
 | **OpenField connector** | Catapult Connect API v6 (read-only): athletes, activities and per-athlete stats via `POST /stats`. Retries on 429/5xx, token never logged. Velocity-band → HSR/sprint mapping is configurable per club. |
 | **Physical ingest** | Activities become training sessions with match-day codes (OpenField `DayCode` tag or computed). Match activities attach their loads to the event-data `Match` of the same day, which is the join between physical and technical data. |
 | **Periods & participation** | Every activity is split into its periods (warm-up, halves, drills) with per-player load. A match's load counts **playing periods only**, so warm-up never inflates match demands or per-90. OpenField participation tags (Full / Part / Alternate) are stored so only full participants feed team norms. |
+| **Configurable metrics** | The provider's full parameter catalogue (~1900 on OpenField) is synced and searchable. Staff pick any parameter (RHIE, metabolic power, Multidirectional Load…) and it is tracked from the next sync on every load and period. Metric sets (club-wide or personal, one default each) decide what each screen shows, in absolute, per-minute or per-90 terms. |
 | **StatsBomb connector** | StatsBomb Open Data (free) over HTTP or from a local clone. Events are mapped to a common vocabulary and coordinates are rescaled to metres. |
 | **Ingest pipeline** | Idempotent (re-runs give identical rows), atomic per match, raw payloads deduplicated by SHA-256, one failing match doesn't stop a season, and every sync is audited. |
 | **API** | JWT auth; `/api/clubs/<id>/…` for teams, players, matches (+ lineups, filterable events), loads, availability and the identity review queue. |
@@ -94,6 +95,18 @@ Staff name periods however they like: "1st Half", "1half", "1 тайм", "Primei
 What is still unknown in a match goes to a review queue (`GET /periods/?needs_review=true`). One click (`POST /periods/{id}/assign_role/`) sets the role, teaches the club vocabulary, re-labels every period with the same name and recomputes the affected match loads. Staff decisions survive re-syncs. Sub-periods inside a half ("1st Half 0–15") become `segment` and are never counted twice.
 
 On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Half 52.3'. Match load now covers 102', not 119'.
+
+### Metrics: every coach reads different numbers
+
+```
+python manage.py metrics --club demo --suggest                    # MDL, mechanical, metabolic, RHIE on this account
+python manage.py metrics --club demo --enable <slug> --enable <slug>
+python manage.py metrics --club demo --create-set "Mechanical" --keys total_distance,<key> --club-wide --default
+```
+
+Each `MetricDefinition` knows how it **aggregates**: sums for distances and counts, max for peaks, time-weighted mean for rates and densities. A match value built from two halves is therefore right for every metric: a 45' half at 10 W/kg plus a 15' spell at 13 W/kg is 10.75 W/kg, not 11.5. Units are converted at ingest (m/s → km/h, s → min). Values live in a JSON column, so a new metric never needs a migration.
+
+API: `GET /metrics/catalogue/?search=`, `POST /metrics/definitions/ {provider_slug}`, `/metric-sets/` (CRUD, `default/`, `{id}/make_default/`), `GET /loads/?metric_set=<id|default>&display=per_90`.
 
 ---
 

@@ -320,6 +320,7 @@ from rest_framework.exceptions import PermissionDenied  # noqa: E402
 
 from clubs.permissions import has_cap  # noqa: E402
 from metrics.models import MetricDefinition, MetricSet, ProviderMetric  # noqa: E402
+from metrics.presets import PRESETS, install_preset  # noqa: E402
 from metrics.services import (  # noqa: E402
     CORE_METRICS, enable_from_catalogue, ensure_core_metrics, search_catalogue, value_of,
 )
@@ -456,6 +457,31 @@ class MetricSetViewSet(ClubScopedMixin, viewsets.ModelViewSet):
                              'metrics': [{'key': m['key'], 'label': m['label'], 'short_label': m['short_label'],
                                           'unit': m['unit'], 'category': m['category']} for m in CORE_METRICS]})
         return Response(self.get_serializer(ms).data)
+
+    @action(detail=False)
+    def presets(self, request, club_id=None):
+        """Ready-made sets, with which of their metrics this club's provider account offers."""
+        offered = set(ProviderMetric.objects.filter(club=self.club).values_list('slug', flat=True))
+        core = {m['key'] for m in CORE_METRICS}
+        installed = set(MetricSet.objects.filter(club=self.club, owner__isnull=True).values_list('name', flat=True))
+        return Response([{
+            'key': p.key, 'name': p.name, 'description': p.description, 'installed': p.name in installed,
+            'metrics': [{'id': m, 'available': m in core or m in offered} for m in p.metrics],
+        } for p in PRESETS.values()])
+
+    @action(detail=False, methods=['post'])
+    def install_preset(self, request, club_id=None):
+        if not self.has_cap(Cap.MANAGE_METRICS):
+            raise PermissionDenied('Only S&C, analysts and club admins publish club-wide metric sets.')
+        key = request.data.get('preset')
+        if key not in PRESETS:
+            raise ValidationError({'preset': f"Choose from: {', '.join(PRESETS)}"})
+        r = install_preset(self.club, key, make_default=bool(request.data.get('make_default')), user=request.user)
+        if r.metric_set is None:
+            raise ValidationError({'preset': 'This provider account offers none of the preset metrics.'})
+        data = self.get_serializer(r.metric_set).data
+        data['skipped'] = r.skipped
+        return Response(data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def make_default(self, request, club_id=None, pk=None):

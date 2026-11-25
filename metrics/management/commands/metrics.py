@@ -1,6 +1,8 @@
 """
 Choose which provider metrics the club tracks — from the terminal.
 
+  python manage.py metrics --club demo --presets                 # ready-made sets: S&C Daily, MDL, Metabolic, RHIE
+  python manage.py metrics --club demo --install all --default sc-daily
   python manage.py metrics --club demo --suggest                 # MDL, mechanical, metabolic, RHIE… on this account
   python manage.py metrics --club demo --search multidirectional
   python manage.py metrics --club demo --enable <slug> --enable <slug>
@@ -13,6 +15,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from clubs.models import Club
 from metrics.models import MetricDefinition, MetricSet, ProviderMetric
+from metrics.presets import PRESETS, install_preset
 from metrics.services import enable_from_catalogue, ensure_core_metrics, guess_definition, search_catalogue
 
 THEMES = {
@@ -33,6 +36,10 @@ class Command(BaseCommand):
         parser.add_argument('--provider', default='catapult_openfield')
         parser.add_argument('--search')
         parser.add_argument('--suggest', action='store_true')
+        parser.add_argument('--presets', action='store_true', help='List ready-made metric sets')
+        parser.add_argument('--install', action='append', default=[], metavar='PRESET',
+                            help=f"Install a ready-made set ({', '.join(PRESETS)} or all)")
+        parser.add_argument('--default-preset', metavar='PRESET', help='Installed preset that becomes the club default')
         parser.add_argument('--enable', action='append', default=[], metavar='SLUG')
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--create-set', metavar='NAME')
@@ -47,8 +54,29 @@ class Command(BaseCommand):
             raise CommandError(f"Club '{o['club']}' not found")
         ensure_core_metrics(club)
         total = ProviderMetric.objects.filter(club=club, provider=o['provider']).count()
-        if not total and (o['search'] or o['suggest'] or o['enable']):
+        if not total and (o['search'] or o['suggest'] or o['enable'] or o['install']):
             raise CommandError('Catalogue is empty: run sync_openfield first.')
+
+        if o['presets']:
+            for p in PRESETS.values():
+                self.stdout.write(self.style.MIGRATE_HEADING(f'{p.key:10} {p.name}'))
+                self.stdout.write(f'           {p.description}\n           {", ".join(p.metrics)}')
+
+        install = list(PRESETS) if 'all' in o['install'] else o['install']
+        for key in install:
+            if key not in PRESETS:
+                raise CommandError(f"Unknown preset '{key}'. Choose from: {', '.join(PRESETS)}, all")
+            r = install_preset(club, key, provider=o['provider'], make_default=(key == o['default_preset']))
+            if r.metric_set is None:
+                self.stdout.write(self.style.WARNING(f'{r.preset.name}: this account offers none of its metrics'))
+                continue
+            note = ' — club default' if r.metric_set.is_default else ''
+            self.stdout.write(self.style.SUCCESS(
+                f'{r.preset.name}: {len(r.metric_set.metric_keys)} columns, {len(r.enabled)} provider metrics{note}'))
+            if r.skipped:
+                self.stdout.write(self.style.WARNING(f"   not on this account: {', '.join(r.skipped)}"))
+        if install:
+            self.stdout.write('Values arrive with the next sync_openfield.')
 
         if o['suggest']:
             for theme, words in THEMES.items():
@@ -87,7 +115,7 @@ class Command(BaseCommand):
             ms.save()
             self.stdout.write(self.style.SUCCESS(f'Created club set "{ms.name}" with {len(keys)} metrics'))
 
-        if o['list'] or not any((o['suggest'], o['search'], o['enable'], o['create_set'])):
+        if o['list'] or not any((o['suggest'], o['search'], o['enable'], o['create_set'], o['presets'], install)):
             self.stdout.write(self.style.MIGRATE_HEADING('Metrics tracked by the club'))
             for md in MetricDefinition.objects.filter(club=club, enabled=True):
                 src = 'core' if md.core_field else md.provider_slug

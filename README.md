@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-201%20passing-green)
+![Tests](https://img.shields.io/badge/tests-210%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -99,6 +99,8 @@ On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Ha
 ### Metrics: every coach reads different numbers
 
 ```
+python manage.py metrics --club demo --presets                    # ready-made sets
+python manage.py metrics --club demo --install all --default-preset sc-daily
 python manage.py metrics --club demo --suggest                    # MDL, mechanical, metabolic, RHIE on this account
 python manage.py metrics --club demo --enable <slug> --enable <slug>
 python manage.py metrics --club demo --create-set "Mechanical" --keys total_distance,<key> --club-wide --default
@@ -106,7 +108,18 @@ python manage.py metrics --club demo --create-set "Mechanical" --keys total_dist
 
 Each `MetricDefinition` knows how it **aggregates**: sums for distances and counts, max for peaks, time-weighted mean for rates and densities. A match value built from two halves is therefore right for every metric: a 45' half at 10 W/kg plus a 15' spell at 13 W/kg is 10.75 W/kg, not 11.5. Units are converted at ingest (m/s → km/h, s → min). Values live in a JSON column, so a new metric never needs a migration.
 
-API: `GET /metrics/catalogue/?search=`, `POST /metrics/definitions/ {provider_slug}`, `/metric-sets/` (CRUD, `default/`, `{id}/make_default/`), `GET /loads/?metric_set=<id|default>&display=per_90`.
+Ready-made sets (`metrics/presets.py`) cover the usual coaching schools, each with hand-checked aggregation, units and short labels:
+
+| Set | Columns |
+|---|---|
+| **S&C Daily** | Min, Dist, HSR, Sprint, Vmax, Acc, Dec, HMLD, MDL, PlayerLoad |
+| **Mechanical / MDL** | MDL, lateral load L/R, high lateral load L/R, max multidirectional acc/dec, mechanical work (total, per min), max mechanical power |
+| **Metabolic** | Equivalent distance, EDI, HMLD, high metabolic power efforts, average metabolic power |
+| **RHIE** | HSR, sprint, RHIE bouts, efforts per bout (mean/max), effort duration, effort and bout recovery (s) |
+
+Metrics the account doesn't offer are skipped and reported. A metric staff already edited keeps their settings.
+
+API: `GET /metric-sets/presets/`, `POST /metric-sets/install_preset/ {preset, make_default}`, `GET /metrics/catalogue/?search=`, `POST /metrics/definitions/ {provider_slug}`, `/metric-sets/` (CRUD, `default/`, `{id}/make_default/`), `GET /loads/?metric_set=<id|default>&display=per_90`.
 
 ---
 

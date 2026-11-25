@@ -92,11 +92,13 @@ def ensure_core_metrics(club) -> None:
 def sync_catalogue(club, provider: str, parameters: Iterable[dict]) -> int:
     """Upsert the provider's parameter list. Returns number of catalogue rows."""
     existing = {pm.slug: pm for pm in ProviderMetric.objects.filter(club=club, provider=provider)}
-    new, changed = [], []
+    new, changed, seen = [], [], set()
     for p in parameters:
-        slug = p.get('slug') if isinstance(p, dict) else None
-        if not slug:
+        slug = (p.get('slug') or '')[:150] if isinstance(p, dict) else ''
+        # Providers repeat slugs (OpenField lists 12 MII parameters twice): first one wins.
+        if not slug or slug in seen:
             continue
+        seen.add(slug)
         name = (p.get('name') or slug)[:200]
         unit_type = (p.get('unit_type') or '')[:40]
         if slug in existing:
@@ -105,7 +107,7 @@ def sync_catalogue(club, provider: str, parameters: Iterable[dict]) -> int:
                 pm.name, pm.unit_type, pm.raw = name, unit_type, p
                 changed.append(pm)
         else:
-            new.append(ProviderMetric(club=club, provider=provider, slug=slug[:150], name=name,
+            new.append(ProviderMetric(club=club, provider=provider, slug=slug, name=name,
                                       unit_type=unit_type, raw=p))
     ProviderMetric.objects.bulk_create(new, batch_size=500)
     if changed:

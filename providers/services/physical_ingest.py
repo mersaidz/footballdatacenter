@@ -247,7 +247,12 @@ def ingest_physical(
     catalogue = _safe(connector.fetch_catalogue)
     if catalogue is not None and catalogue.payload:
         store_raw(club, connector, catalogue)
-        summary.catalogue = sync_catalogue(club, connector.provider, catalogue.payload)
+        try:
+            with transaction.atomic():
+                summary.catalogue = sync_catalogue(club, connector.provider, catalogue.payload)
+        except Exception as exc:  # noqa: BLE001 — the catalogue is a convenience; loads must still sync
+            logger.exception('Metric catalogue sync failed')
+            summary.errors.append(f'metric catalogue: {exc}')
     defs = custom_definitions(club, connector.provider)
     connector.extra_slugs = tuple(d.provider_slug for d in defs)
     summary.custom_metrics = len(defs)

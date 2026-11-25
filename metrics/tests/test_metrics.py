@@ -112,3 +112,11 @@ def test_metrics_command(club):
                  '--club-wide', '--default', stdout=out)
     ms = MetricSet.objects.get(club=club, name='RHIE')
     assert ms.is_default and ms.owner is None and ms.metric_keys == ['total_distance', 'rhie-total-bouts']
+
+
+def test_catalogue_with_repeated_slugs(club):
+    """Regression: the live OpenField catalogue lists 12 MII parameters twice."""
+    dup = {'slug': 'max_intensity_interval_dist_interval_1_start_time', 'name': 'MII Distance Interval 1 Start Time'}
+    params = [dup, {'slug': 'max_vel', 'name': 'Maximum Velocity'}, dict(dup, id='other-id')]
+    assert sync_catalogue(club, 'catapult_openfield', params) == 2
+    assert sync_catalogue(club, 'catapult_openfield', params) == 2

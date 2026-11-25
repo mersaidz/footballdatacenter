@@ -533,3 +533,12 @@ def test_catalogue_synced_and_chosen_metrics_flow_through(api, connector, club, 
     assert training.metrics == {'rhie-total-bouts': 6.0, 'total-multidirectional-load': 300.0}
     assert PeriodLoad.objects.filter(period__external_id='p-h1', player__full_name='Marin Tomasov') \
         .get().metrics['rhie-total-bouts'] == 2.0
+
+
+
+def test_broken_catalogue_does_not_stop_the_sync(api, connector, club, own_team, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError('catalogue exploded')
+    monkeypatch.setattr('providers.services.physical_ingest.sync_catalogue', boom)
+    summary = ingest_physical(club, connector, own_team, *RANGE)
+    assert summary.loads == 5 and any('metric catalogue' in e for e in summary.errors)

@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-232%20passing-green)
+![Tests](https://img.shields.io/badge/tests-236%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -95,6 +95,20 @@ Staff name periods however they like: "1st Half", "1half", "1 тайм", "Primei
 What is still unknown in a match goes to a review queue (`GET /periods/?needs_review=true`). One click (`POST /periods/{id}/assign_role/`) sets the role, teaches the club vocabulary, re-labels every period with the same name and recomputes the affected match loads. Staff decisions survive re-syncs. Sub-periods inside a half ("1st Half 0–15") become `segment` and are never counted twice.
 
 On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Half 52.3'. Match load now covers 102', not 119'.
+
+## Web app
+
+React + TypeScript (`frontend/`), built into `frontend/dist` and served by Django, so running it needs only Python:
+
+```bash
+python manage.py migrate
+python manage.py create_staff --club demo --email you@club.com --role sports_scientist --name "Your Name"
+python manage.py runserver          # then open http://127.0.0.1:8000
+```
+
+Screens: **Today** (readiness traffic light, ACWR, MD+1 groups, any past date), **Sessions** (every training and match, by week, filter by type and dates) → **Session** (periods, every player, any metric view, total / per minute / per 90, sortable), **Microcycle** (the week into any match: team % of match demand, players × days), **Players** → **Player** (load: ACWR chart, daily distance, MD profile, match log; football: IMPECT percentiles, season map, match log), **Settings** (language RU / EN / KZ, profile, metric views, ready-made views).
+
+Changing the frontend needs Node.js: `cd frontend && npm install && npm run dev` (hot reload on http://localhost:5173, API proxied to runserver), then `npm run build` and commit `frontend/dist`.
 
 ### Languages: Russian, English, Kazakh
 

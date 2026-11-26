@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from . import views
+from . import views, views_app
 
 club_router = SimpleRouter()
 club_router.register('teams', views.TeamViewSet, basename='team')
@@ -14,6 +14,7 @@ club_router.register('identities', views.ExternalIdentityViewSet, basename='iden
 club_router.register('periods', views.ActivityPeriodViewSet, basename='period')
 club_router.register('metrics/definitions', views.MetricDefinitionViewSet, basename='metric-definition')
 club_router.register('metrics/requests', views.MetricRequestViewSet, basename='metric-request')
+club_router.register('sessions', views_app.SessionViewSet, basename='session')
 club_router.register('metric-sets', views.MetricSetViewSet, basename='metric-set')
 
 urlpatterns = [
@@ -22,5 +23,8 @@ urlpatterns = [
     path('me/', views.MeView.as_view(), name='me'),
     path('clubs/', views.MyClubsView.as_view(), name='my_clubs'),
     path('clubs/<int:club_id>/metrics/catalogue/', views.MetricCatalogueView.as_view(), name='metric_catalogue'),
+    path('clubs/<int:club_id>/squad-status/', views_app.SquadStatusView.as_view(), name='squad_status'),
+    path('clubs/<int:club_id>/microcycle/', views_app.MicrocycleView.as_view(), name='microcycle'),
+    path('clubs/<int:club_id>/players/<int:pk>/load-history/', views_app.PlayerHistoryView.as_view(), name='load_history'),
     path('clubs/<int:club_id>/', include(club_router.urls)),
 ]

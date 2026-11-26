@@ -13,3 +13,8 @@ openfield_probe_report.json
 
 # downloaded provider data (e.g. IMPECT open data — licence forbids redistribution)
 data/
+
+# web app
+frontend/node_modules/
+staticfiles/
+frontend/*.tsbuildinfo

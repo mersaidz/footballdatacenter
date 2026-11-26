@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 08:07+0000\n"
+"POT-Creation-Date: 2026-11-26 08:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,6 +83,14 @@ msgstr "Выберите из: %(options)s"
 #: api/views.py:574
 msgid "This provider account offers none of the preset metrics."
 msgstr "В аккаунте провайдера нет ни одной метрики из этого набора."
+
+#: api/views_app.py:32
+msgid "Use YYYY-MM-DD."
+msgstr "Используйте формат ГГГГ-ММ-ДД."
+
+#: api/views_app.py:38
+msgid "The club has no own team yet: run a sync first."
+msgstr "У клуба ещё нет своей команды: сначала запустите синхронизацию."
 
 #: clubs/models.py:75
 msgid "Cross-club reference is not allowed."
@@ -435,6 +443,82 @@ msgstr "Дисквалификация"
 #: football/models.py:427
 msgid "International duty"
 msgstr "Сборная"
+
+#: football/services/football_profile.py:23
+msgid "xG"
+msgstr "xG"
+
+#: football/services/football_profile.py:24
+#| msgid "Shot"
+msgid "Shots"
+msgstr "Удары"
+
+#: football/services/football_profile.py:25
+msgid "Goals"
+msgstr "Голы"
+
+#: football/services/football_profile.py:26
+msgid "xA"
+msgstr "xA"
+
+#: football/services/football_profile.py:27
+msgid "Shot-creating actions"
+msgstr "Действия, создающие удар"
+
+#: football/services/football_profile.py:28
+msgid "Packing (bypassed opponents)"
+msgstr "Packing (обыгранные соперники)"
+
+#: football/services/football_profile.py:29
+msgid "Bypassed defenders"
+msgstr "Обыгранные защитники"
+
+#: football/services/football_profile.py:30
+msgid "Packing by receiving"
+msgstr "Packing при приёме"
+
+#: football/services/football_profile.py:31
+msgid "Ball carrying (m gained)"
+msgstr "Ведение (метров к воротам)"
+
+#: football/services/football_profile.py:32
+msgid "Pass completion %"
+msgstr "Точность передач, %"
+
+#: football/services/football_profile.py:33
+msgid "Ball losses"
+msgstr "Потери"
+
+#: football/services/football_profile.py:34
+msgid "Ball wins"
+msgstr "Отборы"
+
+#: football/services/football_profile.py:35
+#| msgid "Pressure"
+msgid "Presses"
+msgstr "Прессинг"
+
+#: football/services/football_profile.py:36
+msgid "Ground duels won %"
+msgstr "Выигранные единоборства на земле, %"
+
+#: football/services/football_profile.py:37
+msgid "Aerial duels won %"
+msgstr "Выигранные верховые, %"
+
+#: football/services/football_profile.py:40
+#| msgid "Attacking midfielder"
+msgid "Attacking"
+msgstr "Атака"
+
+#: football/services/football_profile.py:40
+msgid "Ball progression"
+msgstr "Продвижение мяча"
+
+#: football/services/football_profile.py:40
+#| msgid "Pending"
+msgid "Defending"
+msgstr "Оборона"
 
 #: metrics/models.py:27
 msgid "Volume"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 08:07+0000\n"
+"POT-Creation-Date: 2026-11-26 08:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,6 +84,14 @@ msgstr "Мыналардан таңдаңыз: %(options)s"
 #: api/views.py:574
 msgid "This provider account offers none of the preset metrics."
 msgstr "Провайдер аккаунтында бұл жиынтықтың бірде-бір метрикасы жоқ."
+
+#: api/views_app.py:32
+msgid "Use YYYY-MM-DD."
+msgstr "ЖЖЖЖ-АА-КК пішімін қолданыңыз."
+
+#: api/views_app.py:38
+msgid "The club has no own team yet: run a sync first."
+msgstr "Клубтың өз командасы әлі жоқ: алдымен синхрондауды іске қосыңыз."
 
 #: clubs/models.py:75
 msgid "Cross-club reference is not allowed."
@@ -436,6 +444,82 @@ msgstr "Дисквалификация"
 #: football/models.py:427
 msgid "International duty"
 msgstr "Ұлттық құрама"
+
+#: football/services/football_profile.py:23
+msgid "xG"
+msgstr "xG"
+
+#: football/services/football_profile.py:24
+#| msgid "Shot"
+msgid "Shots"
+msgstr "Соққылар"
+
+#: football/services/football_profile.py:25
+msgid "Goals"
+msgstr "Голдар"
+
+#: football/services/football_profile.py:26
+msgid "xA"
+msgstr "xA"
+
+#: football/services/football_profile.py:27
+msgid "Shot-creating actions"
+msgstr "Соққы тудыратын әрекеттер"
+
+#: football/services/football_profile.py:28
+msgid "Packing (bypassed opponents)"
+msgstr "Packing (өтіп кеткен қарсыластар)"
+
+#: football/services/football_profile.py:29
+msgid "Bypassed defenders"
+msgstr "Өтіп кеткен қорғаушылар"
+
+#: football/services/football_profile.py:30
+msgid "Packing by receiving"
+msgstr "Қабылдаудағы packing"
+
+#: football/services/football_profile.py:31
+msgid "Ball carrying (m gained)"
+msgstr "Доп жүргізу (қақпаға жақындаған метр)"
+
+#: football/services/football_profile.py:32
+msgid "Pass completion %"
+msgstr "Пас дәлдігі, %"
+
+#: football/services/football_profile.py:33
+msgid "Ball losses"
+msgstr "Доп жоғалту"
+
+#: football/services/football_profile.py:34
+msgid "Ball wins"
+msgstr "Доп қайтару"
+
+#: football/services/football_profile.py:35
+#| msgid "Pressure"
+msgid "Presses"
+msgstr "Прессинг"
+
+#: football/services/football_profile.py:36
+msgid "Ground duels won %"
+msgstr "Жердегі жекпе-жектегі жеңіс, %"
+
+#: football/services/football_profile.py:37
+msgid "Aerial duels won %"
+msgstr "Әуедегі жекпе-жектегі жеңіс, %"
+
+#: football/services/football_profile.py:40
+#| msgid "Attacking midfielder"
+msgid "Attacking"
+msgstr "Шабуыл"
+
+#: football/services/football_profile.py:40
+msgid "Ball progression"
+msgstr "Допты алға жылжыту"
+
+#: football/services/football_profile.py:40
+#| msgid "Pending"
+msgid "Defending"
+msgstr "Қорғаныс"
 
 #: metrics/models.py:27
 msgid "Volume"

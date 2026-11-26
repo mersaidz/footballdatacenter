@@ -114,6 +114,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+# The web app (frontend/, React) is built into frontend/dist and served from here.
+STATICFILES_DIRS = [BASE_DIR / 'frontend' / 'dist']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {

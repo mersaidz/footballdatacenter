@@ -11,6 +11,7 @@ from bisect import bisect_left, bisect_right
 from collections import Counter, defaultdict
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from football.models import Event, Match, PlayerMatchKpis, Season
 from providers.models import ExternalIdentity
@@ -19,22 +20,24 @@ MIN_MINUTES = 450
 
 # label, KPI (or computed), group, higher_is_better
 PROFILE_KPIS = [
-    ('xG', 'SHOT_XG', 'Attacking', True),
-    ('Shots', 'SHOT_AT_GOAL_NUMBER', 'Attacking', True),
-    ('Goals', 'GOALS', 'Attacking', True),
-    ('xA', 'EXPECTED_GOAL_ASSISTS', 'Attacking', True),
-    ('Shot-creating actions', 'SHOT_CREATING_ACTIONS', 'Attacking', True),
-    ('Packing (bypassed opponents)', 'BYPASSED_OPPONENTS', 'Ball progression', True),
-    ('Bypassed defenders', 'BYPASSED_DEFENDERS', 'Ball progression', True),
-    ('Packing by receiving', 'BYPASSED_OPPONENTS_RECEIVING', 'Ball progression', True),
-    ('Ball carrying (m gained)', 'DISTANCE_TO_GOAL_COVERED_DRIBBLE', 'Ball progression', True),
-    ('Pass completion %', 'pass_pct', 'Ball progression', True),
-    ('Ball losses', 'BALL_LOSS_NUMBER', 'Ball progression', False),
-    ('Ball wins', 'BALL_WIN_NUMBER', 'Defending', True),
-    ('Presses', 'NUMBER_OF_PRESSES', 'Defending', True),
-    ('Ground duels won %', 'ground_duel_pct', 'Defending', True),
-    ('Aerial duels won %', 'aerial_duel_pct', 'Defending', True),
+    (_('xG'), 'SHOT_XG', 'Attacking', True),
+    (_('Shots'), 'SHOT_AT_GOAL_NUMBER', 'Attacking', True),
+    (_('Goals'), 'GOALS', 'Attacking', True),
+    (_('xA'), 'EXPECTED_GOAL_ASSISTS', 'Attacking', True),
+    (_('Shot-creating actions'), 'SHOT_CREATING_ACTIONS', 'Attacking', True),
+    (_('Packing (bypassed opponents)'), 'BYPASSED_OPPONENTS', 'Ball progression', True),
+    (_('Bypassed defenders'), 'BYPASSED_DEFENDERS', 'Ball progression', True),
+    (_('Packing by receiving'), 'BYPASSED_OPPONENTS_RECEIVING', 'Ball progression', True),
+    (_('Ball carrying (m gained)'), 'DISTANCE_TO_GOAL_COVERED_DRIBBLE', 'Ball progression', True),
+    (_('Pass completion %'), 'pass_pct', 'Ball progression', True),
+    (_('Ball losses'), 'BALL_LOSS_NUMBER', 'Ball progression', False),
+    (_('Ball wins'), 'BALL_WIN_NUMBER', 'Defending', True),
+    (_('Presses'), 'NUMBER_OF_PRESSES', 'Defending', True),
+    (_('Ground duels won %'), 'ground_duel_pct', 'Defending', True),
+    (_('Aerial duels won %'), 'aerial_duel_pct', 'Defending', True),
 ]
+GROUP_KEYS = {'Attacking': 'attacking', 'Ball progression': 'progression', 'Defending': 'defending'}
+GROUP_LABELS = {'Attacking': _('Attacking'), 'Ball progression': _('Ball progression'), 'Defending': _('Defending')}
 RATIOS = {
     'pass_pct': ('SUCCESSFUL_PASSES', 'UNSUCCESSFUL_PASSES'),
     'ground_duel_pct': ('WON_GROUND_DUELS', 'LOST_GROUND_DUELS'),
@@ -107,7 +110,7 @@ def football_profile(player, provider: str = 'impect', season: Season | None = N
         if pct is not None and not hib:
             pct = 100 - pct                          # fewer ball losses = better
         groups.setdefault(group, []).append({
-            'label': label, 'kpi': key, 'per90': v, 'percentile': pct, 'higher_is_better': hib,
+            'label': str(label), 'kpi': key, 'per90': v, 'percentile': pct, 'higher_is_better': hib,
             'unit': '%' if key in RATIOS else 'per 90'})
 
     # match log (all his matches this season, newest first)
@@ -158,7 +161,7 @@ def football_profile(player, provider: str = 'impect', season: Season | None = N
                       if link and link.method == ExternalIdentity.Method.DEMO else None),
         'main_position': main_pos, 'peers': PEERS.get(main_pos, 'players'), 'peer_count': len(peers),
         'min_minutes': MIN_MINUTES, 'minutes': round(me['seconds'] / 60), 'matches': len(me['matches']),
-        'groups': [{'label': g, 'kpis': v} for g, v in groups.items()],
+        'groups': [{'key': GROUP_KEYS[g], 'label': str(GROUP_LABELS[g]), 'kpis': v} for g, v in groups.items()],
         'match_log': log, 'shots': shots, 'carries': carries[:200], 'average_position': avg,
     }
 

@@ -6,6 +6,8 @@ import { acwrColor, Bars, CAT_COLOR, LEVEL, LineChart, State } from '../componen
 import { posLabel } from './Players';
 import { reasonText } from './Today';
 import PitchMap, { MapData } from '../components/PitchMap';
+import PlayerWellnessTab, { CheckinCard, usePlayerWellness } from './PlayerWellness';
+import { answerWord, SCORE_COLOR } from '../components/Checkin';
 
 interface History {
   player: { id: number; name: string; shirt_number: number | null; position: string; foot: string };
@@ -197,9 +199,12 @@ export default function PlayerProfile() {
     setFb(null);
     api<Football>(clubPath(`players/${id}/football/`)).then(setFb).catch((e: ApiError) => setFb(e.status === 404 ? 'none' : null));
   }, [id]);
+  const w = usePlayerWellness(id);
   const h = q.data;
   const p = h?.player;
+  const sleep = w.data?.latest?.sleep_hours != null && w.data.latest.sleep_quality ? w.data.latest : null;
   const st = useMemo(() => status.data?.players.find((x) => String(x.player_id) === id), [status.data, id]);
+  const loadReason = st?.reasons.find((r) => !r.code.startsWith('wellness_'));
   const open = avail.data?.results?.[0];
   const football = fb && fb !== 'none' ? fb : null;
   const wk = (from: number, to?: number) => (h ? h.days.slice(from, to).reduce((a, d) => a + d.distance, 0) : 0);
@@ -224,10 +229,12 @@ export default function PlayerProfile() {
                 </div>
               </div>
               <div className="grid" style={{ '--min': '130px', flex: '1 1 440px' } as React.CSSProperties}>
-                <Signal label={t('tab_load')} value={num(st?.acwr_distance ?? last(h.acwr_distance), 2)} note={st?.reasons.length ? reasonText(st.reasons[0]) : t('in_range')}
+                <Signal label={t('tab_load')} value={num(st?.acwr_distance ?? last(h.acwr_distance), 2)} note={loadReason ? reasonText(loadReason) : t('in_range')}
                   color={st ? LEVEL[st.level].color : acwrColor(last(h.acwr_distance))} src="OpenField" />
                 <Signal label={t('sig_hrv')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />
-                <Signal label={t('sig_sleep')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />
+                {sleep ? <Signal label={t('sig_sleep')} value={`${num(sleep.sleep_hours, 1)} ${t('hours_short')}`} note={answerWord('sleep_quality', sleep.sleep_quality!)}
+                    color={SCORE_COLOR[sleep.sleep_quality!]} src={t('checkin')} />
+                  : <Signal label={t('sig_sleep')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />}
                 <Signal label={t('sig_avail')} value={open ? t(open.status === 'modified' ? 'st_modified' : 'st_unavailable') : t('available')}
                   note={open?.expected_return ? `→ ${day(open.expected_return)}` : t('no_injury')} color={open ? 'var(--red)' : 'var(--green)'} src={t('nav_players')} />
               </div>
@@ -253,8 +260,8 @@ export default function PlayerProfile() {
                     ))}
                   </div>
                 </section>
+                {w.data ? <CheckinCard w={w.data} player={{ id: p.id, name: p.name }} onSaved={() => { w.reload(); status.reload(); }} /> : <Pending title={t('checkin')} text={t('loading')} />}
                 <Pending title={t('recovery')} text={t('recovery_soon')} />
-                <Pending title={t('checkin')} text={t('checkin_soon')} />
               </div>
               <div className="grid" style={{ '--min': '440px' } as React.CSSProperties}>
                 {h.match_log[0] ? <LastMatchPhysical sessionId={h.match_log[0].session_id} playerId={p.id} /> : <section className="card muted">{t('no_match_data')}</section>}
@@ -304,8 +311,9 @@ export default function PlayerProfile() {
             </>}
 
             {tab === 'football' && (football ? <FootballTab f={football} /> : <div className="card muted">{fb === 'none' ? t('fb_none') : t('loading')}</div>)}
-            {tab === 'wellness' && <div className="grid" style={{ '--min': '320px' } as React.CSSProperties}>
-              <Pending title={t('recovery')} text={t('recovery_soon')} /><Pending title={t('checkin')} text={t('checkin_soon')} /></div>}
+            {tab === 'wellness' && <>
+              <PlayerWellnessTab player={{ id: p.id, name: p.name }} />
+              <Pending title={t('recovery')} text={t('recovery_soon')} /></>}
           </>}
         </State>
       </div>

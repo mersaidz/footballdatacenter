@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 08:36+0000\n"
+"POT-Creation-Date: 2026-11-26 18:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,11 +85,11 @@ msgstr "Мыналардан таңдаңыз: %(options)s"
 msgid "This provider account offers none of the preset metrics."
 msgstr "Провайдер аккаунтында бұл жиынтықтың бірде-бір метрикасы жоқ."
 
-#: api/views_app.py:32
+#: api/views_app.py:34
 msgid "Use YYYY-MM-DD."
 msgstr "ЖЖЖЖ-АА-КК пішімін қолданыңыз."
 
-#: api/views_app.py:38
+#: api/views_app.py:40
 msgid "The club has no own team yet: run a sync first."
 msgstr "Клубтың өз командасы әлі жоқ: алдымен синхрондауды іске қосыңыз."
 
@@ -450,7 +450,6 @@ msgid "xG"
 msgstr "xG"
 
 #: football/services/football_profile.py:24
-#| msgid "Shot"
 msgid "Shots"
 msgstr "Соққылар"
 
@@ -495,7 +494,6 @@ msgid "Ball wins"
 msgstr "Доп қайтару"
 
 #: football/services/football_profile.py:35
-#| msgid "Pressure"
 msgid "Presses"
 msgstr "Прессинг"
 
@@ -508,7 +506,6 @@ msgid "Aerial duels won %"
 msgstr "Әуедегі жекпе-жектегі жеңіс, %"
 
 #: football/services/football_profile.py:40
-#| msgid "Attacking midfielder"
 msgid "Attacking"
 msgstr "Шабуыл"
 
@@ -517,7 +514,6 @@ msgid "Ball progression"
 msgstr "Допты алға жылжыту"
 
 #: football/services/football_profile.py:40
-#| msgid "Pending"
 msgid "Defending"
 msgstr "Қорғаныс"
 
@@ -643,7 +639,7 @@ msgstr "SkillCorner"
 msgid "Manual entry"
 msgstr "Қолмен енгізу"
 
-#: providers/models.py:72
+#: providers/models.py:72 wellness/models.py:29
 msgid "Player"
 msgstr "Ойыншы"
 
@@ -690,3 +686,34 @@ msgstr "Қолмен байланыстырылды"
 #: providers/models.py:88
 msgid "Demo link (test data, not the same person)"
 msgstr "Демо-байланыс (сынақ деректері, басқа адам)"
+
+#: wellness/api.py:75
+#| msgid "Training session"
+msgid "Unknown session."
+msgstr "Белгісіз жаттығу."
+
+#: wellness/api.py:86
+msgid "You can answer for today or yesterday only."
+msgstr "Тек бүгін немесе кеше үшін жауап беруге болады."
+
+#: wellness/api.py:104
+msgid "This link no longer works. Ask your S&C coach for a new one."
+msgstr ""
+"Бұл сілтеме енді жұмыс істемейді. Дене дайындығы жаттықтырушысынан жаңасын "
+"сұраңыз."
+
+#: wellness/api.py:163
+msgid "You can rate the last two days only."
+msgstr "Тек соңғы екі күнді бағалауға болады."
+
+#: wellness/api.py:232
+msgid "Use a number of days."
+msgstr "Күн санын көрсетіңіз."
+
+#: wellness/models.py:30
+msgid "Staff"
+msgstr "Штаб"
+
+#: wellness/models.py:31
+msgid "Demo"
+msgstr "Демо"

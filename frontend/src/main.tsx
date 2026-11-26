@@ -12,7 +12,13 @@ import Microcycle from './pages/Microcycle';
 import Players from './pages/Players';
 import PlayerProfile from './pages/PlayerProfile';
 import Settings from './pages/Settings';
+import Wellness from './pages/Wellness';
+import PlayerApp from './pages/PlayerApp';
 
+// A player opening his link for the first time gets his phone's language.
+if (window.location.pathname.startsWith('/p/')) {
+  try { if (!localStorage.getItem('fdc.lang')) { const n = navigator.language.slice(0, 2); setLang(n === 'kk' ? 'kk' : n === 'en' ? 'en' : 'ru'); } } catch { /* ignore */ }
+}
 document.documentElement.lang = getLang();
 
 export interface Membership { club_id: number; club_name: string; club_slug: string; role: string }
@@ -74,7 +80,7 @@ function Shell() {
   if (auth.club() !== club.club_id) auth.setClub(club.club_id);
   const links: [string, string, keyof typeof ICONS][] = [
     ['/', t('nav_today'), 'today'], ['/sessions', t('nav_sessions'), 'sessions'], ['/week', t('nav_week'), 'week'],
-    ['/players', t('nav_players'), 'players'], ['/settings', t('nav_settings'), 'settings'],
+    ['/players', t('nav_players'), 'players'], ['/wellness', t('nav_wellness'), 'wellness'], ['/settings', t('nav_settings'), 'settings'],
   ];
   return (
     <div className="app">
@@ -104,6 +110,7 @@ function Shell() {
           <Route path="/week" element={<Microcycle />} />
           <Route path="/players" element={<Players />} />
           <Route path="/players/:id" element={<PlayerProfile />} />
+          <Route path="/wellness" element={<Wellness />} />
           <Route path="/settings" element={<Settings role={club.role} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
@@ -121,6 +128,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
+        <Route path="/p/:token" element={<PlayerApp />} />
         <Route path="/*" element={<Protected />} />
       </Routes>
     </BrowserRouter>

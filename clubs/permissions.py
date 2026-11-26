@@ -31,10 +31,11 @@ class Cap(StrEnum):
     MANAGE_METRICS = 'manage_metrics'              # add catalogue metrics, publish club metric sets
     MANAGE_INTEGRATIONS = 'manage_integrations'    # provider API keys
     MANAGE_STAFF = 'manage_staff'
+    VIEW_WELLNESS_DETAILS = 'view_wellness_details'  # players' answers, sore areas, comments; player links
 
 
 _PERFORMANCE_STAFF = {Cap.VIEW_FOOTBALL_DATA, Cap.VIEW_PHYSICAL_LOAD, Cap.VIEW_AVAILABILITY}
-_MEDICAL_STAFF = _PERFORMANCE_STAFF | {Cap.VIEW_MEDICAL_DETAILS, Cap.EDIT_MEDICAL}
+_MEDICAL_STAFF = _PERFORMANCE_STAFF | {Cap.VIEW_MEDICAL_DETAILS, Cap.EDIT_MEDICAL, Cap.VIEW_WELLNESS_DETAILS}
 
 ROLE_CAPABILITIES: dict[str, frozenset[Cap]] = {
     Role.CLUB_ADMIN: frozenset({
@@ -45,7 +46,7 @@ ROLE_CAPABILITIES: dict[str, frozenset[Cap]] = {
     Role.HEAD_COACH: frozenset(_PERFORMANCE_STAFF),
     Role.ASSISTANT_COACH: frozenset(_PERFORMANCE_STAFF),
     Role.ANALYST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_IDENTITIES, Cap.MANAGE_PERIODS, Cap.MANAGE_METRICS}),
-    Role.SPORTS_SCIENTIST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_PERIODS, Cap.MANAGE_METRICS}),
+    Role.SPORTS_SCIENTIST: frozenset(_PERFORMANCE_STAFF | {Cap.MANAGE_PERIODS, Cap.MANAGE_METRICS, Cap.VIEW_WELLNESS_DETAILS}),
     Role.PHYSIO: frozenset(_MEDICAL_STAFF),
     Role.DOCTOR: frozenset(_MEDICAL_STAFF),
     Role.SCOUT: frozenset({Cap.VIEW_FOOTBALL_DATA}),

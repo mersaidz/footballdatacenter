@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 08:36+0000\n"
+"POT-Creation-Date: 2026-11-26 18:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,11 +78,11 @@ msgstr ""
 msgid "This provider account offers none of the preset metrics."
 msgstr ""
 
-#: api/views_app.py:32
+#: api/views_app.py:34
 msgid "Use YYYY-MM-DD."
 msgstr ""
 
-#: api/views_app.py:38
+#: api/views_app.py:40
 msgid "The club has no own team yet: run a sync first."
 msgstr ""
 
@@ -632,7 +632,7 @@ msgstr ""
 msgid "Manual entry"
 msgstr ""
 
-#: providers/models.py:72
+#: providers/models.py:72 wellness/models.py:29
 msgid "Player"
 msgstr ""
 
@@ -678,4 +678,32 @@ msgstr ""
 
 #: providers/models.py:88
 msgid "Demo link (test data, not the same person)"
+msgstr ""
+
+#: wellness/api.py:75
+msgid "Unknown session."
+msgstr ""
+
+#: wellness/api.py:86
+msgid "You can answer for today or yesterday only."
+msgstr ""
+
+#: wellness/api.py:104
+msgid "This link no longer works. Ask your S&C coach for a new one."
+msgstr ""
+
+#: wellness/api.py:163
+msgid "You can rate the last two days only."
+msgstr ""
+
+#: wellness/api.py:232
+msgid "Use a number of days."
+msgstr ""
+
+#: wellness/models.py:30
+msgid "Staff"
+msgstr ""
+
+#: wellness/models.py:31
+msgid "Demo"
 msgstr ""

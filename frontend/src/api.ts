@@ -78,15 +78,17 @@ export function useApi<T = any>(path: string | null, key: unknown[] = []) {
 }
 
 // --- types (only what the screens use) ---
-export interface Reason { code: string; value?: number; date?: string }
+export interface Reason { code: string; value?: number; date?: string; normal?: number | null; flags?: string[] }
+export interface Feel { date: string; total: number; z: number | null; level: 'ok' | 'low' | 'very_low'; normal: number | null; flags?: string[] }
 export interface SquadPlayer {
   player_id: number; name: string; shirt_number: number | null; position: string; level: 'reduce' | 'hold' | 'build' | 'plan';
   reasons: Reason[]; acwr_distance: number | null; acwr_hsr: number | null; week_distance: number;
-  week_change_pct: number | null; last_match_minutes: number; last_session: string;
+  week_change_pct: number | null; last_match_minutes: number; last_session: string; wellness: Feel | null;
 }
 export interface SquadStatus {
   as_of: string; days_since_match: number | null; players: SquadPlayer[];
   last_match: { session_id: number; date: string; name: string } | null;
+  wellness?: { answered: number; squad: number };
 }
 export interface SessionSummary {
   id: number; date: string; start: string; name: string; md: string; type: string; players: number;
@@ -99,6 +101,7 @@ export interface SessionDetail {
   metric_set: MetricSetMeta;
   periods: { id: number; name: string; role: string; role_label: string; minutes: number | null; counts_as_play: boolean }[];
   rows: { player_id: number; name: string; shirt_number: number | null; position: string; participation: string; flagged: boolean;
-          values: Record<string, number | null>; periods: Record<string, Record<string, number | null>> }[];
+          values: Record<string, number | null>; periods: Record<string, Record<string, number | null>>; rpe: number | null; srpe: number | null }[];
+  rpe: { answered: number; squad: number; mean: number | null };
 }
 export interface MetricSetItem { id: number; name: string; metric_keys: string[]; display: string; is_default: boolean; is_club: boolean; metrics: MetricCol[] }

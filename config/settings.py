@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'football',
     'providers',
     'metrics',
+    'wellness',
     'api',
 ]
 

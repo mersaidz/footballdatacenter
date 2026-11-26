@@ -3,8 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { clubPath, Reason, SquadStatus, useApi } from '../api';
 import { day, num, t } from '../i18n';
 import { Gauge, LEVEL, LevelBadge, State } from '../components/ui';
+import { FeelBadge } from './Wellness';
 
 export function reasonText(r: Reason) {
+  if (r.code.startsWith('wellness_')) {
+    const extra = (r.flags || []).map((f) => t(`i_${f}` as never)).join(', ');
+    return t(`r_${r.code}` as never) + (extra ? `: ${extra}` : '');
+  }
   const v = r.value != null ? num(r.value, 2) : '';
   const d = r.date ? day(r.date) : '';
   return t(`r_${r.code}` as never, { v, d });
@@ -63,11 +68,14 @@ export default function Today() {
             </section>
           )}
           <section className="card flush">
-            <div className="head"><h2>{t('nav_players')}</h2><span className="small muted">{t('status_rules')}</span></div>
+            <div className="head"><h2>{t('nav_players')}</h2>
+              <span className="row small muted" style={{ gap: 14 }}>
+                {s?.wellness && <Link to="/wellness" style={{ color: 'var(--accent-text)' }}>{t('wl_answered', { a: s.wellness.answered, n: s.wellness.squad })}</Link>}
+                <span>{t('status_rules')}</span></span></div>
             <div className="scroll">
               <table>
                 <thead><tr>
-                  <th>{t('col_status')}</th><th>#</th><th>{t('col_player')}</th><th>{t('col_why')}</th><th>{t('col_acwr_d')}</th>
+                  <th>{t('col_status')}</th><th>#</th><th>{t('col_player')}</th><th>{t('col_why')}</th><th>{t('col_feel')}</th><th>{t('col_acwr_d')}</th>
                   <th>{t('col_acwr_h')}</th><th className="right">{t('col_week')}</th><th className="right">{t('col_vs_prev')}</th><th className="right">{t('col_last_match')}</th>
                 </tr></thead>
                 <tbody>
@@ -77,6 +85,7 @@ export default function Today() {
                       <td className="muted">{p.shirt_number ?? ''}</td>
                       <td><Link to={`/players/${p.player_id}`} style={{ fontWeight: 500 }} onClick={(e) => e.stopPropagation()}>{p.name}</Link>{p.position === 'GK' && <span className="small faint"> GK</span>}</td>
                       <td style={{ whiteSpace: 'normal', minWidth: 220, maxWidth: 380, color: 'var(--text-2)' }}>{p.reasons.length ? p.reasons.map(reasonText).join('; ') : t('in_range')}</td>
+                      <td><FeelBadge a={p.wellness} /></td>
                       <td><Gauge value={p.acwr_distance} /></td>
                       <td>{p.acwr_hsr == null ? <span className="faint">—</span> : <Gauge value={p.acwr_hsr} />}</td>
                       <td className="right">{num(p.week_distance / 1000, 1)}</td>

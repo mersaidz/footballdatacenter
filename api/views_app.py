@@ -19,6 +19,8 @@ from football.services import performance as perf
 from metrics.models import MetricDefinition
 from metrics.services import CORE_METRICS, ensure_core_metrics, value_of
 
+from wellness.services import rpe_for_session
+
 from .permissions import ClubScopedMixin, HasClubCapability
 from .views import resolve_metric_set
 
@@ -48,7 +50,14 @@ class SquadStatusView(_LoadView):
     """GET /clubs/{id}/squad-status/?date=YYYY-MM-DD — readiness traffic light (default: day after the last session)."""
 
     def get(self, request, club_id=None):
-        return Response(perf.squad_status(_team(self), _date(request.query_params.get('date'))))
+        data = perf.squad_status(_team(self), _date(request.query_params.get('date')))
+        if not self.has_cap(Cap.VIEW_WELLNESS_DETAILS):          # coaches: how he feels overall, not what he said
+            for row in data['players']:
+                if row.get('wellness'):
+                    row['wellness'] = {k: row['wellness'][k] for k in ('level', 'total', 'z', 'normal')}
+                for r in row['reasons']:
+                    r.pop('flags', None)
+        return Response(data)
 
 
 class MicrocycleView(_LoadView):
@@ -94,6 +103,7 @@ class SessionViewSet(ClubScopedMixin, viewsets.ViewSet):
         by_player_period = {}
         for pl in PeriodLoad.objects.filter(period__in=periods).select_related('period'):
             by_player_period.setdefault(pl.player_id, {})[pl.period_id] = {d.key: value_of(pl, d, display) for d in defs}
+        rpe = rpe_for_session(session)
         rows = []
         for load in PlayerLoad.objects.filter(training_session=session).select_related('player').order_by('-duration_min'):
             p = load.player
@@ -102,6 +112,7 @@ class SessionViewSet(ClubScopedMixin, viewsets.ViewSet):
                 'participation': load.participation, 'flagged': bool(load.quality_flags), 'load_basis': load.load_basis,
                 'values': {d.key: value_of(load, d, display) for d in defs},
                 'periods': by_player_period.get(p.pk, {}),
+                'rpe': rpe.get(p.pk, {}).get('rpe'), 'srpe': rpe.get(p.pk, {}).get('srpe'),
             })
         neighbours = TrainingSession.objects.filter(club=self.club, team=session.team)
         prev = neighbours.filter(start__lt=session.start).order_by('-start').first()
@@ -116,6 +127,9 @@ class SessionViewSet(ClubScopedMixin, viewsets.ViewSet):
                          'minutes': round(pr.duration_min, 1) if pr.duration_min is not None else None,
                          'counts_as_play': pr.role in ActivityPeriod.PLAYING_ROLES} for pr in periods],
             'rows': rows,
+            'rpe': {'answered': sum(1 for r in rows if r['rpe'] is not None), 'squad': len(rows),
+                    'mean': round(sum(r['rpe'] for r in rows if r['rpe'] is not None) / max(1, sum(1 for r in rows if r['rpe'] is not None)), 1)
+                    if any(r['rpe'] is not None for r in rows) else None},
         })
 
 

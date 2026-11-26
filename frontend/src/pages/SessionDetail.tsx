@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { rpeColor } from '../components/Checkin';
 import { clubPath, MetricSetItem, SessionDetail as Detail, useApi } from '../api';
 import { day, num, t } from '../i18n';
 import { CAT_COLOR, Icon, ICONS, Seg, State } from '../components/ui';
@@ -23,7 +24,7 @@ export default function SessionDetail() {
   const rows = useMemo(() => {
     if (!d) return [];
     const val = (r: Detail['rows'][number], k: string) => (period ? r.periods[period]?.[k] : r.values[k]) ?? null;
-    const list = d.rows.filter((r) => !period || r.periods[period]).map((r) => ({ ...r, v: (k: string) => val(r, k) }));
+    const list = d.rows.filter((r) => !period || r.periods[period]).map((r) => ({ ...r, v: (k: string) => (k === 'rpe' ? r.rpe : k === 'srpe' ? r.srpe : val(r, k)) }));
     if (sort) list.sort((a, b) => { const x = a.v(sort.key), y = b.v(sort.key); if (x == null) return 1; if (y == null) return -1; return (x - y) * sort.dir; });
     return list;
   }, [d, period, sort]);
@@ -72,7 +73,10 @@ export default function SessionDetail() {
               </div>
             )}
             <section className="card flush">
-              <div className="head"><h2>{t('nav_players')} · {rows.length}</h2><span className="small muted">{t('sort_hint')}</span></div>
+              <div className="head"><h2>{t('nav_players')} · {rows.length}</h2>
+                <span className="row small muted" style={{ gap: 14 }}>
+                  <span>{d.rpe.mean != null ? t('rpe_summary', { v: num(d.rpe.mean, 1), a: d.rpe.answered, n: d.rpe.squad }) : t('rpe_none')}</span>
+                  <span>{t('sort_hint')}</span></span></div>
               <div className="scroll">
                 <table>
                   <thead><tr>
@@ -84,6 +88,14 @@ export default function SessionDetail() {
                             <span className="dot" style={{ background: CAT_COLOR[c.category] || '#a3a3a3', width: 6, height: 6 }} />{c.short_label}{sort?.key === c.key ? (sort.dir === -1 ? ' ↓' : ' ↑') : ''}
                           </span>
                           <span className="small faint" style={{ fontWeight: 300, textAlign: 'right' }}>{unit(c.unit, c.aggregation) || ' '}</span>
+                        </button>
+                      </th>
+                    ))}
+                    {!period && (['rpe', 'srpe'] as const).map((k) => (
+                      <th key={k} className="right" aria-sort={sort?.key === k ? (sort.dir === -1 ? 'descending' : 'ascending') : 'none'}>
+                        <button className="sort" onClick={() => setSort({ key: k, dir: sort?.key === k && sort.dir === -1 ? 1 : -1 })} title={k === 'srpe' ? t('internal_hint') : t('rpe_q')}>
+                          <span style={{ color: sort?.key === k ? 'var(--text)' : undefined, textAlign: 'right' }}>{k === 'rpe' ? 'RPE' : 'sRPE'}{sort?.key === k ? (sort.dir === -1 ? ' ↓' : ' ↑') : ''}</span>
+                          <span className="small faint" style={{ fontWeight: 300, textAlign: 'right' }}>{k === 'rpe' ? '0–10' : 'AU'}</span>
                         </button>
                       </th>
                     ))}
@@ -110,6 +122,10 @@ export default function SessionDetail() {
                               </td>
                             );
                           })}
+                          {!period && <>
+                            <td className="right">{r.rpe == null ? <span className="faint">—</span> : <span className="score" style={{ color: rpeColor(r.rpe), background: `${rpeColor(r.rpe)}1f` }}>{r.rpe}</span>}</td>
+                            <td className="right">{num(r.srpe)}</td>
+                          </>}
                         </tr>
                       );
                     })}

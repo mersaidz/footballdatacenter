@@ -124,6 +124,15 @@ def load_action(ad, ah, days_idle, last, short_history, first) -> tuple[str, lis
     return level, reasons
 
 
+def apply_wellness(level: str, reasons: list[dict], w: dict | None) -> str:
+    """How the player feels can only make the day more careful: low → at least "hold", very low → "reduce"."""
+    if not w or w['level'] == 'ok':
+        return level
+    reasons.insert(0, {'code': f"wellness_{w['level']}", 'value': w['total'], 'normal': w['normal'], 'flags': w['flags']})
+    floor = 'reduce' if w['level'] == 'very_low' else 'hold'
+    return min(level, floor, key=LEVELS.index)
+
+
 def last_session_day(team: Team) -> date | None:
     ts = (TrainingSession.objects.filter(team=team).annotate(n=Count('loads'))
           .filter(n__gte=TEAM_SESSION_MIN_PLAYERS).order_by('-start').first()
@@ -149,7 +158,9 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
     match_days = sorted({r.day for r in rows if r.is_match})
     last_match = max(match_days) if match_days else None
     last_match_session = next((r for r in reversed(rows) if r.is_match and r.day == last_match), None)
-    players = Player.objects.filter(club=team.club, current_team=team, pk__in=daily.keys())
+    players = list(Player.objects.filter(club=team.club, current_team=team, pk__in=daily.keys()))
+    from wellness.services import day_summary          # wellness depends on football, not the other way round
+    feel = day_summary(players, as_of)
     out = []
     for p in players:
         mine = [r for r in rows if r.player_id == p.pk]
@@ -159,12 +170,15 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         prev = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(14) <= d < as_of - timedelta(7))
         first, last = mine[0].day, mine[-1].day
         level, reasons = load_action(ad, ah, (as_of - last).days, last, (as_of - first).days < SHORT_HISTORY_DAYS, first)
+        w = feel.get(p.pk)
+        level = apply_wellness(level, reasons, w)
         lm = next((r for r in mine if r.is_match and r.day == last_match), None)
         out.append({
             'player_id': p.pk, 'name': p.display_name, 'shirt_number': p.shirt_number, 'position': p.primary_position,
             'level': level, 'reasons': reasons, 'acwr_distance': ad, 'acwr_hsr': ah,
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
+            'wellness': w,
         })
     order = {lvl: i for i, lvl in enumerate(LEVELS)}
     out.sort(key=lambda s: (order[s['level']], -(s['acwr_distance'] or 0)))
@@ -175,6 +189,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
                        'name': last_match_session.name, 'md': last_match_session.md} if last_match_session else None,
         'thresholds': {'reduce_above': REDUCE_ABOVE, 'hold_above': HOLD_ABOVE,
                        'build_below': BUILD_BELOW, 'build_hsr_below': BUILD_HSR_BELOW, 'build_after_days': NO_SESSION_DAYS},
+        'wellness': {'answered': len(feel), 'squad': len(out)},
         'players': out,
     }
 

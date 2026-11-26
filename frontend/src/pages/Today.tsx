@@ -2,17 +2,28 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clubPath, Reason, SquadStatus, useApi } from '../api';
 import { day, num, t } from '../i18n';
-import { Gauge, LEVEL, LevelBadge, State } from '../components/ui';
+import { Gauge, InfoTip, LEVEL, LevelBadge, State } from '../components/ui';
 import { FeelBadge } from './Wellness';
 
+/** Plain words, not formulas: "Нагрузка в 1,7 раза выше привычной", "Плохо спал, мало сил". */
 export function reasonText(r: Reason) {
   if (r.code.startsWith('wellness_')) {
-    const extra = (r.flags || []).map((f) => t(`i_${f}` as never)).join(', ');
-    return t(`r_${r.code}` as never) + (extra ? `: ${extra}` : '');
+    const said = (r.flags || []).map((f) => t(`f_${f}` as never));
+    if (!said.length) return t(`r_${r.code}` as never);
+    const s = said.join(', ');
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
-  const v = r.value != null ? num(r.value, 2) : '';
+  const v = r.value != null ? num(r.value, 1) : '';
   const d = r.date ? day(r.date) : '';
   return t(`r_${r.code}` as never, { v, d });
+}
+
+/** Reasons as one short line: at most two, and HSR only when distance says nothing (the columns carry the numbers). */
+export function reasonsLine(rs: Reason[]) {
+  const dist = rs.some((r) => r.code.startsWith('acwr_dist'));
+  const main = rs.filter((r) => r.code !== 'short_history' && !(dist && r.code.startsWith('acwr_hsr')))
+    .filter((r) => !(r.code === 'low_hsr' && rs.some((x) => x.code === 'underloaded')));
+  return main.slice(0, 2).map(reasonText).join('. ');
 }
 
 export default function Today() {
@@ -71,7 +82,7 @@ export default function Today() {
             <div className="head"><h2>{t('nav_players')}</h2>
               <span className="row small muted" style={{ gap: 14 }}>
                 {s?.wellness && <Link to="/wellness" style={{ color: 'var(--accent-text)' }}>{t('wl_answered', { a: s.wellness.answered, n: s.wellness.squad })}</Link>}
-                <span>{t('status_rules')}</span></span></div>
+                <InfoTip label={t('how_counted')} text={t('status_rules')} align="right" /></span></div>
             <div className="scroll">
               <table>
                 <thead><tr>
@@ -84,7 +95,7 @@ export default function Today() {
                       <td><LevelBadge level={p.level} /></td>
                       <td className="muted">{p.shirt_number ?? ''}</td>
                       <td><Link to={`/players/${p.player_id}`} style={{ fontWeight: 500 }} onClick={(e) => e.stopPropagation()}>{p.name}</Link>{p.position === 'GK' && <span className="small faint"> GK</span>}</td>
-                      <td style={{ whiteSpace: 'normal', minWidth: 220, maxWidth: 380, color: 'var(--text-2)' }}>{p.reasons.length ? p.reasons.map(reasonText).join('; ') : t('in_range')}</td>
+                      <td style={{ whiteSpace: 'normal', minWidth: 240, maxWidth: 420, color: 'var(--text-2)' }}>{p.reasons.length ? reasonsLine(p.reasons) : t('in_range')}</td>
                       <td><FeelBadge a={p.wellness} /></td>
                       <td><Gauge value={p.acwr_distance} /></td>
                       <td>{p.acwr_hsr == null ? <span className="faint">—</span> : <Gauge value={p.acwr_hsr} />}</td>

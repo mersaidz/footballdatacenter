@@ -107,7 +107,7 @@ export const ICONS = {
 };
 
 /** Instant help: shows on hover, keyboard focus or tap (native `title` tooltips wait ~1 s and never show on touch). */
-export function InfoTip({ label, text }: { label: string; text: string }) {
+export function InfoTip({ label, text, align = 'left' }: { label: string; text: string; align?: 'left' | 'right' }) {
   const [open, setOpen] = useState(false);
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -119,7 +119,7 @@ export function InfoTip({ label, text }: { label: string; text: string }) {
           alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>?</span>
       </button>
       {open && (
-        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, width: 280, zIndex: 20, background: 'rgba(17,17,17,0.97)',
+        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', [align]: 0, width: 280, zIndex: 20, background: 'rgba(17,17,17,0.97)',
           border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', color: 'var(--text-2)', fontSize: 12, lineHeight: 1.5,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>{text}</span>
       )}

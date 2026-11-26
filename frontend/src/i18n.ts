@@ -5,6 +5,12 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    how_counted: 'Как считаем',
+    f_mood: 'плохое настроение',
+    f_stress: 'стресс',
+    f_soreness: 'болят мышцы',
+    f_energy: 'мало сил',
+    f_sleep_quality: 'плохо спал',
     wl_answers: 'Ответы',
     wl_tick: 'черта — его обычный уровень',
     nav_wellness: 'Самочувствие',
@@ -77,8 +83,8 @@ const D = {
     i_soreness: 'болезненность',
     i_stress: 'стресс',
     i_mood: 'настроение',
-    r_wellness_low: 'Самочувствие ниже нормы',
-    r_wellness_very_low: 'Самочувствие сильно ниже нормы',
+    r_wellness_low: 'Самочувствие ниже обычного',
+    r_wellness_very_low: 'Самочувствие сильно ниже обычного',
     rpe_summary: 'Средний RPE {v} · ответили {a} из {n}',
     rpe_none: 'RPE ещё никто не прислал',
     wl_trend: 'Самочувствие по дням',
@@ -96,7 +102,7 @@ const D = {
     press_none: 'без давления', press_light: 'лёгкое давление', press_medium: 'среднее давление', press_strong: 'сильное давление', press_scale: 'давление {v}/100', opp_LESS_THAN_ONE_METER: 'соперник ближе 1 м', opp_ONE_METER: 'соперник в 1 м', opp_TWO_METERS: 'соперник в 2 м', opp_THREE_METERS: 'соперник в 3 м', opp_FOUR_METERS: 'соперник в 4 м', opp_MORE_THAN_FOUR_METERS: 'соперник дальше 4 м', press_hint: 'Давление (IMPECT, 0–100) — насколько близко и активно соперник мешал в момент удара: 0 — никого рядом, 100 — плотный прессинг.',
     layer_shots: 'Удары', layer_carries: 'Ведения', layer_passes: 'Передачи вперёд', layer_heat: 'Зоны действий', whole_season: 'Весь сезон', goal_word: 'Гол', no_goal: 'Без гола', under_pressure: 'под давлением', gained: '+{m} м к воротам', bypassed_n: 'обыграно соперников: {n}', xg_per_shot: 'xG за удар', avg_gain: 'в среднем', actions_n: 'действий: {n}', leg_pass: 'Прогрессивная передача (10 м+)', map_hint: 'Наведите на удар или стрелку — покажем минуту и матч. Нажмите на матч в таблице ниже, и карта покажет только его.', shot_CLOSE_RANGE_SHOT: 'с близкой дистанции', shot_MID_RANGE_SHOT: 'со средней дистанции', shot_LONG_RANGE_SHOT: 'издалека', shot_HEADER: 'головой', shot_ONE_VS_ONE_AGAINST_GK: 'один на один', body_FOOT_LEFT: 'левой', body_FOOT_RIGHT: 'правой', body_HEAD: 'головой', xg_size: 'Размер — xG', heat_hint: 'Доля его действий с мячом в каждой зоне', show_all: 'Показать весь сезон',
     recovery: 'Восстановление',
-    lvl_reduce: 'Снизить нагрузку', lvl_hold: 'Не наращивать', lvl_build: 'Догрузить', lvl_plan: 'По плану', hint_reduce: 'Скачок нагрузки, повышенный риск травмы', hint_hold: 'Нагрузка растёт быстро, держать уровень', hint_build: 'Недогружен или возвращается', hint_plan: 'Всё в норме', r_acwr_hsr_rising: 'ACWR HSR растёт: {v}', md1_groups: 'Тренировка после матча (MD+1)', md1_hint: 'Кто сколько сыграл в {m} — такую тренировку и проводим', recovery_group: 'Восстановительная', topup_group: 'Компенсаторная', played60: 'сыграли 60′+', under60: 'сыграли меньше 60′', status_rules: 'Снизить нагрузку — ACWR выше 1,5. Не наращивать — 1,3–1,5. Догрузить — ниже 0,8, HSR ниже 0,6 или 3+ дня без сессий. ACWR — нагрузка 7 дней к 28 (EWMA).',
+    lvl_reduce: 'Снизить нагрузку', lvl_hold: 'Не наращивать', lvl_build: 'Догрузить', lvl_plan: 'По плану', hint_reduce: 'Скачок нагрузки, повышенный риск травмы', hint_hold: 'Нагрузка растёт быстро, держать уровень', hint_build: 'Недогружен или возвращается', hint_plan: 'Всё в норме', r_acwr_hsr_rising: 'Скоростного бега больше привычного', md1_groups: 'Тренировка после матча (MD+1)', md1_hint: 'Кто сколько сыграл в {m} — такую тренировку и проводим', recovery_group: 'Восстановительная', topup_group: 'Компенсаторная', played60: 'сыграли 60′+', under60: 'сыграли меньше 60′', status_rules: 'Снизить нагрузку — ACWR выше 1,5. Не наращивать — 1,3–1,5. Догрузить — ниже 0,8, HSR ниже 0,6 или 3+ дня без сессий. ACWR — нагрузка 7 дней к 28 (EWMA).',
     tab_overview: 'Обзор', sig_hrv: 'HRV', sig_sleep: 'Сон', sig_avail: 'Доступность', not_connected: 'Не подключено', available: 'Доступен', no_injury: 'Открытых травм нет', st_unavailable: 'Недоступен', st_modified: 'Облегчённая тренировка', this_week: 'Эта неделя', last_match_phys: 'Последний матч · физика', latest_ball: 'Последний матч · с мячом', rank_in_squad: '{r} из {n} в составе', not_measured: 'Не измерялось', minutes_on_pitch: 'минут на поле', leg_avg: 'Средняя позиция', leg_goal: 'Гол', leg_shot: 'Удар (размер — xG)', leg_carry: 'Прогрессивное ведение (10 м+)', attack_lr: 'Атака слева направо', checkin: 'Утренний опросник', recovery_soon: 'HRV, пульс покоя и сон из Whoop / Oura появятся после подключения.', checkin_soon: 'Ответы игроков (сон, энергия, болезненность, стресс, настроение) и RPE после сессии появятся после подключения приложения игрока.', packing_note: 'соперников обыграно', carry_note: 'метров к воротам', losses_note: 'потери мяча', prog_carries: 'Прогрессивные ведения', xg_note: '{s} ударов, {g} голов', no_match_data: 'Нет данных о матчах', source_real: 'OpenField · реальные', 
     brand_sub: 'Платформа данных клуба', nav_today: 'Сегодня', nav_sessions: 'Сессии', nav_week: 'Микроцикл', nav_players: 'Игроки',
     nav_settings: 'Настройки', logout: 'Выйти', loading: 'Загрузка…', error: 'Не удалось загрузить', retry: 'Повторить', empty: 'Пока пусто',
@@ -108,9 +114,9 @@ const D = {
    
     col_status: 'Статус', col_player: 'Игрок', col_why: 'Почему', col_acwr_d: 'ACWR дистанция', col_acwr_h: 'ACWR HSR',
     col_week: 'Км за неделю', col_vs_prev: 'К прошлой неделе', col_last_match: 'Последний матч', in_range: 'В норме',
-    r_acwr_dist_high: 'ACWR дистанции {v}', r_acwr_hsr_high: 'ACWR HSR {v}', r_acwr_dist_rising: 'ACWR дистанции растёт: {v}',
-    r_underloaded: 'Недогружен, ACWR {v}', r_low_hsr: 'Мало HSR, ACWR {v}', r_no_session: 'Нет сессий с {d}',
-    r_short_history: 'короткая история (с {d})',
+    r_acwr_dist_high: 'Нагрузка в {v} раза выше привычной', r_acwr_hsr_high: 'Скоростного бега в {v} раза больше привычного', r_acwr_dist_rising: 'Нагрузка быстро растёт',
+    r_underloaded: 'Мало нагрузки: {v} от привычной', r_low_hsr: 'Мало скоростного бега', r_no_session: 'Нет тренировок с {d}',
+    r_short_history: 'данных пока мало (с {d})',
    
    
     // sessions
@@ -149,6 +155,12 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    how_counted: 'How it works',
+    f_mood: 'low mood',
+    f_stress: 'stressed',
+    f_soreness: 'sore muscles',
+    f_energy: 'low energy',
+    f_sleep_quality: 'slept badly',
     wl_answers: 'Answers',
     wl_tick: 'tick — his usual level',
     nav_wellness: 'Wellness',
@@ -221,8 +233,8 @@ const D = {
     i_soreness: 'soreness',
     i_stress: 'stress',
     i_mood: 'mood',
-    r_wellness_low: 'Wellness below normal',
-    r_wellness_very_low: 'Wellness well below normal',
+    r_wellness_low: 'Feeling below his usual',
+    r_wellness_very_low: 'Feeling well below his usual',
     rpe_summary: 'Mean RPE {v} · {a} of {n} answered',
     rpe_none: 'No RPE answers yet',
     wl_trend: 'Wellness by day',
@@ -240,7 +252,7 @@ const D = {
     press_none: 'no pressure', press_light: 'light pressure', press_medium: 'medium pressure', press_strong: 'strong pressure', press_scale: 'pressure {v}/100', opp_LESS_THAN_ONE_METER: 'opponent within 1 m', opp_ONE_METER: 'opponent at 1 m', opp_TWO_METERS: 'opponent at 2 m', opp_THREE_METERS: 'opponent at 3 m', opp_FOUR_METERS: 'opponent at 4 m', opp_MORE_THAN_FOUR_METERS: 'opponent 4 m+ away', press_hint: 'Pressure (IMPECT, 0–100): how close and active the nearest opponent was at the moment of the shot. 0 = nobody near, 100 = tight press.',
     layer_shots: 'Shots', layer_carries: 'Carries', layer_passes: 'Forward passes', layer_heat: 'Action zones', whole_season: 'Whole season', goal_word: 'Goal', no_goal: 'No goal', under_pressure: 'under pressure', gained: '+{m} m towards goal', bypassed_n: 'opponents bypassed: {n}', xg_per_shot: 'xG per shot', avg_gain: 'on average', actions_n: '{n} actions', leg_pass: 'Progressive pass (10 m+)', map_hint: 'Hover a shot or an arrow to see the minute and match. Click a match in the table below to show only that match.', shot_CLOSE_RANGE_SHOT: 'close range', shot_MID_RANGE_SHOT: 'mid range', shot_LONG_RANGE_SHOT: 'long range', shot_HEADER: 'header', shot_ONE_VS_ONE_AGAINST_GK: 'one-on-one', body_FOOT_LEFT: 'left foot', body_FOOT_RIGHT: 'right foot', body_HEAD: 'head', xg_size: 'Size = xG', heat_hint: 'Share of his on-ball actions in each zone', show_all: 'Show the whole season',
     recovery: 'Recovery',
-    lvl_reduce: 'Reduce load', lvl_hold: 'Hold load', lvl_build: 'Build up', lvl_plan: 'As planned', hint_reduce: 'Load spike, higher injury risk', hint_hold: 'Rising fast, keep the level', hint_build: 'Under-loaded or returning', hint_plan: 'All in range', r_acwr_hsr_rising: 'HSR ACWR rising: {v}', md1_groups: 'Session after the match (MD+1)', md1_hint: 'What each player does follows his minutes in {m}', recovery_group: 'Recovery', topup_group: 'Compensatory', played60: 'played 60′+', under60: 'played under 60′', status_rules: 'Reduce load: ACWR above 1.5. Hold load: 1.3–1.5. Build up: below 0.8, HSR below 0.6 or 3+ days without a session. ACWR = 7 vs 28 days (EWMA).',
+    lvl_reduce: 'Reduce load', lvl_hold: 'Hold load', lvl_build: 'Build up', lvl_plan: 'As planned', hint_reduce: 'Load spike, higher injury risk', hint_hold: 'Rising fast, keep the level', hint_build: 'Under-loaded or returning', hint_plan: 'All in range', r_acwr_hsr_rising: 'More high-speed running than usual', md1_groups: 'Session after the match (MD+1)', md1_hint: 'What each player does follows his minutes in {m}', recovery_group: 'Recovery', topup_group: 'Compensatory', played60: 'played 60′+', under60: 'played under 60′', status_rules: 'Reduce load: ACWR above 1.5. Hold load: 1.3–1.5. Build up: below 0.8, HSR below 0.6 or 3+ days without a session. ACWR = 7 vs 28 days (EWMA).',
     tab_overview: 'Overview', sig_hrv: 'HRV', sig_sleep: 'Sleep', sig_avail: 'Availability', not_connected: 'Not connected', available: 'Available', no_injury: 'No open injury', st_unavailable: 'Unavailable', st_modified: 'Modified training', this_week: 'This week', last_match_phys: 'Last match · physical', latest_ball: 'Latest match · on the ball', rank_in_squad: '{r} of {n} in the squad', not_measured: 'Not measured', minutes_on_pitch: 'minutes on the pitch', leg_avg: 'Average position', leg_goal: 'Goal', leg_shot: 'Shot (size = xG)', leg_carry: 'Progressive carry (10 m+)', attack_lr: 'Attacking left to right', checkin: 'Morning check-in', recovery_soon: 'HRV, resting heart rate and sleep from Whoop / Oura appear once connected.', checkin_soon: 'Player answers (sleep, energy, soreness, stress, mood) and session RPE appear once the player app is connected.', packing_note: 'opponents bypassed', carry_note: 'metres towards goal', losses_note: 'turnovers', prog_carries: 'Progressive carries', xg_note: '{s} shots, {g} goals', no_match_data: 'No match data', source_real: 'OpenField · real', 
     brand_sub: 'Club data platform', nav_today: 'Today', nav_sessions: 'Sessions', nav_week: 'Microcycle', nav_players: 'Players',
     nav_settings: 'Settings', logout: 'Log out', loading: 'Loading…', error: 'Could not load', retry: 'Retry', empty: 'Nothing here yet',
@@ -251,8 +263,8 @@ const D = {
    
     col_status: 'Status', col_player: 'Player', col_why: 'Why', col_acwr_d: 'ACWR distance', col_acwr_h: 'ACWR HSR',
     col_week: 'Week km', col_vs_prev: 'vs prev week', col_last_match: 'Last match', in_range: 'Within range',
-    r_acwr_dist_high: 'Distance ACWR {v}', r_acwr_hsr_high: 'HSR ACWR {v}', r_acwr_dist_rising: 'Distance ACWR rising: {v}',
-    r_underloaded: 'Underloaded, ACWR {v}', r_low_hsr: 'Low HSR exposure, ACWR {v}', r_no_session: 'No session since {d}',
+    r_acwr_dist_high: 'Load {v}× his usual', r_acwr_hsr_high: 'High-speed running {v}× his usual', r_acwr_dist_rising: 'Load rising fast',
+    r_underloaded: 'Underloaded: {v} of his usual', r_low_hsr: 'Little high-speed running', r_no_session: 'No sessions since {d}',
     r_short_history: 'short history (since {d})',
    
    
@@ -287,6 +299,12 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    how_counted: 'Қалай есептейміз',
+    f_mood: 'көңіл-күйі нашар',
+    f_stress: 'стресс',
+    f_soreness: 'бұлшықеттері ауырады',
+    f_energy: 'күші аз',
+    f_sleep_quality: 'нашар ұйықтады',
     wl_answers: 'Жауаптар',
     wl_tick: 'сызық — оның әдеттегі деңгейі',
     nav_wellness: 'Хал-ахуал',
@@ -359,8 +377,8 @@ const D = {
     i_soreness: 'ауырсыну',
     i_stress: 'стресс',
     i_mood: 'көңіл-күй',
-    r_wellness_low: 'Хал-ахуал қалыптан төмен',
-    r_wellness_very_low: 'Хал-ахуал қалыптан әлдеқайда төмен',
+    r_wellness_low: 'Хал-ахуалы әдеттегіден төмен',
+    r_wellness_very_low: 'Хал-ахуалы әдеттегіден әлдеқайда төмен',
     rpe_summary: 'Орташа RPE {v} · {n} ішінен {a} жауап берді',
     rpe_none: 'Әлі ешкім RPE жібермеді',
     wl_trend: 'Күндер бойынша хал-ахуал',
@@ -378,7 +396,7 @@ const D = {
     press_none: 'қысымсыз', press_light: 'жеңіл қысым', press_medium: 'орташа қысым', press_strong: 'күшті қысым', press_scale: 'қысым {v}/100', opp_LESS_THAN_ONE_METER: 'қарсылас 1 м-ден жақын', opp_ONE_METER: 'қарсылас 1 м-де', opp_TWO_METERS: 'қарсылас 2 м-де', opp_THREE_METERS: 'қарсылас 3 м-де', opp_FOUR_METERS: 'қарсылас 4 м-де', opp_MORE_THAN_FOUR_METERS: 'қарсылас 4 м-ден алыс', press_hint: 'Қысым (IMPECT, 0–100) — соққы сәтінде қарсыластың қаншалықты жақын әрі белсенді кедергі жасағаны: 0 — ешкім жоқ, 100 — тығыз прессинг.',
     layer_shots: 'Соққылар', layer_carries: 'Доп жүргізу', layer_passes: 'Алға пас', layer_heat: 'Әрекет аймақтары', whole_season: 'Бүкіл маусым', goal_word: 'Гол', no_goal: 'Голсыз', under_pressure: 'қысыммен', gained: 'қақпаға +{m} м', bypassed_n: 'өтілген қарсылас: {n}', xg_per_shot: 'соққыға xG', avg_gain: 'орташа', actions_n: 'әрекет: {n}', leg_pass: 'Прогрессивті пас (10 м+)', map_hint: 'Минут пен матчты көру үшін соққыға не көрсеткіге апарыңыз. Тек сол матчты көрсету үшін төмендегі кестеден матчты басыңыз.', shot_CLOSE_RANGE_SHOT: 'жақын қашықтықтан', shot_MID_RANGE_SHOT: 'орта қашықтықтан', shot_LONG_RANGE_SHOT: 'алыстан', shot_HEADER: 'баспен', shot_ONE_VS_ONE_AGAINST_GK: 'бір де бір', body_FOOT_LEFT: 'сол аяқпен', body_FOOT_RIGHT: 'оң аяқпен', body_HEAD: 'баспен', xg_size: 'Өлшемі — xG', heat_hint: 'Әр аймақтағы доппен әрекеттерінің үлесі', show_all: 'Бүкіл маусымды көрсету',
     recovery: 'Қалпына келу',
-    lvl_reduce: 'Жүктемені азайту', lvl_hold: 'Арттырмау', lvl_build: 'Жүктемені толықтыру', lvl_plan: 'Жоспар бойынша', hint_reduce: 'Жүктеменің күрт өсуі, жарақат қаупі жоғары', hint_hold: 'Жүктеме тез өсуде, деңгейді сақтау', hint_build: 'Жүктеме аз немесе қайта оралуда', hint_plan: 'Бәрі қалыпты', r_acwr_hsr_rising: 'HSR ACWR өсуде: {v}', md1_groups: 'Матчтан кейінгі жаттығу (MD+1)', md1_hint: '{m} матчында кім қанша ойнады — соған сай жаттығу', recovery_group: 'Қалпына келтіру', topup_group: 'Толықтыру жаттығуы', played60: '60′+ ойнады', under60: '60′-тан аз ойнады', status_rules: 'Азайту — ACWR 1,5-тен жоғары. Арттырмау — 1,3–1,5. Толықтыру — 0,8-ден төмен, HSR 0,6-дан төмен немесе 3+ күн сессиясыз. ACWR — 7 күннің 28 күнге қатынасы (EWMA).',
+    lvl_reduce: 'Жүктемені азайту', lvl_hold: 'Арттырмау', lvl_build: 'Жүктемені толықтыру', lvl_plan: 'Жоспар бойынша', hint_reduce: 'Жүктеменің күрт өсуі, жарақат қаупі жоғары', hint_hold: 'Жүктеме тез өсуде, деңгейді сақтау', hint_build: 'Жүктеме аз немесе қайта оралуда', hint_plan: 'Бәрі қалыпты', r_acwr_hsr_rising: 'Жылдам жүгіріс әдеттегіден көп', md1_groups: 'Матчтан кейінгі жаттығу (MD+1)', md1_hint: '{m} матчында кім қанша ойнады — соған сай жаттығу', recovery_group: 'Қалпына келтіру', topup_group: 'Толықтыру жаттығуы', played60: '60′+ ойнады', under60: '60′-тан аз ойнады', status_rules: 'Азайту — ACWR 1,5-тен жоғары. Арттырмау — 1,3–1,5. Толықтыру — 0,8-ден төмен, HSR 0,6-дан төмен немесе 3+ күн сессиясыз. ACWR — 7 күннің 28 күнге қатынасы (EWMA).',
     tab_overview: 'Шолу', sig_hrv: 'HRV', sig_sleep: 'Ұйқы', sig_avail: 'Қолжетімділік', not_connected: 'Қосылмаған', available: 'Дайын', no_injury: 'Ашық жарақат жоқ', st_unavailable: 'Дайын емес', st_modified: 'Жеңілдетілген жаттығу', this_week: 'Осы апта', last_match_phys: 'Соңғы матч · физика', latest_ball: 'Соңғы матч · доппен', rank_in_squad: 'құрамда {n} ішінде {r}-орын', not_measured: 'Өлшенбеген', minutes_on_pitch: 'алаңдағы минут', leg_avg: 'Орташа позиция', leg_goal: 'Гол', leg_shot: 'Соққы (өлшемі — xG)', leg_carry: 'Прогрессивті доп жүргізу (10 м+)', attack_lr: 'Шабуыл солдан оңға', checkin: 'Таңғы сауалнама', recovery_soon: 'Whoop / Oura-дан HRV, тыныштықтағы пульс және ұйқы қосылғаннан кейін шығады.', checkin_soon: 'Ойыншы жауаптары (ұйқы, қуат, ауырсыну, стресс, көңіл-күй) және сессия RPE ойыншы қосымшасы қосылғаннан кейін шығады.', packing_note: 'қарсылас өтілді', carry_note: 'қақпаға қарай метр', losses_note: 'доп жоғалту', prog_carries: 'Прогрессивті доп жүргізу', xg_note: '{s} соққы, {g} гол', no_match_data: 'Матч деректері жоқ', source_real: 'OpenField · нақты', 
     brand_sub: 'Клубтың деректер платформасы', nav_today: 'Бүгін', nav_sessions: 'Сессиялар', nav_week: 'Микроцикл', nav_players: 'Ойыншылар',
     nav_settings: 'Баптаулар', logout: 'Шығу', loading: 'Жүктелуде…', error: 'Жүктеу мүмкін болмады', retry: 'Қайталау', empty: 'Әзірге бос',
@@ -389,9 +407,9 @@ const D = {
    
     col_status: 'Күйі', col_player: 'Ойыншы', col_why: 'Себебі', col_acwr_d: 'ACWR қашықтық', col_acwr_h: 'ACWR HSR',
     col_week: 'Апталық км', col_vs_prev: 'Өткен аптаға', col_last_match: 'Соңғы матч', in_range: 'Қалыпты',
-    r_acwr_dist_high: 'Қашықтық ACWR {v}', r_acwr_hsr_high: 'HSR ACWR {v}', r_acwr_dist_rising: 'Қашықтық ACWR өсуде: {v}',
-    r_underloaded: 'Жүктеме аз, ACWR {v}', r_low_hsr: 'HSR аз, ACWR {v}', r_no_session: '{d} бастап сессия жоқ',
-    r_short_history: 'қысқа тарих ({d} бастап)',
+    r_acwr_dist_high: 'Жүктеме әдеттегіден {v} есе жоғары', r_acwr_hsr_high: 'Жылдам жүгіріс әдеттегіден {v} есе көп', r_acwr_dist_rising: 'Жүктеме тез өсіп келеді',
+    r_underloaded: 'Жүктеме аз: әдеттегінің {v} бөлігі', r_low_hsr: 'Жылдам жүгіріс аз', r_no_session: '{d} бастап жаттығу жоқ',
+    r_short_history: 'деректер әзірге аз ({d} бастап)',
    
    
     sessions_title: 'Сессиялар тарихы', f_all: 'Барлығы', f_matches: 'Матчтар', f_trainings: 'Жаттығулар', from: 'Бастап', to: 'Дейін',

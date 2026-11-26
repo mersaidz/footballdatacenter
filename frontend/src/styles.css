@@ -128,3 +128,6 @@ textarea.input { resize: vertical; font: inherit; line-height: 1.5; }
 .qr { width: 180px; height: 180px; background: #fff; border-radius: 12px; padding: 8px; flex: none; }
 .qr svg { width: 100%; height: 100%; display: block; }
 .link-box { display: block; background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; word-break: break-all; color: var(--text-2); }
+/* a player who isn't training: still listed, but out of the way */
+tr.out td { color: var(--muted); }
+tr.out td:not(:first-child):not(:nth-child(3)):not(:nth-child(4)) { opacity: 0.45; }

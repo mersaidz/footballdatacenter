@@ -102,7 +102,7 @@ export default function Today() {
                 </tr></thead>
                 <tbody>
                   {rows.map((p) => (
-                    <tr key={p.player_id} className="click" onClick={() => nav(`/players/${p.player_id}`)}>
+                    <tr key={p.player_id} className={`click${p.level === 'out' ? ' out' : ''}`} onClick={() => nav(`/players/${p.player_id}`)}>
                       <td><LevelBadge level={p.level} /></td>
                       <td className="muted">{p.shirt_number ?? ''}</td>
                       <td><Link to={`/players/${p.player_id}`} style={{ fontWeight: 500 }} onClick={(e) => e.stopPropagation()}>{p.name}</Link>{p.position === 'GK' && <span className="small faint"> GK</span>}</td>

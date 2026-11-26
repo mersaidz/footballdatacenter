@@ -25,6 +25,28 @@ if not SECRET_KEY:
 DEBUG = env_bool('DJANGO_DEBUG', False)
 ALLOWED_HOSTS = [h for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h]
 
+
+def _lan_addresses() -> list[str]:
+    """This computer's addresses on the local network, so a phone on the same Wi-Fi can open the dev server."""
+    import socket
+    found = set()
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(('10.255.255.255', 1))            # picks the outgoing interface; nothing is sent
+            found.add(s.getsockname()[0])
+    except OSError:
+        pass
+    try:
+        found.update(a[4][0] for a in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET))
+    except OSError:
+        pass
+    return sorted(a for a in found if not a.startswith('127.'))
+
+
+if DEBUG:
+    # Development only: the Mac's own Wi-Fi address and its Bonjour name (e.g. mersaid-macbook.local).
+    ALLOWED_HOSTS += _lan_addresses() + ['.local']
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

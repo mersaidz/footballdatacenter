@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { num, t } from '../i18n';
 
 export const LEVEL = {
@@ -104,3 +104,24 @@ export const ICONS = {
   settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   left: 'M15 18l-6-6 6-6', right: 'M9 18l6-6-6-6', logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
 };
+
+/** Instant help: shows on hover, keyboard focus or tap (native `title` tooltips wait ~1 s and never show on touch). */
+export function InfoTip({ label, text }: { label: string; text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button type="button" aria-expanded={open} aria-label={`${label}: ${text}`} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
+        onClick={() => setOpen((o) => !o)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 0, color: 'inherit', cursor: 'help', padding: 0, font: 'inherit' }}>
+        {label}
+        <span aria-hidden="true" style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--faint)', display: 'inline-flex',
+          alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>?</span>
+      </button>
+      {open && (
+        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, width: 280, zIndex: 20, background: 'rgba(17,17,17,0.97)',
+          border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', color: 'var(--text-2)', fontSize: 12, lineHeight: 1.5,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>{text}</span>
+      )}
+    </span>
+  );
+}

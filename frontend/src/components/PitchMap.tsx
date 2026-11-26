@@ -2,7 +2,7 @@
 // with arrows, and an action heat map. Hover for minute / match / xG; filter to one match.
 import { useMemo, useRef, useState } from 'react';
 import { day, num, t } from '../i18n';
-import { Seg } from './ui';
+import { InfoTip, Seg } from './ui';
 
 export type Shot = { x: number; y: number; end_x: number | null; end_y: number | null; xg: number; goal: boolean; match_id: number; minute: number; kind: string; body_part: string; pressure: number | null; opponent_distance?: string | null };
 
@@ -152,7 +152,7 @@ export default function PitchMap({ data, match, onMatch }: { data: MapData; matc
         {layer === 'carries' && <span style={{ color: COLOR.carries }}>→ {t('leg_carry')}</span>}
         {layer === 'passes' && <span style={{ color: COLOR.passes }}>→ {t('leg_pass')}</span>}
         {layer === 'heat' && <span>{t('heat_hint')}</span>}
-        {layer === 'shots' && <span title={t('press_hint')} style={{ borderBottom: '1px dotted var(--faint)', cursor: 'help' }}>{t('press_scale', { v: '0–100' })}?</span>}
+        {layer === 'shots' && <InfoTip label={t('press_label')} text={t('press_hint')} />}
         {!match && data.average_position && <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: COLOR.avg }} />{t('leg_avg')}</span>}
         <span>{t('attack_lr')}</span>
         {match && <button className="pill" onClick={() => onMatch(null)}>{t('show_all')}</button>}

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, api, clubPath, useApi } from '../api';
+import { ApiError, api, clubPath, MetricSetItem, SessionDetail, SquadStatus, useApi } from '../api';
 import { day, num, t } from '../i18n';
-import { acwrColor, Bars, LineChart, State } from '../components/ui';
+import { acwrColor, Bars, CAT_COLOR, LEVEL, LineChart, State } from '../components/ui';
 import { posLabel } from './Players';
+import { reasonText } from './Today';
 
 interface History {
   player: { id: number; name: string; shirt_number: number | null; position: string; foot: string };
@@ -14,111 +15,248 @@ interface History {
   reference: Record<string, number>;
   totals: { sessions: number; matches: number; match_minutes: number; top_speed: number | null; flagged: number };
 }
+type Shot = { x: number; y: number; xg: number; goal: boolean; match_id: number };
+type Carry = { x: number; y: number; end_x: number; end_y: number; match_id: number };
 interface Football {
   competition: string; season: string; demo_link: { source_player: string; squad?: string } | null; main_position: string; peers: string;
   peer_count: number; minutes: number; matches: number;
-  groups: { label: string; kpis: { label: string; kpi: string; per90: number; percentile: number | null; unit: string }[] }[];
+  groups: { key: string; label: string; kpis: { label: string; kpi: string; per90: number; percentile: number | null; unit: string }[] }[];
   match_log: { match_id: number; date: string; home: boolean; opponent: string; score: string; result: string; minutes: number; position: string; xg: number; shots: number; goals: number; packing: number; carrying_m: number; ball_losses: number }[];
-  shots: { x: number; y: number; xg: number; goal: boolean }[]; carries: { x: number; y: number; end_x: number; end_y: number }[];
-  average_position: { x: number; y: number } | null;
+  shots: Shot[]; carries: Carry[]; average_position: { x: number; y: number } | null;
 }
 
 const heat = (v: number | null) => v == null ? {} : { background: `rgba(0,159,180,${(Math.max(0.06, Math.min(1, v / 110)) * 0.85).toFixed(2)})` };
-const GROUP_COLOR = ['#ff7a45', '#5fd0e0', '#a78bfa'];
+const GROUP_COLOR: Record<string, string> = { attacking: '#ff7a45', progression: '#5fd0e0', defending: '#a78bfa' };
+const IMPECT_POS: Record<string, string> = { GOALKEEPER: 'GK', CENTRAL_DEFENDER: 'CB', LEFT_WINGBACK_DEFENDER: 'FB', RIGHT_WINGBACK_DEFENDER: 'FB',
+  DEFENSE_MIDFIELD: 'DM', CENTRAL_MIDFIELD: 'CM', ATTACKING_MIDFIELD: 'AM', LEFT_WINGER: 'W', RIGHT_WINGER: 'W', CENTER_FORWARD: 'CF' };
+const last = (a: (number | null)[] | null | undefined) => (a && a.length ? a[a.length - 1] : null);
 
-function Pitch({ f }: { f: Football }) {
+function Pitch({ shots, carries, avg, arrows, label }: { shots: Shot[]; carries: Carry[]; avg: { x: number; y: number } | null; arrows?: boolean; label: string }) {
   const circle = (x: number, y: number, r: number) => `M${x - r} ${y}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
+  const r = (s: Shot) => 0.9 + Math.sqrt(s.xg) * 3.2;
+  const head = (c: Carry) => {
+    const a = Math.atan2(c.end_y - c.y, c.end_x - c.x), h = 1.8;
+    return `M${c.end_x} ${c.end_y}L${c.end_x - h * Math.cos(a - 0.45)} ${c.end_y - h * Math.sin(a - 0.45)}L${c.end_x - h * Math.cos(a + 0.45)} ${c.end_y - h * Math.sin(a + 0.45)}Z`;
+  };
   return (
-    <svg viewBox="-2 -2 109 72" role="img" aria-label="Season map" style={{ width: '100%', background: '#12261b', borderRadius: 8 }}>
-      <g fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.4"><rect x="0" y="0" width="105" height="68" /><line x1="52.5" y1="0" x2="52.5" y2="68" />
-        <circle cx="52.5" cy="34" r="9.15" /><rect x="0" y="13.84" width="16.5" height="40.32" /><rect x="88.5" y="13.84" width="16.5" height="40.32" /></g>
-      <path d={f.carries.map((c) => `M${c.x} ${c.y}L${c.end_x} ${c.end_y}`).join('')} stroke="#5fd0e0" strokeWidth="0.35" opacity="0.55" />
-      <path d={f.shots.filter((s) => !s.goal).map((s) => circle(s.x, s.y, 0.9 + Math.sqrt(s.xg) * 3.2)).join('')} fill="none" stroke="#fafafa" strokeWidth="0.35" />
-      <path d={f.shots.filter((s) => s.goal).map((s) => circle(s.x, s.y, 0.9 + Math.sqrt(s.xg) * 3.2)).join('')} fill="#ff7a45" />
-      {f.average_position && <circle cx={f.average_position.x} cy={f.average_position.y} r="2.4" fill="#fbbf24" stroke="#12261b" strokeWidth="0.8" />}
-    </svg>
+    <figure style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <svg viewBox="-2 -2 109 72" role="img" aria-label={label} style={{ width: '100%', background: '#12261b', borderRadius: 8 }}>
+        <g fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.4"><rect x="0" y="0" width="105" height="68" /><line x1="52.5" y1="0" x2="52.5" y2="68" />
+          <circle cx="52.5" cy="34" r="9.15" /><rect x="0" y="13.84" width="16.5" height="40.32" /><rect x="88.5" y="13.84" width="16.5" height="40.32" />
+          <rect x="0" y="24.84" width="5.5" height="18.32" /><rect x="99.5" y="24.84" width="5.5" height="18.32" /></g>
+        <path d={carries.map((c) => `M${c.x} ${c.y}L${c.end_x} ${c.end_y}`).join('')} stroke="#5fd0e0" strokeWidth={arrows ? 0.7 : 0.35} opacity={arrows ? 0.9 : 0.55} strokeLinecap="round" />
+        {arrows && <path d={carries.map(head).join('')} fill="#5fd0e0" />}
+        <path d={shots.filter((s) => !s.goal).map((s) => circle(s.x, s.y, r(s))).join('')} fill="none" stroke="#fafafa" strokeWidth="0.4" />
+        <path d={shots.filter((s) => s.goal).map((s) => circle(s.x, s.y, r(s))).join('')} fill="#ff7a45" />
+        {avg && <circle cx={avg.x} cy={avg.y} r="2.4" fill="#fbbf24" stroke="#12261b" strokeWidth="0.8" />}
+      </svg>
+      <figcaption className="row small muted" style={{ gap: 14 }}>
+        <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: '#fbbf24' }} />{t('leg_avg')}</span>
+        <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: '#ff7a45' }} />{t('leg_goal')}</span>
+        <span className="row" style={{ gap: 6 }}><span className="dot" style={{ border: '1px solid #fafafa' }} />{t('leg_shot')}</span>
+        <span style={{ color: '#5fd0e0' }}>→ {t('leg_carry')}</span>
+        <span>{t('attack_lr')}</span>
+      </figcaption>
+    </figure>
   );
 }
 
-function FootballTab({ id }: { id: string }) {
-  const [f, setF] = useState<Football | null>(null); const [err, setErr] = useState<string | null>(null); const [none, setNone] = useState(false);
-  useEffect(() => {
-    api<Football>(clubPath(`players/${id}/football/`)).then(setF).catch((e: ApiError) => (e.status === 404 ? setNone(true) : setErr(e.detail)));
-  }, [id]);
-  if (none) return <div className="card muted">{t('fb_none')}</div>;
+const Signal = ({ label, value, note, color, src }: { label: string; value: string; note: string; color: string; src: string }) => (
+  <div style={{ borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <span className="row small muted" style={{ gap: 6 }}><span className="dot" style={{ background: color }} />{label}</span>
+    <b className="num" style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.1 }}>{value}</b>
+    <span className="small" style={{ color: 'var(--text-2)' }}>{note}</span>
+    <span className="small faint">{src}</span>
+  </div>
+);
+
+function LastMatchPhysical({ sessionId, playerId }: { sessionId: number; playerId: number }) {
+  const sets = useApi<MetricSetItem[]>(clubPath('metric-sets/'));
+  const [setId, setSetId] = useState('default');
+  const q = useApi<SessionDetail>(clubPath(`sessions/${sessionId}/?metric_set=${setId}`), [sessionId, setId]);
+  const d = q.data;
+  const me = d?.rows.find((r) => r.player_id === playerId);
   return (
-    <State loading={!f && !err} error={err}>
-      {f && <>
-        {f.demo_link && <div className="notice">{t('fb_demo', { src: f.demo_link.source_player, squad: `${f.demo_link.squad || ''}, ${f.competition} ${f.season}` })}</div>}
-        <div className="grid" style={{ '--min': '420px' } as React.CSSProperties}>
-          <section className="card">
-            <div className="head"><div><h2>{t('fb_profile')}</h2><span className="small muted">{t('fb_peers', { n: f.peer_count, p: posLabel(({ GOALKEEPER: 'GK', CENTRAL_DEFENDER: 'CB', LEFT_WINGBACK_DEFENDER: 'FB', RIGHT_WINGBACK_DEFENDER: 'FB', DEFENSE_MIDFIELD: 'DM', CENTRAL_MIDFIELD: 'CM', ATTACKING_MIDFIELD: 'AM', LEFT_WINGER: 'W', RIGHT_WINGER: 'W', CENTER_FORWARD: 'CF' } as Record<string, string>)[f.main_position] || '') })}</span></div>
-              <span className="small muted">{f.competition} {f.season} · {t('fb_minutes', { m: num(f.minutes), n: f.matches })}</span></div>
-            {f.groups.filter((g) => !(f.main_position === 'GOALKEEPER' && (g as { key?: string }).key === 'attacking')).map((g, gi) => (
-              <div key={g.label} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span className="small" style={{ color: GROUP_COLOR[gi % 3], fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{g.label}</span>
-                {g.kpis.map((k) => (
-                  <div key={k.kpi} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px,1.4fr) 64px minmax(80px,2fr) 28px', gap: 10, alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-2)' }}>{k.label}</span>
-                    <span className="right num">{k.unit === '%' ? `${num(k.per90, 1)}%` : num(k.per90, k.per90 >= 100 ? 0 : 2)}</span>
-                    <span className="bar" style={{ height: 8 }}><span style={{ width: `${k.percentile ?? 0}%`, background: GROUP_COLOR[gi % 3], opacity: 0.35 + (k.percentile ?? 0) / 160 }} /></span>
-                    <span className="small muted right num">{k.percentile ?? '—'}</span>
-                  </div>
-                ))}
+    <section className="card">
+      <div className="head"><div><h2>{t('last_match_phys')}</h2>{d && <span className="small muted">{d.session.name} · {day(d.session.date)}</span>}</div>
+        <span className="small muted">{t('source_real')}</span></div>
+      <div className="row" role="group" aria-label={t('metric_view')}>
+        {(sets.data || []).map((s) => <button key={s.id} className="pill" aria-pressed={String(s.id) === setId || (setId === 'default' && s.id === d?.metric_set.id)} onClick={() => setSetId(String(s.id))}>{s.name}</button>)}
+      </div>
+      <State loading={q.loading && !d} error={q.error}>
+        {d && me && (
+          <div className="grid" style={{ '--min': '130px' } as React.CSSProperties}>
+            {d.metric_set.metrics.map((m) => {
+              const v = me.values[m.key];
+              const all = d.rows.map((r) => r.values[m.key]).filter((x): x is number => x != null).sort((a, b) => b - a);
+              const rank = v == null ? null : all.indexOf(v) + 1;
+              const pct = v == null || !all[0] ? 0 : Math.max(3, (v / all[0]) * 100);
+              return (
+                <div key={m.key} title={m.label} style={{ borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span className="row small muted" style={{ gap: 6 }}><span className="dot" style={{ width: 6, height: 6, background: CAT_COLOR[m.category] || '#a3a3a3' }} />{m.short_label}</span>
+                  <b className="num" style={{ fontSize: 20, fontWeight: 600, color: v == null ? 'var(--faint)' : undefined }}>{num(v, m.unit === 'km/h' ? 1 : 0)} <span className="small faint" style={{ fontWeight: 300 }}>{m.unit}</span></b>
+                  <span className="bar"><span style={{ width: `${pct}%`, background: CAT_COLOR[m.category] || '#a3a3a3' }} /></span>
+                  <span className="small faint">{v == null ? t('not_measured') : m.key === 'duration' ? t('minutes_on_pitch') : t('rank_in_squad', { r: rank!, n: all.length })}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </State>
+    </section>
+  );
+}
+
+function LatestOnTheBall({ f }: { f: Football }) {
+  const m = f.match_log[0];
+  if (!m) return null;
+  const shots = f.shots.filter((s) => s.match_id === m.match_id);
+  const carries = f.carries.filter((c) => c.match_id === m.match_id);
+  const tiles: [string, string, string][] = [
+    ['xG', num(m.xg, 2), t('xg_note', { s: m.shots, g: m.goals })], ['Packing', num(m.packing), t('packing_note')],
+    [t('col_carry'), num(m.carrying_m), t('carry_note')], [t('prog_carries'), String(carries.length), '10 m+'],
+    [t('col_losses'), String(m.ball_losses), t('losses_note')], [t('col_min'), `${m.minutes}′`, posLabel(IMPECT_POS[m.position] || '')],
+  ];
+  return (
+    <section className="card">
+      <div className="head"><div><h2>{t('latest_ball')}</h2>
+        <span className="small muted">{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })} · {m.home ? t('home') : t('away')}: {m.opponent} · {m.score} ({m.result})</span></div>
+        <span className="small" style={{ border: '1px dashed rgba(255,255,255,0.28)', borderRadius: 999, padding: '3px 9px', color: 'var(--muted)' }}>IMPECT{f.demo_link ? ' · demo' : ''}</span></div>
+      <div className="row" style={{ alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ flex: '1 1 280px' }}><Pitch shots={shots} carries={carries} avg={f.average_position} arrows label={t('latest_ball')} /></div>
+        <div className="grid" style={{ '--min': '120px', flex: '1 1 200px' } as React.CSSProperties}>
+          {tiles.map(([l, v, n]) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span className="small muted">{l}</span><b className="num" style={{ fontSize: 20, fontWeight: 600 }}>{v}</b><span className="small faint">{n}</span></div>)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FootballTab({ f }: { f: Football }) {
+  return <>
+    {f.demo_link && <div className="notice">{t('fb_demo', { src: f.demo_link.source_player, squad: `${f.demo_link.squad || ''}, ${f.competition} ${f.season}` })}</div>}
+    <div className="grid" style={{ '--min': '420px' } as React.CSSProperties}>
+      <section className="card">
+        <div className="head"><div><h2>{t('fb_profile')}</h2><span className="small muted">{t('fb_peers', { n: f.peer_count, p: posLabel(IMPECT_POS[f.main_position] || '') })}</span></div>
+          <span className="small muted">{f.competition} {f.season} · {t('fb_minutes', { m: num(f.minutes), n: f.matches })}</span></div>
+        {f.groups.filter((g) => !(f.main_position === 'GOALKEEPER' && g.key === 'attacking')).map((g) => (
+          <div key={g.key} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span className="small" style={{ color: GROUP_COLOR[g.key], fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{g.label}</span>
+            {g.kpis.map((k) => (
+              <div key={k.kpi} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px,1.4fr) 64px minmax(80px,2fr) 28px', gap: 10, alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-2)' }}>{k.label}</span>
+                <span className="right num">{k.unit === '%' ? `${num(k.per90, 1)}%` : num(k.per90, k.per90 >= 100 ? 0 : 2)}</span>
+                <span className="bar" style={{ height: 8 }}><span style={{ width: `${k.percentile ?? 0}%`, background: GROUP_COLOR[g.key], opacity: 0.35 + (k.percentile ?? 0) / 160 }} /></span>
+                <span className="small muted right num">{k.percentile ?? '—'}</span>
               </div>
             ))}
-          </section>
-          <section className="card"><div className="head"><h2>{t('season_map')}</h2><span className="small muted">→</span></div><Pitch f={f} /></section>
-        </div>
-        <section className="card flush">
-          <div className="head"><h2>{t('fb_log')}</h2><span className="small muted">IMPECT</span></div>
-          <div className="scroll" style={{ maxHeight: 440, overflowY: 'auto' }}>
-            <table>
-              <thead><tr><th>{t('col_date')}</th><th>{t('col_opp')}</th><th>{t('col_score')}</th><th className="right">{t('col_min')}</th><th className="right">{t('col_xg')}</th><th className="right">{t('col_shots')}</th><th className="right">{t('col_goals')}</th><th className="right">{t('col_packing')}</th><th className="right">{t('col_carry')}</th><th className="right">{t('col_losses')}</th></tr></thead>
-              <tbody>{f.match_log.map((m) => (
-                <tr key={m.match_id}><td>{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td><td>{m.opponent} <span className="small faint">{m.home ? t('home') : t('away')}</span></td>
-                  <td><span className="tag" style={{ color: '#0a0a0a', background: { W: '#4ade80', D: '#a3a3a3', L: '#f87171' }[m.result] || '#a3a3a3' }}>{m.result}</span> {m.score}</td>
-                  <td className="right">{m.minutes}′</td><td className="right">{num(m.xg, 2)}</td><td className="right">{m.shots}</td><td className="right">{m.goals}</td>
-                  <td className="right">{num(m.packing)}</td><td className="right">{num(m.carrying_m)}</td><td className="right">{m.ball_losses}</td></tr>
-              ))}</tbody>
-            </table>
           </div>
-        </section>
-      </>}
-    </State>
-  );
+        ))}
+      </section>
+      <section className="card"><div className="head"><h2>{t('season_map')}</h2><span className="small muted">{f.shots.length} · xG {num(f.shots.reduce((a, s) => a + s.xg, 0), 1)}</span></div>
+        <Pitch shots={f.shots} carries={f.carries} avg={f.average_position} label={t('season_map')} /></section>
+    </div>
+    <section className="card flush">
+      <div className="head"><h2>{t('fb_log')}</h2><span className="small muted">IMPECT</span></div>
+      <div className="scroll" style={{ maxHeight: 440, overflowY: 'auto' }}>
+        <table>
+          <thead><tr><th>{t('col_date')}</th><th>{t('col_opp')}</th><th>{t('col_score')}</th><th className="right">{t('col_min')}</th><th className="right">{t('col_xg')}</th><th className="right">{t('col_shots')}</th><th className="right">{t('col_goals')}</th><th className="right">{t('col_packing')}</th><th className="right">{t('col_carry')}</th><th className="right">{t('col_losses')}</th></tr></thead>
+          <tbody>{f.match_log.map((m) => (
+            <tr key={m.match_id}><td>{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td><td>{m.opponent} <span className="small faint">{m.home ? t('home') : t('away')}</span></td>
+              <td><span className="tag" style={{ color: '#0a0a0a', background: ({ W: '#4ade80', D: '#a3a3a3', L: '#f87171' } as Record<string, string>)[m.result] || '#a3a3a3' }}>{m.result}</span> {m.score}</td>
+              <td className="right">{m.minutes}′</td><td className="right">{num(m.xg, 2)}</td><td className="right">{m.shots}</td><td className="right">{m.goals}</td>
+              <td className="right">{num(m.packing)}</td><td className="right">{num(m.carrying_m)}</td><td className="right">{m.ball_losses}</td></tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </section>
+  </>;
 }
+
+const Pending = ({ title, text }: { title: string; text: string }) => (
+  <section className="card" style={{ border: '1px dashed rgba(255,255,255,0.22)', background: 'transparent' }}>
+    <div className="head"><h2>{title}</h2><span className="small faint">{t('not_connected')}</span></div>
+    <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>{text}</p>
+  </section>
+);
 
 export default function PlayerProfile() {
   const { id = '' } = useParams();
   const nav = useNavigate();
-  const [tab, setTab] = useState<'load' | 'football' | 'wellness'>('load');
+  const [tab, setTab] = useState<'overview' | 'load' | 'football' | 'wellness'>('overview');
   const q = useApi<History>(clubPath(`players/${id}/load-history/`), [id]);
+  const status = useApi<SquadStatus>(clubPath('squad-status/'));
+  const avail = useApi<{ results: { status: string; expected_return: string | null }[] }>(clubPath(`availability/?player=${id}&current=true`), [id]);
+  const [fb, setFb] = useState<Football | null | 'none'>(null);
+  useEffect(() => {
+    setFb(null);
+    api<Football>(clubPath(`players/${id}/football/`)).then(setFb).catch((e: ApiError) => setFb(e.status === 404 ? 'none' : null));
+  }, [id]);
   const h = q.data;
   const p = h?.player;
-  const last = (a: (number | null)[] | null | undefined) => (a && a.length ? a[a.length - 1] : null);
+  const st = useMemo(() => status.data?.players.find((x) => String(x.player_id) === id), [status.data, id]);
+  const open = avail.data?.results?.[0];
+  const football = fb && fb !== 'none' ? fb : null;
+  const wk = (from: number, to?: number) => (h ? h.days.slice(from, to).reduce((a, d) => a + d.distance, 0) : 0);
+  const now = wk(-7), prev = wk(-14, -7);
   return (
     <>
       <header className="top"><Link to="/players">{t('nav_players')}</Link><span>/</span><span style={{ color: 'var(--text)' }}>{p?.name}</span></header>
       <div className="page">
         <State loading={q.loading && !h} error={q.error} onRetry={q.reload}>
           {h && p && <>
-            <section className="card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, alignItems: 'center' }}>
-              <div className="hero-num"><b>{p.shirt_number ?? '—'}</b><span className="small" style={{ color: 'var(--accent-text)', fontWeight: 600 }}>{p.position || ''}</span></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 260px' }}>
-                <h1 style={{ fontSize: 28 }}>{p.name}</h1>
-                <span className="row muted">{posLabel(p.position)}{p.foot && <> · {t(`foot_${p.foot}` as never)}</>}</span>
+            <section className="card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, alignItems: 'center', background: 'linear-gradient(180deg,#1c1c1c,#161616)' }}>
+              <div style={{ display: 'flex', gap: 18, alignItems: 'center', flex: '1 1 340px' }}>
+                <div className="hero-num"><b>{p.shirt_number ?? '—'}</b><span className="small" style={{ color: 'var(--accent-text)', fontWeight: 600 }}>{p.position || ''}</span></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h1 style={{ fontSize: 28 }}>{p.name}</h1>
+                  <span className="row" style={{ gap: 8 }}>
+                    {st && <span className="badge" style={{ color: LEVEL[st.level].color, background: LEVEL[st.level].bg }}><span className="dot" style={{ background: LEVEL[st.level].color, width: 7, height: 7 }} />{t(`lvl_${st.level}`)}</span>}
+                    <span className="small" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px' }}>{posLabel(p.position)}</span>
+                    {p.foot && <span className="small" style={{ border: '1px solid var(--line)', borderRadius: 999, padding: '3px 10px' }}>{t(`foot_${p.foot}` as never)}</span>}
+                  </span>
+                  <span className="small muted">{h.totals.sessions} {t('sessions_n').toLowerCase()} · {h.totals.matches} {t('matches_n').toLowerCase()} · {h.totals.match_minutes} {t('minutes_short')} · {t('top_speed').toLowerCase()} {num(h.totals.top_speed, 1)} km/h</span>
+                </div>
               </div>
-              <div className="grid" style={{ '--min': '120px', flex: '2 1 480px' } as React.CSSProperties}>
-                {[[t('col_acwr_d'), num(last(h.acwr_distance), 2), acwrColor(last(h.acwr_distance))], [t('sessions_n'), h.totals.sessions], [t('matches_n'), h.totals.matches],
-                  [t('match_minutes'), h.totals.match_minutes], [t('top_speed'), h.totals.top_speed ? `${num(h.totals.top_speed, 1)} km/h` : '—'], [t('gps_flagged'), h.totals.flagged]].map(([l, v, c]) => (
-                  <div key={l as string} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span className="small muted">{l}</span><b className="num" style={{ fontSize: 20, fontWeight: 600, color: c as string | undefined }}>{v}</b></div>
-                ))}
+              <div className="grid" style={{ '--min': '130px', flex: '1 1 440px' } as React.CSSProperties}>
+                <Signal label={t('tab_load')} value={num(st?.acwr_distance ?? last(h.acwr_distance), 2)} note={st?.reasons.length ? reasonText(st.reasons[0]) : t('in_range')}
+                  color={st ? LEVEL[st.level].color : acwrColor(last(h.acwr_distance))} src="OpenField" />
+                <Signal label={t('sig_hrv')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />
+                <Signal label={t('sig_sleep')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />
+                <Signal label={t('sig_avail')} value={open ? t(open.status === 'modified' ? 'st_modified' : 'st_unavailable') : t('available')}
+                  note={open?.expected_return ? `→ ${day(open.expected_return)}` : t('no_injury')} color={open ? 'var(--red)' : 'var(--green)'} src={t('nav_players')} />
               </div>
             </section>
             <div className="tabs" role="tablist">
-              {(['load', 'football', 'wellness'] as const).map((k) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(`tab_${k}`)}</button>)}
+              {(['overview', 'load', 'football', 'wellness'] as const).map((k) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(`tab_${k}`)}</button>)}
             </div>
+
+            {tab === 'overview' && <>
+              <div className="grid" style={{ '--min': '300px' } as React.CSSProperties}>
+                <section className="card">
+                  <div className="head"><h2>{t('tab_load')}</h2><span className="small muted">{t('source_real')}</span></div>
+                  <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><b className="num" style={{ fontSize: 36, fontWeight: 700, color: acwrColor(last(h.acwr_distance)) }}>{num(last(h.acwr_distance), 2)}</b><span className="muted">{t('col_acwr_d')}</span></div>
+                  <div style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.08)' }}>
+                    <span style={{ position: 'absolute', left: '32%', width: '20%', top: 0, bottom: 0, background: 'rgba(74,222,128,0.25)' }} />
+                    <span style={{ position: 'absolute', left: '60%', top: -3, bottom: -3, width: 2, background: 'rgba(248,113,113,0.7)' }} />
+                    <span style={{ position: 'absolute', top: -4, width: 16, height: 16, marginLeft: -8, borderRadius: '50%', border: '3px solid var(--card)', background: acwrColor(last(h.acwr_distance)), left: `${Math.min(100, ((last(h.acwr_distance) || 0) / 2.5) * 100)}%` }} />
+                  </div>
+                  <div className="grid" style={{ '--min': '110px' } as React.CSSProperties}>
+                    {[[t('col_acwr_h'), h.acwr_hsr ? num(last(h.acwr_hsr), 2) : '—'], [t('this_week'), `${num(now / 1000, 1)} km`],
+                      [t('col_vs_prev'), prev ? `${now >= prev ? '+' : ''}${Math.round((now / prev - 1) * 100)}%` : '—'], [t('match_demand'), `${num((h.reference.dist || 0) / 1000, 1)} km`]].map(([l, v]) => (
+                      <div key={l}><span className="small muted">{l}</span><b className="num" style={{ display: 'block', fontSize: 16, fontWeight: 600 }}>{v}</b></div>
+                    ))}
+                  </div>
+                </section>
+                <Pending title={t('recovery')} text={t('recovery_soon')} />
+                <Pending title={t('checkin')} text={t('checkin_soon')} />
+              </div>
+              <div className="grid" style={{ '--min': '440px' } as React.CSSProperties}>
+                {h.match_log[0] ? <LastMatchPhysical sessionId={h.match_log[0].session_id} playerId={p.id} /> : <section className="card muted">{t('no_match_data')}</section>}
+                {football ? <LatestOnTheBall f={football} /> : <section className="card muted">{fb === 'none' ? t('fb_none') : t('loading')}</section>}
+              </div>
+            </>}
+
             {tab === 'load' && <>
               <section className="card">
                 <div className="head"><h2>{t('acwr_chart')}</h2><span className="row small muted">
@@ -159,8 +297,10 @@ export default function PlayerProfile() {
                 </section>
               </div>
             </>}
-            {tab === 'football' && <FootballTab id={id} />}
-            {tab === 'wellness' && <div className="card muted">{t('wellness_soon')}</div>}
+
+            {tab === 'football' && (football ? <FootballTab f={football} /> : <div className="card muted">{fb === 'none' ? t('fb_none') : t('loading')}</div>)}
+            {tab === 'wellness' && <div className="grid" style={{ '--min': '320px' } as React.CSSProperties}>
+              <Pending title={t('recovery')} text={t('recovery_soon')} /><Pending title={t('checkin')} text={t('checkin_soon')} /></div>}
           </>}
         </State>
       </div>

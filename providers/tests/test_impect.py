@@ -217,7 +217,11 @@ def test_football_profile_api(club, our_team, make_member):
     packing = next(k for g in d['groups'] for k in g['kpis'] if k['kpi'] == 'BYPASSED_OPPONENTS')
     assert packing['per90'] == round(80 / 190 * 90, 2) and packing['percentile'] == 50   # only winger: himself
     assert [m['result'] for m in d['match_log']] == ['W', 'W'] and d['match_log'][0]['opponent'] == 'Bullen'
-    assert d['shots'] == [{'x': 94.0, 'y': 36.0, 'xg': 0.31, 'goal': True, 'match_id': d['shots'][0]['match_id'], 'minute': 92}]
+    shot = d['shots'][0]
+    assert (shot['x'], shot['y'], shot['xg'], shot['goal'], shot['minute'], shot['kind'], shot['pressure']) == \
+        (94.0, 36.0, 0.31, True, 92, 'CLOSE_RANGE_SHOT', True) and len(d['shots']) == 1
+    assert d['heat']['cols'] == 12 and sum(map(sum, d['heat']['season'])) == 2      # carry + shot
+    assert d['passes'] == []
     assert d['carries'][0]['end_x'] == 67.5 and d['average_position'] is not None
     gk = Player.objects.get(full_name='Tó Bench')                 # no IMPECT data
     assert coach.get(f'/api/clubs/{club.pk}/players/{gk.pk}/football/').status_code == 404

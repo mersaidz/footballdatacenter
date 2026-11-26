@@ -142,14 +142,31 @@ def football_profile(player, provider: str = 'impect', season: Season | None = N
         })
 
     ev = Event.objects.filter(player=player, provider=provider, match_id__in=by_match)
-    shots = [{'x': e.x, 'y': e.y, 'xg': round(e.xg or 0, 3), 'goal': e.outcome == 'success', 'match_id': e.match_id, 'minute': e.minute}
-             for e in ev.filter(event_type='shot').exclude(x=None)]
-    carries = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'match_id': e.match_id}
-               for e in ev.filter(event_type='carry').exclude(x=None).exclude(end_x=None)
-               if e.end_x - e.x >= 10 and e.end_x >= 40]                       # progressive: 10 m+ towards goal
-    touches = list(ev.exclude(x=None).values_list('x', 'y'))
+    shots = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'xg': round(e.xg or 0, 3),
+              'goal': e.outcome == 'success', 'match_id': e.match_id, 'minute': e.minute,
+              'kind': (e.attributes or {}).get('action', ''), 'body_part': (e.attributes or {}).get('body_part', ''),
+              'pressure': bool(e.under_pressure)}
+             for e in ev.filter(event_type='shot').exclude(x=None).order_by('match_id', 'sequence')]
+    progressive = lambda e: e.end_x - e.x >= 10 and e.end_x >= 40          # noqa: E731 — 10 m+ towards goal, beyond own third
+    carries = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'match_id': e.match_id, 'minute': e.minute,
+                'bypassed': (e.attributes or {}).get('bypassed_opponents')}
+               for e in ev.filter(event_type='carry').exclude(x=None).exclude(end_x=None) if progressive(e)]
+    passes = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'match_id': e.match_id, 'minute': e.minute,
+               'bypassed': (e.attributes or {}).get('bypassed_opponents')}
+              for e in ev.filter(event_type='pass', outcome='success').exclude(x=None).exclude(end_x=None)
+              if progressive(e) and not (e.attributes or {}).get('set_piece')]
+    touches = list(ev.exclude(x=None).values_list('x', 'y', 'match_id'))
     avg = ({'x': round(sum(t[0] for t in touches) / len(touches), 1),
             'y': round(sum(t[1] for t in touches) / len(touches), 1)} if touches else None)
+    # where he is on the ball: share of his actions per zone (12 × 8 grid over the pitch), season and per match
+    GX, GY = 12, 8
+    def grid(points):
+        cells = [[0] * GX for _ in range(GY)]
+        for x, y, *_ in points:
+            cells[min(GY - 1, int(y / 68 * GY))][min(GX - 1, int(x / 105 * GX))] += 1
+        return cells
+    heat = {'cols': GX, 'rows': GY, 'season': grid(touches),
+            'matches': {mid: grid([t for t in touches if t[2] == mid]) for mid in by_match}}
 
     link = ExternalIdentity.objects.filter(club=player.club, provider=provider, entity_type='player',
                                            object_id=player.pk).first()
@@ -162,7 +179,8 @@ def football_profile(player, provider: str = 'impect', season: Season | None = N
         'main_position': main_pos, 'peers': PEERS.get(main_pos, 'players'), 'peer_count': len(peers),
         'min_minutes': MIN_MINUTES, 'minutes': round(me['seconds'] / 60), 'matches': len(me['matches']),
         'groups': [{'key': GROUP_KEYS[g], 'label': str(GROUP_LABELS[g]), 'kpis': v} for g, v in groups.items()],
-        'match_log': log, 'shots': shots, 'carries': carries[:200], 'average_position': avg,
+        'match_log': log, 'shots': shots, 'carries': carries[:400], 'passes': passes[:400], 'heat': heat,
+        'average_position': avg,
     }
 
 

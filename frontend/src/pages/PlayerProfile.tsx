@@ -5,6 +5,7 @@ import { day, num, t } from '../i18n';
 import { acwrColor, Bars, CAT_COLOR, LEVEL, LineChart, State } from '../components/ui';
 import { posLabel } from './Players';
 import { reasonText } from './Today';
+import PitchMap, { MapData } from '../components/PitchMap';
 
 interface History {
   player: { id: number; name: string; shirt_number: number | null; position: string; foot: string };
@@ -23,6 +24,7 @@ interface Football {
   groups: { key: string; label: string; kpis: { label: string; kpi: string; per90: number; percentile: number | null; unit: string }[] }[];
   match_log: { match_id: number; date: string; home: boolean; opponent: string; score: string; result: string; minutes: number; position: string; xg: number; shots: number; goals: number; packing: number; carrying_m: number; ball_losses: number }[];
   shots: Shot[]; carries: Carry[]; average_position: { x: number; y: number } | null;
+  passes?: MapData['passes']; heat?: MapData['heat'];
 }
 
 const heat = (v: number | null) => v == null ? {} : { background: `rgba(0,159,180,${(Math.max(0.06, Math.min(1, v / 110)) * 0.85).toFixed(2)})` };
@@ -133,6 +135,7 @@ function LatestOnTheBall({ f }: { f: Football }) {
 }
 
 function FootballTab({ f }: { f: Football }) {
+  const [match, setMatch] = useState<number | null>(null);
   return <>
     {f.demo_link && <div className="notice">{t('fb_demo', { src: f.demo_link.source_player, squad: `${f.demo_link.squad || ''}, ${f.competition} ${f.season}` })}</div>}
     <div className="grid" style={{ '--min': '420px' } as React.CSSProperties}>
@@ -153,8 +156,8 @@ function FootballTab({ f }: { f: Football }) {
           </div>
         ))}
       </section>
-      <section className="card"><div className="head"><h2>{t('season_map')}</h2><span className="small muted">{f.shots.length} · xG {num(f.shots.reduce((a, s) => a + s.xg, 0), 1)}</span></div>
-        <Pitch shots={f.shots} carries={f.carries} avg={f.average_position} label={t('season_map')} /></section>
+      <section className="card" id="season-map"><div className="head"><h2>{t('season_map')}</h2><span className="small muted">IMPECT</span></div>
+        <PitchMap data={f as unknown as MapData} match={match} onMatch={setMatch} /></section>
     </div>
     <section className="card flush">
       <div className="head"><h2>{t('fb_log')}</h2><span className="small muted">IMPECT</span></div>
@@ -162,7 +165,9 @@ function FootballTab({ f }: { f: Football }) {
         <table>
           <thead><tr><th>{t('col_date')}</th><th>{t('col_opp')}</th><th>{t('col_score')}</th><th className="right">{t('col_min')}</th><th className="right">{t('col_xg')}</th><th className="right">{t('col_shots')}</th><th className="right">{t('col_goals')}</th><th className="right">{t('col_packing')}</th><th className="right">{t('col_carry')}</th><th className="right">{t('col_losses')}</th></tr></thead>
           <tbody>{f.match_log.map((m) => (
-            <tr key={m.match_id}><td>{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td><td>{m.opponent} <span className="small faint">{m.home ? t('home') : t('away')}</span></td>
+            <tr key={m.match_id} className="click" aria-selected={match === m.match_id}
+              style={match === m.match_id ? { background: 'rgba(255,122,69,0.08)' } : undefined}
+              onClick={() => { setMatch(match === m.match_id ? null : m.match_id); document.getElementById('season-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}><td>{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td><td>{m.opponent} <span className="small faint">{m.home ? t('home') : t('away')}</span></td>
               <td><span className="tag" style={{ color: '#0a0a0a', background: ({ W: '#4ade80', D: '#a3a3a3', L: '#f87171' } as Record<string, string>)[m.result] || '#a3a3a3' }}>{m.result}</span> {m.score}</td>
               <td className="right">{m.minutes}′</td><td className="right">{num(m.xg, 2)}</td><td className="right">{m.shots}</td><td className="right">{m.goals}</td>
               <td className="right">{num(m.packing)}</td><td className="right">{num(m.carrying_m)}</td><td className="right">{m.ball_losses}</td></tr>

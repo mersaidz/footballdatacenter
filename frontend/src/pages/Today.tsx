@@ -13,6 +13,9 @@ export function reasonText(r: Reason) {
     const s = said.join(', ');
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
+  const why = t(`av_${r.reason || 'other'}` as never);
+  if (r.code === 'unavailable') { const s = r.date ? t('r_unavailable', { why, d: day(r.date) }) : t('r_unavailable_nodate', { why }); return s.charAt(0).toUpperCase() + s.slice(1); }
+  if (r.code === 'modified') return t('r_modified', { why });
   const v = r.value != null ? num(r.value, 1) : '';
   const d = r.date ? day(r.date) : '';
   return t(`r_${r.code}` as never, { v, d });
@@ -30,14 +33,15 @@ export function reasonsLine(rs: Reason[]) {
 
 export default function Today() {
   const [date, setDate] = useState('');
-  const [filter, setFilter] = useState<'all' | 'reduce' | 'hold' | 'build' | 'plan'>('all');
+  const [filter, setFilter] = useState<'all' | 'reduce' | 'hold' | 'build' | 'plan' | 'out'>('all');
   const nav = useNavigate();
   const q = useApi<SquadStatus>(clubPath(`squad-status/${date ? `?date=${date}` : ''}`), [date]);
   const s = q.data;
-  const counts = { reduce: 0, hold: 0, build: 0, plan: 0 };
+  const counts = { reduce: 0, hold: 0, build: 0, plan: 0, out: 0 };
   s?.players.forEach((p) => { counts[p.level] += 1; });
   const rows = (s?.players || []).filter((p) => filter === 'all' || p.level === filter);
   const md1 = s?.days_since_match === 1 && s.last_match;
+  const training = (s?.players || []).filter((p) => p.level !== 'out');
   return (
     <>
       <header className="top">
@@ -63,13 +67,18 @@ export default function Today() {
               </button>
             ))}
           </div>
+          {counts.out > 0 && (
+            <button type="button" className="pill" aria-pressed={filter === 'out'} onClick={() => setFilter(filter === 'out' ? 'all' : 'out')} style={{ alignSelf: 'flex-start' }}>
+              <span className="dot" style={{ background: LEVEL.out.color }} />{t('out_n', { n: counts.out })}
+            </button>
+          )}
           {md1 && s && (
             <section className="card">
               <div className="head"><h2>{t('md1_groups')}</h2><span className="small muted">{t('md1_hint', { m: s.last_match!.name })}</span></div>
               <div className="grid" style={{ '--min': '240px' } as React.CSSProperties}>
-                {[[t('recovery_group'), t('played60'), (m: number) => m >= 60, 'rgba(95,208,224,0.16)', '#9be3ec'],
-                  [t('topup_group'), t('under60'), (m: number) => m < 60, 'rgba(255,122,69,0.14)', '#ffb08f']].map(([title, hint, fn, bg, fg]) => {
-                  const ps = s.players.filter((p) => (fn as (m: number) => boolean)(p.last_match_minutes)).sort((a, b) => (a.shirt_number || 99) - (b.shirt_number || 99));
+                {[[t('recovery_group'), t('played60'), (m: number) => m >= 60, 'rgba(95,208,224,0.16)', 'var(--teal-text)'],
+                  [t('topup_group'), t('under60'), (m: number) => m < 60, 'rgba(255,122,69,0.14)', 'var(--accent-text)']].map(([title, hint, fn, bg, fg]) => {
+                  const ps = training.filter((p) => (fn as (m: number) => boolean)(p.last_match_minutes)).sort((a, b) => (a.shirt_number || 99) - (b.shirt_number || 99));
                   return (
                     <div key={title as string} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <span><b style={{ fontWeight: 500 }}>{title as string}</b> <span className="muted small">— {hint as string} · {ps.length}</span></span>

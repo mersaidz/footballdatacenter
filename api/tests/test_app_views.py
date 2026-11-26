@@ -110,3 +110,36 @@ def test_load_action(ad, ah, idle, expect):
     from football.services.performance import load_action
     level, reasons = load_action(ad, ah, idle, date(2026, 8, 1), False, date(2026, 7, 1))
     assert level == expect and (reasons == []) == (expect == 'plan')
+
+
+def test_availability_shapes_the_day(make_member, club, season):
+    """Out → not part of today's load calls; modified training → at most 'hold'; just back → said so."""
+    from datetime import date
+    from football.models import PlayerAvailability
+    _, _, (gk, steady, spike) = season
+    _, physio = make_member(club, 'physio')
+    _, coach = make_member(club, 'head_coach')
+    r = physio.post(u(club, 'availability/'), {'player': spike.pk, 'status': 'unavailable', 'reason': 'injury',
+                                               'start_date': '2026-08-03', 'expected_return': '2026-08-20',
+                                               'diagnosis': 'hamstring strain grade 1'}, format='json')
+    assert r.status_code == 201
+    assert coach.post(u(club, 'availability/'), {'player': gk.pk, 'status': 'modified', 'start_date': '2026-08-01'},
+                      format='json').status_code == 403
+    physio.post(u(club, 'availability/'), {'player': steady.pk, 'status': 'modified', 'reason': 'load_management',
+                                          'start_date': '2026-08-04'}, format='json')
+    d = coach.get(u(club, 'squad-status/')).data
+    by = {p['name']: p for p in d['players']}
+    assert by['Spiky Sam']['level'] == 'out' and by['Spiky Sam']['reasons'] == [
+        {'code': 'unavailable', 'reason': 'injury', 'date': '2026-08-20'}]
+    assert 'diagnosis' not in str(by['Spiky Sam'])                       # coaches never see the diagnosis
+    assert by['Steady Eddie']['level'] == 'hold' and by['Steady Eddie']['reasons'][0]['code'] == 'modified'
+    assert d['players'][-1]['name'] == 'Spiky Sam'                         # out players go to the bottom
+    # A new episode closes the open one; once back, "returning" for a week.
+    physio.post(u(club, 'availability/'), {'player': spike.pk, 'status': 'modified', 'reason': 'injury',
+                                          'start_date': '2026-08-04'}, format='json')
+    assert PlayerAvailability.objects.filter(player=spike, actual_return__isnull=True).count() == 1
+    ep = PlayerAvailability.objects.get(player=spike, actual_return__isnull=True)
+    ep.actual_return = date(2026, 8, 5); ep.save()
+    d = coach.get(u(club, 'squad-status/')).data
+    spike_row = next(p for p in d['players'] if p['name'] == 'Spiky Sam')
+    assert spike_row['level'] != 'out' and spike_row['reasons'][0]['code'] == 'returning'

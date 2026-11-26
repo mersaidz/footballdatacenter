@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api, clubPath, MetricCol, MetricSetItem, useApi } from '../api';
 import { t } from '../i18n';
 import { CAT_COLOR, State } from '../components/ui';
-import { LangSwitch } from '../main';
+import { LangSwitch, ThemeSwitch } from '../main';
 
 const MANAGERS = ['sports_scientist', 'analyst', 'club_admin'];
 
@@ -31,6 +31,8 @@ export default function Settings({ role }: { role: string }) {
         <section className="card">
           <h2>{t('language')}</h2>
           <LangSwitch />
+          <h2 style={{ marginTop: 8 }}>{t('theme')}</h2>
+          <ThemeSwitch />
         </section>
         <section className="card">
           <h2>{t('profile')}</h2>

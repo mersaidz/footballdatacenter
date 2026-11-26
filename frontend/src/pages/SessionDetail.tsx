@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { rpeColor } from '../components/Checkin';
+import { rpeColor, rpeText } from '../components/Checkin';
 import { clubPath, MetricSetItem, SessionDetail as Detail, useApi } from '../api';
 import { day, num, t } from '../i18n';
 import { CAT_COLOR, Icon, ICONS, Seg, State } from '../components/ui';
 import { TypeBadge } from './Sessions';
 
 const PART: Record<string, [string, string, string]> = {
-  full: ['part_full', '#7fd6e2', 'rgba(0,159,180,0.16)'], partial: ['part_partial', '#d4d4d4', 'rgba(255,255,255,0.08)'],
-  alternate: ['part_alternate', '#ffb08f', 'rgba(255,122,69,0.14)'],
+  full: ['part_full', 'var(--teal-text)', 'rgba(0,159,180,0.16)'], partial: ['part_partial', 'var(--text-2)', 'rgba(var(--fg-rgb),0.08)'],
+  alternate: ['part_alternate', 'var(--accent-text)', 'rgba(255,122,69,0.14)'],
 };
 
 export default function SessionDetail() {
@@ -123,7 +123,7 @@ export default function SessionDetail() {
                             );
                           })}
                           {!period && <>
-                            <td className="right">{r.rpe == null ? <span className="faint">—</span> : <span className="score" style={{ color: rpeColor(r.rpe), background: `${rpeColor(r.rpe)}1f` }}>{r.rpe}</span>}</td>
+                            <td className="right">{r.rpe == null ? <span className="faint">—</span> : <span className="score" style={{ color: rpeText(r.rpe), background: `${rpeColor(r.rpe)}1f` }}>{r.rpe}</span>}</td>
                             <td className="right">{num(r.srpe)}</td>
                           </>}
                         </tr>

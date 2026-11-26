@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import qrcode from 'qrcode-generator';
 import { api, ApiError, clubPath, useApi } from '../api';
-import { answerWord, areaLabel, CheckinValues, ITEMS, Questionnaire, RpePicker, SCORE_COLOR } from '../components/Checkin';
+import { scoreText, answerWord, areaLabel, CheckinValues, ITEMS, Questionnaire, RpePicker, SCORE_COLOR } from '../components/Checkin';
 import { InfoTip, State } from '../components/ui';
 import { day, Key, num, t } from '../i18n';
 
@@ -33,7 +33,7 @@ export function FeelBadge({ a }: { a: Answer | null }) {
   );
 }
 
-const ScoreCell = ({ v }: { v?: number }) => (v ? <span className="score" style={{ color: SCORE_COLOR[v], background: `${SCORE_COLOR[v]}1f` }}>{v}</span> : <span className="faint">—</span>);
+const ScoreCell = ({ v }: { v?: number }) => (v ? <span className="score" style={{ color: scoreText(v), background: `${SCORE_COLOR[v]}1f` }}>{v}</span> : <span className="faint">—</span>);
 
 /** Modal: staff fill in the questionnaire (and RPE) after talking to the player. */
 export function EntryDialog({ player, date, initial, onClose }:

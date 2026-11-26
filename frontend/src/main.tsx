@@ -5,6 +5,7 @@ import './styles.css';
 import { api, auth, useApi } from './api';
 import { getLang, LANGS, Lang, setLang, t } from './i18n';
 import { Icon, ICONS, State } from './components/ui';
+import { applyTheme, getTheme, setTheme, Theme } from './theme';
 import Today from './pages/Today';
 import Sessions from './pages/Sessions';
 import SessionDetail from './pages/SessionDetail';
@@ -20,6 +21,9 @@ if (window.location.pathname.startsWith('/p/')) {
   try { if (!localStorage.getItem('fdc.lang')) { const n = navigator.language.slice(0, 2); setLang(n === 'kk' ? 'kk' : n === 'en' ? 'en' : 'ru'); } } catch { /* ignore */ }
 }
 document.documentElement.lang = getLang();
+// The player's page follows his phone unless he picked a theme himself.
+const pickedTheme = (() => { try { return !!localStorage.getItem('fdc.theme'); } catch { return false; } })();
+applyTheme(window.location.pathname.startsWith('/p/') && !pickedTheme ? 'auto' : getTheme());
 
 export interface Membership { club_id: number; club_name: string; club_slug: string; role: string }
 
@@ -65,6 +69,17 @@ export function LangSwitch({ onChange }: { onChange?: (l: Lang) => void }) {
   );
 }
 
+export function ThemeSwitch() {
+  const [cur, setCur] = useState<Theme>(getTheme());
+  return (
+    <div className="seg" role="group" aria-label={t('theme')}>
+      {(['dark', 'light', 'auto'] as const).map((k) => (
+        <button key={k} type="button" aria-pressed={cur === k} onClick={() => { setTheme(k); setCur(k); }}>{t(`theme_${k}`)}</button>
+      ))}
+    </div>
+  );
+}
+
 function Shell() {
   const clubs = useApi<Membership[]>('clubs/');
   const me = useApi<{ email: string; full_name: string; language: Lang }>('me/');
@@ -98,6 +113,7 @@ function Shell() {
             </select>
           )}
           <LangSwitch />
+          <ThemeSwitch />
           <span>{me.data?.full_name || me.data?.email}</span>
           <button className="pill" onClick={auth.logout}><Icon d={ICONS.logout} />{t('logout')}</button>
         </div>

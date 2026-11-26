@@ -203,6 +203,10 @@ class AvailabilityViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.Retriev
         return response
 
     def perform_create(self, serializer):
+        # One open episode per player: a new one (e.g. "out" → "modified training") closes the previous.
+        start = serializer.validated_data['start_date']
+        PlayerAvailability.objects.filter(club=self.club, player=serializer.validated_data['player'],
+                                          actual_return__isnull=True, start_date__lte=start).update(actual_return=start)
         obj = serializer.save(club=self.club, created_by=self.request.user)
         log_event(action=AuditLog.Action.MEDICAL_RECORD_CHANGED, request=self.request, club=self.club,
                   extra_info={'availability_id': obj.pk, 'op': 'create'})

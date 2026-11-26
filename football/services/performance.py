@@ -25,6 +25,7 @@ REDUCE_ABOVE, HOLD_ABOVE, BUILD_BELOW, BUILD_HSR_BELOW = 1.5, 1.3, 0.8, 0.6
 # What to do with today's load — everyone can train, the status says how much:
 #   reduce: a spike (ACWR > 1.5)   hold: rising fast (1.3–1.5)   build: under-loaded or returning   plan: in range
 LEVELS = ('reduce', 'hold', 'build', 'plan')
+RETURNING_DAYS = 7          # after an episode closes, the player is "returning": build up gradually
 NO_SESSION_DAYS, SHORT_HISTORY_DAYS = 3, 21
 MATCH_REF_MIN = 45                                    # matches that define a player's match demand
 
@@ -141,6 +142,29 @@ def apply_wellness(level: str, reasons: list[dict], w: dict | None) -> str:
     return min(level, floor, key=LEVELS.index)
 
 
+def availability_on(players, day: date) -> tuple[dict, dict]:
+    """(open episode per player on `day`, episode that ended in the last week per player). Medical staff set these."""
+    from football.models import PlayerAvailability
+    eps = PlayerAvailability.objects.filter(player__in=players, start_date__lte=day).exclude(status='available')
+    current = {e.player_id: e for e in eps.filter(Q(actual_return__isnull=True) | Q(actual_return__gt=day)).order_by('start_date')}
+    back = {e.player_id: e for e in eps.filter(actual_return__lte=day, actual_return__gt=day - timedelta(RETURNING_DAYS))
+            .order_by('actual_return')}
+    return current, back
+
+
+def apply_availability(level: str, reasons: list[dict], ep, back) -> str:
+    """Out → 'out' (not part of today's load decisions). Modified training → at most 'hold'. Just back → say so."""
+    if ep is not None and ep.status == 'unavailable':
+        reasons[:] = [{'code': 'unavailable', 'reason': ep.reason, 'date': ep.expected_return.isoformat() if ep.expected_return else None}]
+        return 'out'
+    if ep is not None and ep.status == 'modified':
+        reasons.insert(0, {'code': 'modified', 'reason': ep.reason, 'date': ep.expected_return.isoformat() if ep.expected_return else None})
+        return min(level, 'hold', key=LEVELS.index)
+    if back is not None:
+        reasons.insert(0, {'code': 'returning', 'reason': back.reason, 'date': back.actual_return.isoformat()})
+    return level
+
+
 def last_session_day(team: Team) -> date | None:
     ts = (TrainingSession.objects.filter(team=team).annotate(n=Count('loads'))
           .filter(n__gte=TEAM_SESSION_MIN_PLAYERS).order_by('-start').first()
@@ -169,6 +193,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
     players = list(Player.objects.filter(club=team.club, current_team=team, pk__in=daily.keys()))
     from wellness.services import day_summary          # wellness depends on football, not the other way round
     feel = day_summary(players, as_of)
+    current, back = availability_on(players, as_of)
     out = []
     for p in players:
         mine = [r for r in rows if r.player_id == p.pk]
@@ -180,6 +205,8 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         level, reasons = load_action(ad, ah, (as_of - last).days, last, (as_of - first).days < SHORT_HISTORY_DAYS, first)
         w = feel.get(p.pk)
         level = apply_wellness(level, reasons, w)
+        level = apply_availability(level, reasons, current.get(p.pk), back.get(p.pk))
+        ep = current.get(p.pk)
         lm = next((r for r in mine if r.is_match and r.day == last_match), None)
         out.append({
             'player_id': p.pk, 'name': p.display_name, 'shirt_number': p.shirt_number, 'position': p.primary_position,
@@ -187,8 +214,10 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
             'wellness': w,
+            'availability': {'status': ep.status, 'reason': ep.reason,
+                             'expected_return': ep.expected_return.isoformat() if ep.expected_return else None} if ep else None,
         })
-    order = {lvl: i for i, lvl in enumerate(LEVELS)}
+    order = {lvl: i for i, lvl in enumerate(LEVELS + ('out',))}
     out.sort(key=lambda s: (order[s['level']], -(s['acwr_distance'] or 0)))
     return {
         'as_of': as_of.isoformat(),

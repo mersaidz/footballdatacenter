@@ -8,6 +8,7 @@ import { reasonText } from './Today';
 import PitchMap, { MapData } from '../components/PitchMap';
 import PlayerWellnessTab, { CheckinCard, usePlayerWellness } from './PlayerWellness';
 import { answerWord, SCORE_COLOR } from '../components/Checkin';
+import { AvailabilityActions, Episode, episodeNote } from '../components/Availability';
 
 interface History {
   player: { id: number; name: string; shirt_number: number | null; position: string; foot: string };
@@ -66,7 +67,7 @@ function Pitch({ shots, carries, avg, arrows, label }: { shots: Shot[]; carries:
 }
 
 const Signal = ({ label, value, note, color, src }: { label: string; value: string; note: string; color: string; src: string }) => (
-  <div style={{ borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+  <div style={{ borderRadius: 12, background: 'rgba(var(--fg-rgb),0.03)', border: '1px solid rgba(var(--fg-rgb),0.08)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
     <span className="row small muted" style={{ gap: 6 }}><span className="dot" style={{ background: color }} />{label}</span>
     <b className="num" style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.1 }}>{value}</b>
     <span className="small" style={{ color: 'var(--text-2)' }}>{note}</span>
@@ -96,7 +97,7 @@ function LastMatchPhysical({ sessionId, playerId }: { sessionId: number; playerI
               const rank = v == null ? null : all.indexOf(v) + 1;
               const pct = v == null || !all[0] ? 0 : Math.max(3, (v / all[0]) * 100);
               return (
-                <div key={m.key} title={m.label} style={{ borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div key={m.key} title={m.label} style={{ borderRadius: 10, background: 'rgba(var(--fg-rgb),0.03)', border: '1px solid rgba(var(--fg-rgb),0.07)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <span className="row small muted" style={{ gap: 6 }}><span className="dot" style={{ width: 6, height: 6, background: CAT_COLOR[m.category] || '#a3a3a3' }} />{m.short_label}</span>
                   <b className="num" style={{ fontSize: 20, fontWeight: 600, color: v == null ? 'var(--faint)' : undefined }}>{num(v, m.unit === 'km/h' ? 1 : 0)} <span className="small faint" style={{ fontWeight: 300 }}>{m.unit}</span></b>
                   <span className="bar"><span style={{ width: `${pct}%`, background: CAT_COLOR[m.category] || '#a3a3a3' }} /></span>
@@ -125,7 +126,7 @@ function LatestOnTheBall({ f }: { f: Football }) {
     <section className="card">
       <div className="head"><div><h2>{t('latest_ball')}</h2>
         <span className="small muted">{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })} · {m.home ? t('home') : t('away')}: {m.opponent} · {m.score} ({m.result})</span></div>
-        <span className="small" style={{ border: '1px dashed rgba(255,255,255,0.28)', borderRadius: 999, padding: '3px 9px', color: 'var(--muted)' }}>IMPECT{f.demo_link ? ' · demo' : ''}</span></div>
+        <span className="small" style={{ border: '1px dashed rgba(var(--fg-rgb),0.28)', borderRadius: 999, padding: '3px 9px', color: 'var(--muted)' }}>IMPECT{f.demo_link ? ' · demo' : ''}</span></div>
       <div className="row" style={{ alignItems: 'flex-start', gap: 16 }}>
         <div style={{ flex: '1 1 280px' }}><Pitch shots={shots} carries={carries} avg={f.average_position} arrows label={t('latest_ball')} /></div>
         <div className="grid" style={{ '--min': '120px', flex: '1 1 200px' } as React.CSSProperties}>
@@ -181,7 +182,7 @@ function FootballTab({ f }: { f: Football }) {
 }
 
 const Pending = ({ title, text }: { title: string; text: string }) => (
-  <section className="card" style={{ border: '1px dashed rgba(255,255,255,0.22)', background: 'transparent' }}>
+  <section className="card" style={{ border: '1px dashed rgba(var(--fg-rgb),0.22)', background: 'transparent' }}>
     <div className="head"><h2>{title}</h2><span className="small faint">{t('not_connected')}</span></div>
     <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>{text}</p>
   </section>
@@ -193,7 +194,7 @@ export default function PlayerProfile() {
   const [tab, setTab] = useState<'overview' | 'load' | 'football' | 'wellness'>('overview');
   const q = useApi<History>(clubPath(`players/${id}/load-history/`), [id]);
   const status = useApi<SquadStatus>(clubPath('squad-status/'));
-  const avail = useApi<{ results: { status: string; expected_return: string | null }[] }>(clubPath(`availability/?player=${id}&current=true`), [id]);
+  const avail = useApi<{ results: Episode[] }>(clubPath(`availability/?player=${id}&current=true`), [id]);
   const [fb, setFb] = useState<Football | null | 'none'>(null);
   useEffect(() => {
     setFb(null);
@@ -231,12 +232,15 @@ export default function PlayerProfile() {
               <div className="grid" style={{ '--min': '130px', flex: '1 1 440px' } as React.CSSProperties}>
                 <Signal label={t('tab_load')} value={num(st?.acwr_distance ?? last(h.acwr_distance), 2)} note={loadReason ? reasonText(loadReason) : t('in_range')}
                   color={st ? LEVEL[st.level].color : acwrColor(last(h.acwr_distance))} src="OpenField" />
-                <Signal label={t('sig_hrv')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />
+                <Signal label={t('sig_hrv')} value="—" note={t('not_connected')} color="var(--faint)" src="Whoop / Oura" />
                 {sleep ? <Signal label={t('sig_sleep')} value={`${num(sleep.sleep_hours, 1)} ${t('hours_short')}`} note={answerWord('sleep_quality', sleep.sleep_quality!)}
                     color={SCORE_COLOR[sleep.sleep_quality!]} src={t('checkin')} />
-                  : <Signal label={t('sig_sleep')} value="—" note={t('not_connected')} color="#525252" src="Whoop / Oura" />}
+                  : <Signal label={t('sig_sleep')} value="—" note={t('not_connected')} color="var(--faint)" src="Whoop / Oura" />}
                 <Signal label={t('sig_avail')} value={open ? t(open.status === 'modified' ? 'st_modified' : 'st_unavailable') : t('available')}
-                  note={open?.expected_return ? `→ ${day(open.expected_return)}` : t('no_injury')} color={open ? 'var(--red)' : 'var(--green)'} src={t('nav_players')} />
+                  note={episodeNote(open)} color={open ? (open.status === 'modified' ? 'var(--amber)' : 'var(--red)') : 'var(--green)'} src={t('nav_players')} />
+              </div>
+              <div style={{ flex: '1 1 100%', display: 'flex', justifyContent: 'flex-end' }}>
+                <AvailabilityActions playerId={p.id} playerName={p.name} episode={open || null} onChanged={() => { avail.reload(); status.reload(); }} />
               </div>
             </section>
             <div className="tabs" role="tablist">
@@ -248,7 +252,7 @@ export default function PlayerProfile() {
                 <section className="card">
                   <div className="head"><h2>{t('tab_load')}</h2><span className="small muted">{t('source_real')}</span></div>
                   <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><b className="num" style={{ fontSize: 36, fontWeight: 700, color: acwrColor(last(h.acwr_distance)) }}>{num(last(h.acwr_distance), 2)}</b><span className="muted">{t('col_acwr_d')}</span></div>
-                  <div style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.08)' }}>
+                  <div style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(var(--fg-rgb),0.08)' }}>
                     <span style={{ position: 'absolute', left: '32%', width: '20%', top: 0, bottom: 0, background: 'rgba(74,222,128,0.25)' }} />
                     <span style={{ position: 'absolute', left: '60%', top: -3, bottom: -3, width: 2, background: 'rgba(248,113,113,0.7)' }} />
                     <span style={{ position: 'absolute', top: -4, width: 16, height: 16, marginLeft: -8, borderRadius: '50%', border: '3px solid var(--card)', background: acwrColor(last(h.acwr_distance)), left: `${Math.min(100, ((last(h.acwr_distance) || 0) / 2.5) * 100)}%` }} />

@@ -1,7 +1,7 @@
 // Player profile: what he told us (check-ins against his own normal) and internal load (sRPE).
 import { useState } from 'react';
 import { clubPath, useApi } from '../api';
-import { answerWord, areaLabel, ITEMS, rpeColor, SCORE_COLOR } from '../components/Checkin';
+import { scoreText, answerWord, areaLabel, ITEMS, rpeColor, SCORE_COLOR } from '../components/Checkin';
 import { Bars, LineChart, State } from '../components/ui';
 import { day, Key, num, t } from '../i18n';
 import { Answer, EntryDialog, FeelBadge } from './Wellness';
@@ -45,17 +45,17 @@ export function CheckinCard({ w, player, onSaved }: { w: PlayerWellnessData; pla
             return (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 112px', gap: 10, alignItems: 'center' }}>
                 <span className="small" style={{ color: 'var(--text-2)' }}>{t(`q_${i}` as Key).replace('?', '')}</span>
-                <span style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.07)' }}>
+                <span style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(var(--fg-rgb),0.07)' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(v / 5) * 100}%`, borderRadius: 4, background: SCORE_COLOR[v] }} />
-                  {usual != null && <span title={t('wl_usual', { n: num(usual, 1) })} style={{ position: 'absolute', left: `${(usual / 5) * 100}%`, top: -4, bottom: -4, width: 2, background: 'rgba(255,255,255,0.6)' }} />}
+                  {usual != null && <span title={t('wl_usual', { n: num(usual, 1) })} style={{ position: 'absolute', left: `${(usual / 5) * 100}%`, top: -4, bottom: -4, width: 2, background: 'rgba(var(--fg-rgb),0.6)' }} />}
                 </span>
-                <span className="small" style={{ color: SCORE_COLOR[v] }}>{v} · {answerWord(i, v)}</span>
+                <span className="small" style={{ color: scoreText(v) }}>{v} · {answerWord(i, v)}</span>
               </div>
             );
           })}
           <div className="row small muted" style={{ gap: 14, marginTop: 4 }}>
             {a.sleep_hours != null && <span>{t('col_sleep_h')}: <b style={{ color: 'var(--text)', fontWeight: 500 }}>{num(a.sleep_hours, 1)}</b></span>}
-            {!!a.sore_areas?.length && <span>{t('col_sore')}: <b style={{ color: '#fecaca', fontWeight: 500 }}>{a.sore_areas.map(areaLabel).join(', ')}</b></span>}
+            {!!a.sore_areas?.length && <span>{t('col_sore')}: <b style={{ color: 'var(--red)', fontWeight: 500 }}>{a.sore_areas.map(areaLabel).join(', ')}</b></span>}
           </div>
           {a.comment && <div className="notice small" style={{ borderStyle: 'solid', borderColor: 'var(--line)', background: 'var(--raised)' }}>«{a.comment}»</div>}
           {base && <span className="small faint">{t('wl_tick')}</span>}
@@ -82,7 +82,7 @@ export function WellnessTrend({ w }: { w: PlayerWellnessData }) {
       <div className="row small" style={{ gap: 4 }}>
         {ds.map((d) => { const h = w.history.find((x) => x.date === d); return (
           <span key={d} title={h ? `${day(d)} · ${h.total}/25` : `${day(d)} · ${t('wl_none')}`} style={{ flex: 1, height: 6, borderRadius: 2,
-            background: h ? (h.level === 'ok' ? 'rgba(74,222,128,0.6)' : h.level === 'low' ? 'var(--amber)' : 'var(--red)') : 'rgba(255,255,255,0.06)' }} />); })}
+            background: h ? (h.level === 'ok' ? 'rgba(74,222,128,0.6)' : h.level === 'low' ? 'var(--amber)' : 'var(--red)') : 'rgba(var(--fg-rgb),0.06)' }} />); })}
       </div>
     </section>
   );

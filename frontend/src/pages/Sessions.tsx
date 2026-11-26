@@ -14,7 +14,7 @@ export function TypeBadge({ type, md }: { type: string; md?: string }) {
   const match = type === 'match';
   return (
     <span className="row" style={{ gap: 6 }}>
-      {md && <span className="tag" style={{ background: match ? 'var(--accent-soft)' : 'rgba(255,255,255,0.08)', color: match ? 'var(--accent-text)' : 'var(--text-2)' }}>{md}</span>}
+      {md && <span className="tag" style={{ background: match ? 'var(--accent-soft)' : 'rgba(var(--fg-rgb),0.08)', color: match ? 'var(--accent-text)' : 'var(--text-2)' }}>{md}</span>}
       <span className="small muted">{match ? t('t_match') : t('t_training')}</span>
     </span>
   );

@@ -6,6 +6,7 @@ export const LEVEL = {
   hold: { color: 'var(--amber)', bg: 'rgba(245,196,81,0.12)' },
   build: { color: 'var(--blue)', bg: 'rgba(108,168,247,0.13)' },
   plan: { color: 'var(--green)', bg: 'rgba(91,214,142,0.11)' },
+  out: { color: 'var(--muted)', bg: 'rgba(var(--fg-rgb),0.08)' },
 } as const;
 
 export const CAT_COLOR: Record<string, string> = {
@@ -27,7 +28,7 @@ export function LevelBadge({ level }: { level: keyof typeof LEVEL }) {
 }
 
 export function acwrColor(v: number | null) {
-  if (v == null) return '#737373';
+  if (v == null) return 'var(--faint)';
   return v > 1.5 ? 'var(--red)' : v > 1.3 ? 'var(--amber)' : v < 0.8 ? 'var(--blue)' : 'var(--green)';
 }
 
@@ -81,7 +82,7 @@ export function Bars({ items, height = 160, refValue, refLabel }:
   return (
     <div>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 3, height, borderBottom: '1px solid var(--line)' }}>
-        {refValue ? <span title={refLabel} style={{ position: 'absolute', left: 0, right: 0, bottom: (refValue / max) * height, borderTop: '1px dashed rgba(255,255,255,0.35)' }} /> : null}
+        {refValue ? <span title={refLabel} style={{ position: 'absolute', left: 0, right: 0, bottom: (refValue / max) * height, borderTop: '1px dashed rgba(var(--fg-rgb),0.35)' }} /> : null}
         {items.map((it, i) => (
           <button key={i} type="button" title={it.title} aria-label={it.title} onClick={it.onClick} disabled={!it.onClick}
             style={{ flex: 1, minWidth: 0, height: Math.max(it.value ? 2 : 0, (it.value / max) * height), background: it.color,
@@ -119,7 +120,7 @@ export function InfoTip({ label, text, align = 'left' }: { label: string; text: 
           alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>?</span>
       </button>
       {open && (
-        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', [align]: 0, width: 280, zIndex: 20, background: 'rgba(23,26,33,0.97)',
+        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', [align]: 0, width: 280, zIndex: 20, background: 'var(--tooltip)',
           border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', color: 'var(--text-2)', fontSize: 12, lineHeight: 1.5,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>{text}</span>
       )}

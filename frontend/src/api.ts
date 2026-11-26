@@ -78,12 +78,13 @@ export function useApi<T = any>(path: string | null, key: unknown[] = []) {
 }
 
 // --- types (only what the screens use) ---
-export interface Reason { code: string; value?: number; date?: string; normal?: number | null; flags?: string[] }
+export interface Reason { code: string; value?: number; date?: string; reason?: string; normal?: number | null; flags?: string[] }
 export interface Feel { date: string; total: number; z: number | null; level: 'ok' | 'low' | 'very_low'; normal: number | null; flags?: string[] }
 export interface SquadPlayer {
-  player_id: number; name: string; shirt_number: number | null; position: string; level: 'reduce' | 'hold' | 'build' | 'plan';
+  player_id: number; name: string; shirt_number: number | null; position: string; level: 'reduce' | 'hold' | 'build' | 'plan' | 'out';
   reasons: Reason[]; acwr_distance: number | null; acwr_hsr: number | null; week_distance: number;
   week_change_pct: number | null; last_match_minutes: number; last_session: string; wellness: Feel | null;
+  availability: { status: 'modified' | 'unavailable'; reason: string; expected_return: string | null } | null;
 }
 export interface SquadStatus {
   as_of: string; days_since_match: number | null; players: SquadPlayer[];

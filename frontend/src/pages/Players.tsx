@@ -23,7 +23,7 @@ export default function Players() {
           <div className="grid" style={{ '--min': '220px' } as React.CSSProperties}>
             {list.map((p) => (
               <Link key={p.player_id} to={`/players/${p.player_id}`} className="card" style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 }}>
-                <span className="num" style={{ fontSize: 26, fontWeight: 700, color: '#ff9b70', width: 40, textAlign: 'center' }}>{p.shirt_number ?? '—'}</span>
+                <span className="num" style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent-text)', width: 40, textAlign: 'center' }}>{p.shirt_number ?? '—'}</span>
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
                   <b style={{ fontWeight: 500 }}>{p.name}</b>
                   <span className="small muted">{posLabel(p.position)}</span>

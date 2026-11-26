@@ -14,6 +14,9 @@ export interface CheckinValues {
 
 /** 1 = worst … 5 = best for every item. */
 export const SCORE_COLOR = ['', '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80'];
+/** Text in score colour: bright on dark, darker on light (contrast). */
+export const scoreText = (v: number) => `var(--s${v})`;
+export const rpeText = (v: number) => scoreText(v <= 2 ? 5 : v <= 4 ? 4 : v <= 6 ? 3 : v <= 8 ? 2 : 1);
 export const answerWord = (item: Item, v: number) => t(`a_${item}` as Key).split('|')[v - 1] || '';
 export const areaLabel = (code: string) => t('areas').split('|')[AREAS.indexOf(code as typeof AREAS[number])] || code;
 
@@ -23,7 +26,7 @@ export const rpeColor = (v: number) => (v <= 2 ? '#4ade80' : v <= 4 ? '#a3e635' 
 function Scale({ item, value, onChange, big }: { item: Item; value: number | null; onChange: (v: number) => void; big?: boolean }) {
   return (
     <fieldset className="q">
-      <legend><span>{t(`q_${item}` as Key)}</span>{value ? <b style={{ color: SCORE_COLOR[value] }}>{answerWord(item, value)}</b> : null}</legend>
+      <legend><span>{t(`q_${item}` as Key)}</span>{value ? <b style={{ color: scoreText(value) }}>{answerWord(item, value)}</b> : null}</legend>
       <div className="scale" role="radiogroup" aria-label={t(`q_${item}` as Key)}>
         {[1, 2, 3, 4, 5].map((v) => (
           <button key={v} type="button" role="radio" aria-checked={value === v} aria-label={`${v} — ${answerWord(item, v)}`}
@@ -89,7 +92,7 @@ export function RpePicker({ value, onPick, busy }: { value: number | null; onPic
       {Array.from({ length: 11 }, (_, i) => 10 - i).map((r) => (
         <button key={r} type="button" role="radio" aria-checked={value === r} disabled={busy} onClick={() => onPick(r)}
           style={value === r ? { background: rpeColor(r), borderColor: rpeColor(r), color: 'var(--ink)' } : undefined}>
-          <b className="num" style={{ color: value === r ? 'var(--ink)' : rpeColor(r) }}>{r}</b><span>{words[r]}</span>
+          <b className="num" style={{ color: value === r ? 'var(--ink)' : rpeText(r) }}>{r}</b><span>{words[r]}</span>
         </button>
       ))}
     </div>

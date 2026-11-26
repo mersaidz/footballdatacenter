@@ -61,6 +61,16 @@ class PlayerViewSet(ClubReadOnlyViewSet):
         return qs
 
 
+    @action(detail=True)
+    def football(self, request, club_id=None, pk=None):
+        """On-the-ball profile from event data: per 90, percentiles vs his position, match log, maps."""
+        from football.services.football_profile import football_profile
+        data = football_profile(self.get_object(), provider=request.query_params.get('provider', 'impect'))
+        if data is None:
+            return Response({'detail': 'No event data for this player yet.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data)
+
+
 class MatchViewSet(ClubReadOnlyViewSet):
     model = Match
     serializer_class = s.MatchSerializer

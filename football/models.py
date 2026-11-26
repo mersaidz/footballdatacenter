@@ -447,3 +447,32 @@ class PlayerAvailability(ClubOwnedModel):
                 name='availability_return_after_start',
             ),
         ]
+
+
+class PlayerMatchKpis(ClubOwnedModel):
+    """
+    A player's event-data KPIs in one match, per position played (IMPECT reports a
+    player who changed position as two rows). Values keyed by the provider's KPI name
+    (BYPASSED_OPPONENTS, SHOT_XG…), so new KPIs need no migration.
+    """
+    provider = models.CharField(max_length=40)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='player_kpis')
+    team = models.ForeignKey(Team, on_delete=models.PROTECT)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='match_kpis')
+    position = models.CharField(max_length=40, help_text="Provider position, e.g. RIGHT_WINGER.")
+    play_seconds = models.FloatField(default=0)
+    kpis = models.JSONField(default=dict)
+
+    _club_check_fields = ('match', 'team', 'player')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['provider', 'match', 'player', 'position'],
+                                               name='one_kpi_row_per_player_position')]
+        indexes = [models.Index(fields=['club', 'player']), models.Index(fields=['club', 'position'])]
+
+    @property
+    def minutes(self) -> float:
+        return self.play_seconds / 60
+
+    def __str__(self):
+        return f'{self.player} {self.match} {self.position}'

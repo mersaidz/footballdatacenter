@@ -10,3 +10,6 @@ htmlcov/
 data_cache/
 .DS_Store
 openfield_probe_report.json
+
+# downloaded provider data (e.g. IMPECT open data — licence forbids redistribution)
+data/

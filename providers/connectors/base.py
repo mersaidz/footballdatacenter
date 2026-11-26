@@ -108,6 +108,7 @@ class FetchedResource:
     external_id: str
     payload: Any
     provider_api_version: str = ''
+    persist: bool = True       # False: don't keep a raw copy (e.g. open data that may not be redistributed)
 
 
 class BaseConnector(abc.ABC):

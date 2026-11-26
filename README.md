@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-218%20passing-green)
+![Tests](https://img.shields.io/badge/tests-227%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -95,6 +95,22 @@ Staff name periods however they like: "1st Half", "1half", "1 тайм", "Primei
 What is still unknown in a match goes to a review queue (`GET /periods/?needs_review=true`). One click (`POST /periods/{id}/assign_role/`) sets the role, teaches the club vocabulary, re-labels every period with the same name and recomputes the affected match loads. Staff decisions survive re-syncs. Sub-periods inside a half ("1st Half 0–15") become `segment` and are never counted twice.
 
 On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Half 52.3'. Match load now covers 102', not 119'.
+
+### IMPECT: event data, positions, packing
+
+```bash
+# IMPECT open data (Bundesliga 23/24): full events for Leverkusen, KPIs for the whole league,
+# each of our players demo-linked to a Leverkusen player of the same role (GK ↔ GK, then by minutes)
+python manage.py ingest_impect --club demo --open-data --iteration 743 --squad Leverkusen --demo-link "First Team"
+
+# a club's own IMPECT account: IMPECT_USERNAME / IMPECT_PASSWORD in .env
+python manage.py ingest_impect --club demo --list
+python manage.py ingest_impect --club demo --iteration <id> --squad "<club name in IMPECT>"
+```
+
+Every match gives lineups (position, shirt number, minutes) and ~100 KPIs per player (`PlayerMatchKpis`). The chosen squad also gets every event, converted to the platform pitch (105 × 68 m, attacking left to right), with xG and packing on each event. IMPECT KPIs join the metric catalogue. `GET /players/{id}/football/` returns per-90 KPIs, percentiles against every player of the same position in the league (450+ min), match log, shot and carry maps.
+
+Demo links are stored with `method=demo` and the API reports them (`demo_link`), so the UI always says whose data it is. **IMPECT open data licence:** analysis and research only, no redistribution, credit IMPECT. It is downloaded on demand and never committed (`data/` is gitignored). A club with an IMPECT contract uses its own credentials and sees only what its contract covers.
 
 ### Metrics: every coach reads different numbers
 

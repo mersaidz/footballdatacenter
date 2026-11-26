@@ -84,6 +84,7 @@ class ExternalIdentity(ClubOwnedModel):
         EXACT = 'exact', 'Exact attribute match'
         FUZZY = 'fuzzy', 'Fuzzy name match'
         MANUAL = 'manual', 'Linked by a human'
+        DEMO = 'demo', 'Demo link (test data, not the same person)'
 
     provider = models.CharField(max_length=40, choices=Provider.choices)
     entity_type = models.CharField(max_length=20, choices=EntityType.choices)

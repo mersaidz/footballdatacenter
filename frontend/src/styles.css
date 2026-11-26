@@ -131,3 +131,6 @@ textarea.input { resize: vertical; font: inherit; line-height: 1.5; }
 /* a player who isn't training: still listed, but out of the way */
 tr.out td { color: var(--muted); }
 tr.out td:not(:first-child):not(:nth-child(3)):not(:nth-child(4)) { opacity: 0.45; }
+
+.demo-bar { padding: 8px 24px; font-size: 12px; color: var(--text-2); background: var(--accent-soft); border-bottom: 1px solid var(--line-soft); }
+.demo-bar a { color: var(--accent-text); text-decoration: underline; }

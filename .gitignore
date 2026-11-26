@@ -18,3 +18,6 @@ data/
 frontend/node_modules/
 staticfiles/
 frontend/*.tsbuildinfo
+
+# server-less demo build (holds recorded data; never commit)
+frontend/dist-demo/

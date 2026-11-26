@@ -1,6 +1,7 @@
 // Thin API client: JWT in localStorage, silent refresh, language header, typed helpers.
 import { useCallback, useEffect, useState } from 'react';
 import { getLang } from './i18n';
+import { DEMO, demoFetch } from './demo';
 
 const ACCESS = 'fdc.access';
 const REFRESH = 'fdc.refresh';
@@ -16,7 +17,7 @@ export class ApiError extends Error {
 }
 
 export const auth = {
-  loggedIn: () => !!store.get(ACCESS),
+  loggedIn: () => DEMO || !!store.get(ACCESS),
   async login(email: string, password: string) {
     const r = await fetch('/api/auth/token/', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept-Language': getLang() },
@@ -26,7 +27,7 @@ export const auth = {
     const d = await r.json();
     store.set(ACCESS, d.access); store.set(REFRESH, d.refresh);
   },
-  logout() { store.set(ACCESS, null); store.set(REFRESH, null); store.set(CLUB, null); window.location.href = '/login'; },
+  logout() { if (DEMO) { window.location.hash = '#/'; return; } store.set(ACCESS, null); store.set(REFRESH, null); store.set(CLUB, null); window.location.href = '/login'; },
   club: () => Number(store.get(CLUB)) || null,
   setClub: (id: number) => store.set(CLUB, String(id)),
 };
@@ -45,6 +46,9 @@ async function refresh(): Promise<boolean> {
 }
 
 export async function api<T = any>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
+  if (DEMO) {
+    try { return await demoFetch<T>(path, init); } catch (e) { throw new ApiError(404, (e as { detail: string }).detail); }
+  }
   const headers: Record<string, string> = { 'Accept-Language': getLang(), ...(init.headers as Record<string, string> || {}) };
   if (init.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
   const token = store.get(ACCESS);

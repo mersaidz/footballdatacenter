@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckinValues, Questionnaire, RpePicker } from '../components/Checkin';
 import { day, getLang, LANGS, Lang, setLang, t } from '../i18n';
+import { DEMO, demoFetch } from '../demo';
 
 interface Home {
   player: { name: string; first_name: string; shirt_number: number | null; club: string };
@@ -11,6 +12,7 @@ interface Home {
 }
 
 async function call<T>(token: string, path: string, body?: unknown): Promise<T> {
+  if (DEMO) return demoFetch<T>(`p/${token}/${path}`, body ? { method: 'POST', body: JSON.stringify(body) } : {});
   const r = await fetch(`/api/p/${encodeURIComponent(token)}/${path}?lang=${getLang()}`, {
     method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'Accept-Language': getLang() },
     body: body ? JSON.stringify(body) : undefined,
@@ -52,12 +54,12 @@ export default function PlayerApp() {
 
   const sendCheckin = async (v: CheckinValues) => {
     setBusy(true);
-    try { await call(token, 'checkin/', v); setEditing(false); await load(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    try { await call(token, 'checkin/', v); setEditing(false); if (DEMO) setHome((h) => h && { ...h, checkin: v }); else await load(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   const sendRpe = async (rpe: number, sessionId?: number) => {
     setBusy(true);
-    try { await call(token, 'rpe/', sessionId ? { session_id: sessionId, rpe } : { rpe }); setRpeMsg(t('rpe_saved', { v: rpe })); await load(); }
+    try { await call(token, 'rpe/', sessionId ? { session_id: sessionId, rpe } : { rpe }); setRpeMsg(t('rpe_saved', { v: rpe })); if (DEMO) setHome((h) => h && { ...h, rpe_today: rpe }); else await load(); }
     catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
 

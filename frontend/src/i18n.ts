@@ -5,6 +5,7 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    demo_banner: 'Демо-версия: тестовые данные OpenField и IMPECT open data, изменения не сохраняются.', demo_player: "Открыть страницу игрока",
     lvl_out: 'Не тренируется',
     hint_out: 'Травма, болезнь или отсутствует: отмечает медштаб',
     r_unavailable: '{why}, вернётся ~{d}',
@@ -182,6 +183,7 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    demo_banner: 'Demo: test data from OpenField and IMPECT open data; changes are not saved.', demo_player: "Open a player's page",
     lvl_out: 'Not training',
     hint_out: 'Injured, ill or away: set by medical staff',
     r_unavailable: '{why}, back ~{d}',
@@ -353,6 +355,7 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    demo_banner: 'Демо-нұсқа: OpenField және IMPECT open data сынақ деректері, өзгерістер сақталмайды.', demo_player: "Ойыншы бетін ашу",
     lvl_out: 'Жаттықпайды',
     hint_out: 'Жарақат, ауру немесе жоқ: медштаб белгілейді',
     r_unavailable: '{why}, ~{d} оралады',

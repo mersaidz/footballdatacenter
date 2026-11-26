@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { DEMO } from './demo';
 import './styles.css';
 import { api, auth, useApi } from './api';
 import { getLang, LANGS, Lang, setLang, t } from './i18n';
@@ -17,13 +18,13 @@ import Wellness from './pages/Wellness';
 import PlayerApp from './pages/PlayerApp';
 
 // A player opening his link for the first time gets his phone's language.
-if (window.location.pathname.startsWith('/p/')) {
+if (window.location.pathname.startsWith('/p/') || window.location.hash.startsWith('#/p/')) {
   try { if (!localStorage.getItem('fdc.lang')) { const n = navigator.language.slice(0, 2); setLang(n === 'kk' ? 'kk' : n === 'en' ? 'en' : 'ru'); } } catch { /* ignore */ }
 }
 document.documentElement.lang = getLang();
 // The player's page follows his phone unless he picked a theme himself.
 const pickedTheme = (() => { try { return !!localStorage.getItem('fdc.theme'); } catch { return false; } })();
-applyTheme(window.location.pathname.startsWith('/p/') && !pickedTheme ? 'auto' : getTheme());
+applyTheme((window.location.pathname.startsWith('/p/') || window.location.hash.startsWith('#/p/')) && !pickedTheme ? 'auto' : getTheme());
 
 export interface Membership { club_id: number; club_name: string; club_slug: string; role: string }
 
@@ -119,6 +120,7 @@ function Shell() {
         </div>
       </nav>
       <main className="main">
+        {DEMO && <div className="demo-bar">{t('demo_banner')} <Link to="/p/demo">{t('demo_player')}</Link></div>}
         <Routes>
           <Route path="/" element={<Today />} />
           <Route path="/sessions" element={<Sessions />} />
@@ -139,15 +141,17 @@ function Shell() {
 const Protected = () => (auth.loggedIn() ? <Shell /> : <Navigate to="/login" replace />);
 const LoginRoute = () => (auth.loggedIn() ? <Navigate to="/" replace /> : <Login />);
 
+const Router = DEMO ? HashRouter : BrowserRouter;
+
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/p/:token" element={<PlayerApp />} />
         <Route path="/*" element={<Protected />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

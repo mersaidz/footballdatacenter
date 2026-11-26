@@ -5,6 +5,7 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    r_no_topup_today: 'Нагрузки мало, но сегодня не догружаем',
     how_counted: 'Как считаем',
     f_mood: 'плохое настроение',
     f_stress: 'стресс',
@@ -155,6 +156,7 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    r_no_topup_today: 'Underloaded, but no top-up today',
     how_counted: 'How it works',
     f_mood: 'low mood',
     f_stress: 'stressed',
@@ -299,6 +301,7 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    r_no_topup_today: 'Жүктеме аз, бірақ бүгін қоспаймыз',
     how_counted: 'Қалай есептейміз',
     f_mood: 'көңіл-күйі нашар',
     f_stress: 'стресс',

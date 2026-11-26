@@ -85,13 +85,15 @@ def test_low_is_judged_against_his_own_normal(squad):
     assert svc.assess(one, None)['level'] == 'very_low'
 
 
-@pytest.mark.parametrize('load_level,feel,expected', [
-    ('plan', 'low', 'hold'), ('build', 'low', 'hold'), ('reduce', 'low', 'reduce'),
-    ('plan', 'very_low', 'reduce'), ('hold', 'ok', 'hold'),
+@pytest.mark.parametrize('load_level,feel,worst,expected', [
+    ('plan', 'low', 2, 'hold'), ('build', 'low', 2, 'hold'), ('reduce', 'low', 2, 'reduce'),
+    ('plan', 'very_low', 2, 'reduce'), ('hold', 'ok', 4, 'hold'),
+    ('build', 'very_low', 2, 'hold'),        # under-loaded + bad morning: don't top up, but no day off either
+    ('build', 'very_low', 1, 'reduce'),      # an answer of 1 (pain, no sleep) still counts
 ])
-def test_wellness_only_makes_the_day_more_careful(load_level, feel, expected):
+def test_wellness_only_makes_the_day_more_careful(load_level, feel, worst, expected):
     reasons = []
-    assert apply_wellness(load_level, reasons, {'level': feel, 'total': 14, 'normal': 20, 'flags': []}) == expected
+    assert apply_wellness(load_level, reasons, {'level': feel, 'total': 14, 'normal': 20, 'flags': [], 'worst': worst}) == expected
     assert (reasons[0]['code'] == f'wellness_{feel}') if feel != 'ok' else reasons == []
 
 

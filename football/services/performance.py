@@ -125,11 +125,19 @@ def load_action(ad, ah, days_idle, last, short_history, first) -> tuple[str, lis
 
 
 def apply_wellness(level: str, reasons: list[dict], w: dict | None) -> str:
-    """How the player feels can only make the day more careful: low → at least "hold", very low → "reduce"."""
+    """
+    How the player feels can only make the day more careful: low → at least "hold", very low → "reduce".
+    An under-loaded player is the exception: a bad morning means "don't top him up today" ("hold"),
+    not "train less than usual" — otherwise a poor answer alone would buy a day off. Only an answer
+    of 1 (real pain, no sleep) still moves him to "reduce".
+    """
     if not w or w['level'] == 'ok':
         return level
     reasons.insert(0, {'code': f"wellness_{w['level']}", 'value': w['total'], 'normal': w['normal'], 'flags': w['flags']})
     floor = 'reduce' if w['level'] == 'very_low' else 'hold'
+    if level == 'build' and w.get('worst', 5) > 1:
+        floor = 'hold'
+        reasons.append({'code': 'no_topup_today'})
     return min(level, floor, key=LEVELS.index)
 
 

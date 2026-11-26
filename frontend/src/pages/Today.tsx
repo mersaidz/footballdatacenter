@@ -20,6 +20,8 @@ export function reasonText(r: Reason) {
 
 /** Reasons as one short line: at most two, and HSR only when distance says nothing (the columns carry the numbers). */
 export function reasonsLine(rs: Reason[]) {
+  const topup = rs.find((r) => r.code === 'no_topup_today');
+  if (topup) return [rs.find((r) => r.code.startsWith('wellness_')), topup].filter(Boolean).map((r) => reasonText(r!)).join('. ');
   const dist = rs.some((r) => r.code.startsWith('acwr_dist'));
   const main = rs.filter((r) => r.code !== 'short_history' && !(dist && r.code.startsWith('acwr_hsr')))
     .filter((r) => !(r.code === 'low_hsr' && rs.some((x) => x.code === 'underloaded')));

@@ -54,7 +54,7 @@ def assess(c: WellnessCheckin, base: dict | None) -> dict:
     if level != 'ok' and not flags:       # say which answers pulled the total down
         flags = [i for i in ITEMS if base and getattr(c, i) < base[i][0] - 0.75]
     return {'date': c.date.isoformat(), 'total': c.total, 'z': z, 'level': level, 'flags': flags,
-            'normal': round(base['total'][0], 1) if base else None}
+            'normal': round(base['total'][0], 1) if base else None, 'worst': min(getattr(c, i) for i in ITEMS)}
 
 
 def checkin_detail(c: WellnessCheckin) -> dict:

@@ -4,7 +4,13 @@ import { useMemo, useRef, useState } from 'react';
 import { day, num, t } from '../i18n';
 import { Seg } from './ui';
 
-export type Shot = { x: number; y: number; end_x: number | null; end_y: number | null; xg: number; goal: boolean; match_id: number; minute: number; kind: string; body_part: string; pressure: boolean };
+export type Shot = { x: number; y: number; end_x: number | null; end_y: number | null; xg: number; goal: boolean; match_id: number; minute: number; kind: string; body_part: string; pressure: number | null; opponent_distance?: string | null };
+
+export function pressureText(p: number | null | undefined) {
+  if (p == null) return '';
+  const level = p === 0 ? 'press_none' : p < 40 ? 'press_light' : p < 70 ? 'press_medium' : 'press_strong';
+  return p === 0 ? t(level) : `${t(level)} (${t('press_scale', { v: p })})`;
+}
 export type Arrow = { x: number; y: number; end_x: number; end_y: number; match_id: number; minute: number; bypassed?: number | null };
 export interface MapMatch { match_id: number; date: string; home: boolean; opponent: string; score: string; result: string }
 export interface MapData {
@@ -124,8 +130,10 @@ export default function PitchMap({ data, match, onMatch }: { data: MapData; matc
             <b style={{ fontWeight: 600 }}>{hover.item.minute}′</b> <span className="muted">{mLabel(hover.item.match_id)}</span>
             {hover.kind === 'shot' ? <div>
               <span style={{ color: hover.item.goal ? COLOR.goal : 'var(--text-2)', fontWeight: 600 }}>{hover.item.goal ? t('goal_word') : t('no_goal')}</span> · xG {num(hover.item.xg, 2)}
-              <div className="muted">{[t(`shot_${hover.item.kind}` as never), t(`body_${hover.item.body_part}` as never), hover.item.pressure ? t('under_pressure') : '']
+              <div className="muted">{[t(`shot_${hover.item.kind}` as never), t(`body_${hover.item.body_part}` as never)]
                 .filter((x) => x && !x.startsWith('shot_') && !x.startsWith('body_')).join(' · ')}</div>
+              {hover.item.pressure != null && <div className="muted">{pressureText(hover.item.pressure)}
+                {hover.item.opponent_distance ? ` · ${t(`opp_${hover.item.opponent_distance}` as never)}` : ''}</div>}
             </div> : <div>
               {t('gained', { m: num(hover.item.end_x - hover.item.x) })}
               {hover.item.bypassed ? <div className="muted">{t('bypassed_n', { n: num(hover.item.bypassed) })}</div> : null}
@@ -144,6 +152,7 @@ export default function PitchMap({ data, match, onMatch }: { data: MapData; matc
         {layer === 'carries' && <span style={{ color: COLOR.carries }}>→ {t('leg_carry')}</span>}
         {layer === 'passes' && <span style={{ color: COLOR.passes }}>→ {t('leg_pass')}</span>}
         {layer === 'heat' && <span>{t('heat_hint')}</span>}
+        {layer === 'shots' && <span title={t('press_hint')} style={{ borderBottom: '1px dotted var(--faint)', cursor: 'help' }}>{t('press_scale', { v: '0–100' })}?</span>}
         {!match && data.average_position && <span className="row" style={{ gap: 6 }}><span className="dot" style={{ background: COLOR.avg }} />{t('leg_avg')}</span>}
         <span>{t('attack_lr')}</span>
         {match && <button className="pill" onClick={() => onMatch(null)}>{t('show_all')}</button>}

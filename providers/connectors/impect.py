@@ -371,7 +371,8 @@ class ImpectConnector(EventDataConnector):
             player = e.get('player') or {}
             attrs = {'action': e.get('action'), 'action_type': action, 'phase': e.get('phase'),
                      'body_part': e.get('bodyPart'), 'position': player.get('position'),
-                     'pressure': e.get('pressure'), 'opponents': e.get('opponents'), **{k.lower(): v for k, v in kpis.items()}}
+                     'pressure': e.get('pressure'), 'opponents': e.get('opponents'),
+                     'distance_to_opponent': e.get('distanceToOpponent'), 'pressing_player': e.get('pressingPlayerId'), **{k.lower(): v for k, v in kpis.items()}}
             if action in SET_PIECES:
                 attrs['set_piece'] = action.lower()
             if e.get('shot'):
@@ -382,7 +383,7 @@ class ImpectConnector(EventDataConnector):
                 event_type=EVENT_TYPE.get(action, 'other'), team_external_id=str(e['squadId']),
                 player_external_id=str(player['id']) if player.get('id') else None,
                 outcome=(e.get('result') or '').lower(), possession=e.get('sequenceIndex'),
-                under_pressure=bool(e.get('pressure')), x=x, y=y, end_x=ex, end_y=ey,
+                under_pressure=(e.get('pressure') or 0) >= 40, x=x, y=y, end_x=ex, end_y=ey,   # pressure ≥ 40/100 = medium or more
                 xg=kpis.get('SHOT_XG') if action == 'SHOT' else None,
                 attributes={k: v for k, v in attrs.items() if v is not None},
             )

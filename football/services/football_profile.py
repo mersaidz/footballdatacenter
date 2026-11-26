@@ -145,7 +145,8 @@ def football_profile(player, provider: str = 'impect', season: Season | None = N
     shots = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'xg': round(e.xg or 0, 3),
               'goal': e.outcome == 'success', 'match_id': e.match_id, 'minute': e.minute,
               'kind': (e.attributes or {}).get('action', ''), 'body_part': (e.attributes or {}).get('body_part', ''),
-              'pressure': bool(e.under_pressure)}
+              'pressure': (e.attributes or {}).get('pressure'),                 # IMPECT 0–100, None = unknown
+              'opponent_distance': (e.attributes or {}).get('distance_to_opponent')}
              for e in ev.filter(event_type='shot').exclude(x=None).order_by('match_id', 'sequence')]
     progressive = lambda e: e.end_x - e.x >= 10 and e.end_x >= 40          # noqa: E731 — 10 m+ towards goal, beyond own third
     carries = [{'x': e.x, 'y': e.y, 'end_x': e.end_x, 'end_y': e.end_y, 'match_id': e.match_id, 'minute': e.minute,

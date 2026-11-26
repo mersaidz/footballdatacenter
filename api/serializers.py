@@ -1,8 +1,24 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+
+from accounts.models import User
 
 from clubs.models import Club, Player, StaffMembership, Team
 from football.models import ActivityPeriod, Event, Match, MatchAppearance, PlayerAvailability, PlayerLoad
 from providers.models import ExternalIdentity
+
+
+class MeSerializer(serializers.ModelSerializer):
+    languages = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'full_name', 'language', 'languages')
+        read_only_fields = ('email',)
+
+    def get_languages(self, obj):
+        from django.conf import settings
+        return [{'code': c, 'name': n} for c, n in settings.LANGUAGES]
 
 
 class MyClubSerializer(serializers.ModelSerializer):
@@ -115,7 +131,7 @@ class AvailabilityMedicalSerializer(AvailabilityStatusSerializer):
         start = attrs.get('start_date', getattr(self.instance, 'start_date', None))
         ret = attrs.get('actual_return', getattr(self.instance, 'actual_return', None))
         if start and ret and ret < start:
-            raise serializers.ValidationError({'actual_return': 'Return date is before start date.'})
+            raise serializers.ValidationError({'actual_return': _('Return date is before start date.')})
         return attrs
 
 

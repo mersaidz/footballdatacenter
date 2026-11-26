@@ -1,0 +1,608 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-26 08:07+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: kk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: api/permissions.py:42
+msgid "Your role in this club does not grant access to this data."
+msgstr "Клубтағы рөліңіз бұл деректерге қол жеткізуге рұқсат бермейді."
+
+#: api/serializers.py:134
+msgid "Return date is before start date."
+msgstr "Оралу күні басталу күнінен ерте."
+
+#: api/views.py:86
+msgid "No event data for this player yet."
+msgstr "Бұл ойыншы бойынша оқиға деректері әлі жоқ."
+
+#: api/views.py:258
+msgid "Only player links can be rejected in v1."
+msgstr "Әзірге тек ойыншы байланыстарын қабылдамауға болады."
+
+#: api/views.py:412
+msgid "Not in this club's provider catalogue (run a sync first)."
+msgstr ""
+"Бұл клубтың провайдер каталогында жоқ (алдымен синхрондауды іске қосыңыз)."
+
+#: api/views.py:449
+msgid "Not in this club's provider catalogue."
+msgstr "Бұл клубтың провайдер каталогында жоқ."
+
+#: api/views.py:453
+#, python-format
+msgid "Already tracked as \"%(label)s\"."
+msgstr "«%(label)s» ретінде бақыланып жатыр."
+
+#: api/views.py:464
+msgid ""
+"Only S&C, analysts and club admins decide which metrics the club tracks."
+msgstr ""
+"Клуб қандай метрикаларды бақылайтынын тек S&C, аналитиктер және клуб "
+"әкімшілері шешеді."
+
+#: api/views.py:467
+#, python-format
+msgid "Already %(status)s."
+msgstr "Бұрыннан: %(status)s."
+
+#: api/views.py:472
+msgid "No longer in the provider catalogue."
+msgstr "Провайдер каталогында енді жоқ."
+
+#: api/views.py:511
+msgid "Only S&C, analysts and club admins change club-wide metric sets."
+msgstr ""
+"Клубтық метрика жиынтықтарын тек S&C, аналитиктер және клуб әкімшілері "
+"өзгертеді."
+
+#: api/views.py:518 api/views.py:568
+msgid "Only S&C, analysts and club admins publish club-wide metric sets."
+msgstr ""
+"Клубтық метрика жиынтықтарын тек S&C, аналитиктер және клуб әкімшілері "
+"жариялайды."
+
+#: api/views.py:571
+#, python-format
+msgid "Choose from: %(options)s"
+msgstr "Мыналардан таңдаңыз: %(options)s"
+
+#: api/views.py:574
+msgid "This provider account offers none of the preset metrics."
+msgstr "Провайдер аккаунтында бұл жиынтықтың бірде-бір метрикасы жоқ."
+
+#: clubs/models.py:75
+msgid "Cross-club reference is not allowed."
+msgstr "Басқа клубтың деректеріне сілтеме жасауға болмайды."
+
+#: clubs/models.py:85
+msgid "Male"
+msgstr "Ерлер"
+
+#: clubs/models.py:86
+msgid "Female"
+msgstr "Әйелдер"
+
+#: clubs/models.py:104
+msgid "Left"
+msgstr "Сол"
+
+#: clubs/models.py:105
+msgid "Right"
+msgstr "Оң"
+
+#: clubs/models.py:106
+msgid "Both"
+msgstr "Екеуі де"
+
+#: clubs/models.py:109
+msgid "Goalkeeper"
+msgstr "Қақпашы"
+
+#: clubs/models.py:110
+msgid "Centre-back"
+msgstr "Орталық қорғаушы"
+
+#: clubs/models.py:111
+msgid "Full-back / Wing-back"
+msgstr "Қапталдағы қорғаушы"
+
+#: clubs/models.py:112
+msgid "Defensive midfielder"
+msgstr "Тірек жартылай қорғаушы"
+
+#: clubs/models.py:113
+msgid "Central midfielder"
+msgstr "Орталық жартылай қорғаушы"
+
+#: clubs/models.py:114
+msgid "Attacking midfielder"
+msgstr "Шабуылшы жартылай қорғаушы"
+
+#: clubs/models.py:115
+msgid "Winger"
+msgstr "Қанат ойыншысы"
+
+#: clubs/models.py:116
+msgid "Centre-forward"
+msgstr "Орталық шабуылшы"
+
+#: clubs/models.py:147
+msgid "Club admin"
+msgstr "Клуб әкімшісі"
+
+#: clubs/models.py:148
+msgid "Sporting director"
+msgstr "Спорт директоры"
+
+#: clubs/models.py:149
+msgid "Head coach"
+msgstr "Бас бапкер"
+
+#: clubs/models.py:150
+msgid "Assistant coach"
+msgstr "Бапкер көмекшісі"
+
+#: clubs/models.py:151
+msgid "Performance / data analyst"
+msgstr "Талдаушы"
+
+#: clubs/models.py:152
+msgid "Sports scientist / S&C"
+msgstr "Спорт ғалымы / S&C"
+
+#: clubs/models.py:153
+msgid "Physiotherapist"
+msgstr "Физиотерапевт"
+
+#: clubs/models.py:154
+msgid "Club doctor"
+msgstr "Клуб дәрігері"
+
+#: clubs/models.py:155
+msgid "Scout"
+msgstr "Скаут"
+
+#: core/models.py:26
+msgid "Provider account connected"
+msgstr "Провайдер аккаунты қосылды"
+
+#: core/models.py:27
+msgid "Provider account updated"
+msgstr "Провайдер аккаунты жаңартылды"
+
+#: core/models.py:28
+msgid "Sync success"
+msgstr "Синхрондау сәтті өтті"
+
+#: core/models.py:29
+msgid "Sync failed"
+msgstr "Синхрондау сәтсіз аяқталды"
+
+#: core/models.py:30
+msgid "External identity confirmed"
+msgstr "Провайдермен байланыс расталды"
+
+#: core/models.py:31
+msgid "External identity rejected"
+msgstr "Провайдермен байланыс қабылданбады"
+
+#: core/models.py:32
+msgid "Medical record viewed"
+msgstr "Медициналық жазба қаралды"
+
+#: core/models.py:33
+msgid "Medical record created/changed"
+msgstr "Медициналық жазба жасалды не өзгертілді"
+
+#: core/models.py:34
+msgid "Staff membership changed"
+msgstr "Штат құрамы өзгертілді"
+
+#: core/models.py:35
+msgid "Period role set by staff"
+msgstr "Кезең рөлін қызметкер белгіледі"
+
+#: football/models.py:57
+msgid "Scheduled"
+msgstr "Жоспарланған"
+
+#: football/models.py:58
+msgid "Played"
+msgstr "Ойналды"
+
+#: football/models.py:59
+msgid "Postponed"
+msgstr "Кейінге қалдырылды"
+
+#: football/models.py:60
+msgid "Cancelled"
+msgstr "Болдырылмады"
+
+#: football/models.py:141
+msgid "Session must end after it starts."
+msgstr "Сессия басталғаннан кейін аяқталуы керек."
+
+#: football/models.py:151
+msgid "Pass"
+msgstr "Пас"
+
+#: football/models.py:152
+msgid "Shot"
+msgstr "Соққы"
+
+#: football/models.py:153
+msgid "Carry"
+msgstr "Доп жүргізу"
+
+#: football/models.py:154
+msgid "Dribble"
+msgstr "Алдап өту"
+
+#: football/models.py:155
+msgid "Ball receipt"
+msgstr "Допты қабылдау"
+
+#: football/models.py:156
+msgid "Pressure"
+msgstr "Прессинг"
+
+#: football/models.py:157
+msgid "Duel"
+msgstr "Жекпе-жек"
+
+#: football/models.py:158
+msgid "Interception"
+msgstr "Ұстап қалу"
+
+#: football/models.py:159
+msgid "Ball recovery"
+msgstr "Допты қайтару"
+
+#: football/models.py:160
+msgid "Clearance"
+msgstr "Алыстату"
+
+#: football/models.py:161
+msgid "Block"
+msgstr "Блок"
+
+#: football/models.py:162
+msgid "Foul committed"
+msgstr "Ереже бұзу"
+
+#: football/models.py:163
+msgid "Foul won"
+msgstr "Қарсылас ережені бұзды"
+
+#: football/models.py:164
+msgid "Goalkeeper action"
+msgstr "Қақпашы әрекеті"
+
+#: football/models.py:165
+msgid "Miscontrol"
+msgstr "Сәтсіз қабылдау"
+
+#: football/models.py:166
+msgid "Dispossessed"
+msgstr "Допты жоғалту"
+
+#: football/models.py:167 football/models.py:269 metrics/models.py:37
+msgid "Other"
+msgstr "Басқа"
+
+#: football/models.py:266
+msgid "Full"
+msgstr "Толық"
+
+#: football/models.py:267
+msgid "Partial"
+msgstr "Ішінара"
+
+#: football/models.py:268
+msgid "Alternate (individual / RTP)"
+msgstr "Жеке / RTP"
+
+#: football/models.py:272
+msgid "Whole activity"
+msgstr "Бүкіл белсенділік"
+
+#: football/models.py:273
+msgid "Match playing periods only"
+msgstr "Матчтың ойын кезеңдері ғана"
+
+#: football/models.py:318
+msgid "Warm-up"
+msgstr "Жаттығу алдындағы қыздыру"
+
+#: football/models.py:319
+msgid "1st half"
+msgstr "1-тайм"
+
+#: football/models.py:320
+msgid "2nd half"
+msgstr "2-тайм"
+
+#: football/models.py:321
+msgid "Extra time 1"
+msgstr "Қосымша уақыт 1"
+
+#: football/models.py:322
+msgid "Extra time 2"
+msgstr "Қосымша уақыт 2"
+
+#: football/models.py:323
+msgid "Penalty shoot-out"
+msgstr "Пенальти сериясы"
+
+#: football/models.py:324
+msgid "Segment inside another period"
+msgstr "Кезең ішіндегі бөлік"
+
+#: football/models.py:325
+msgid "Top-up / compensatory"
+msgstr "Жүктемені толықтыру"
+
+#: football/models.py:326
+msgid "Recovery"
+msgstr "Қалпына келу"
+
+#: football/models.py:327
+msgid "Rehab / return to play"
+msgstr "Оңалту / ойынға оралу"
+
+#: football/models.py:328
+msgid "Drill"
+msgstr "Жаттығу"
+
+#: football/models.py:329 providers/models.py:81
+msgid "Needs review"
+msgstr "Тексеру қажет"
+
+#: football/models.py:332
+msgid "Provider tag"
+msgstr "Провайдер тегі"
+
+#: football/models.py:333
+msgid "Club mapping"
+msgstr "Клуб ережесі"
+
+#: football/models.py:334
+msgid "Name dictionary"
+msgstr "Атаулар сөздігі"
+
+#: football/models.py:335
+msgid "Match structure"
+msgstr "Матч құрылымы"
+
+#: football/models.py:336
+msgid "Default for training"
+msgstr "Жаттығу үшін әдепкі"
+
+#: football/models.py:337
+msgid "Set by staff"
+msgstr "Қызметкер белгіледі"
+
+#: football/models.py:338
+msgid "Not resolved"
+msgstr "Анықталмаған"
+
+#: football/models.py:417
+msgid "Available"
+msgstr "Дайын"
+
+#: football/models.py:418
+msgid "Modified training"
+msgstr "Жеңілдетілген жаттығу"
+
+#: football/models.py:419
+msgid "Unavailable"
+msgstr "Дайын емес"
+
+#: football/models.py:422
+msgid "Injury"
+msgstr "Жарақат"
+
+#: football/models.py:423
+msgid "Illness"
+msgstr "Ауру"
+
+#: football/models.py:424
+msgid "Load management"
+msgstr "Жүктемені басқару"
+
+#: football/models.py:425
+msgid "Personal"
+msgstr "Жеке себептер"
+
+#: football/models.py:426
+msgid "Suspension"
+msgstr "Дисквалификация"
+
+#: football/models.py:427
+msgid "International duty"
+msgstr "Ұлттық құрама"
+
+#: metrics/models.py:27
+msgid "Volume"
+msgstr "Көлем"
+
+#: metrics/models.py:28
+msgid "Speed & high-speed running"
+msgstr "Жылдамдық және HSR"
+
+#: metrics/models.py:29
+msgid "Accelerations & decelerations"
+msgstr "Үдеу мен тежелу"
+
+#: metrics/models.py:30
+msgid "Multidirectional load"
+msgstr "Көпбағытты жүктеме (MDL)"
+
+#: metrics/models.py:31
+msgid "Mechanical load"
+msgstr "Механикалық жүктеме"
+
+#: metrics/models.py:32
+msgid "Metabolic power"
+msgstr "Метаболикалық қуат"
+
+#: metrics/models.py:33
+msgid "Repeated high-intensity efforts"
+msgstr "Қайталанатын жоғары қарқынды күш (RHIE)"
+
+#: metrics/models.py:34
+msgid "Intensity / density"
+msgstr "Қарқындылық / тығыздық"
+
+#: metrics/models.py:35
+msgid "Heart rate"
+msgstr "Жүрек соғысы"
+
+#: metrics/models.py:36
+msgid "PlayerLoad & accelerometry"
+msgstr "PlayerLoad және акселерометрия"
+
+#: metrics/models.py:41
+msgid "Sum (distances, counts, load)"
+msgstr "Қосынды (қашықтық, саны, жүктеме)"
+
+#: metrics/models.py:42
+msgid "Maximum (peak speed, peak power)"
+msgstr "Максимум (ең жоғары жылдамдық, қуат)"
+
+#: metrics/models.py:43
+msgid "Time-weighted mean (rates, %, densities)"
+msgstr "Уақыт бойынша өлшенген орташа (қарқын, %, тығыздық)"
+
+#: metrics/models.py:107
+msgid "Absolute"
+msgstr "Жиыны"
+
+#: metrics/models.py:108
+msgid "Per minute"
+msgstr "Минутына"
+
+#: metrics/models.py:109
+msgid "Per 90"
+msgstr "90 минутқа"
+
+#: metrics/models.py:136
+msgid "Pick at least one metric."
+msgstr "Кемінде бір метриканы таңдаңыз."
+
+#: metrics/models.py:138
+#, python-format
+msgid "At most %(n)s metrics per set."
+msgstr "Бір жиынтықта %(n)s метрикадан аспауы керек."
+
+#: metrics/models.py:140
+msgid "A metric appears twice."
+msgstr "Метрика екі рет көрсетілген."
+
+#: metrics/models.py:144
+#, python-format
+msgid "Unknown metrics: %(keys)s"
+msgstr "Белгісіз метрикалар: %(keys)s"
+
+#: metrics/models.py:154
+msgid "Pending"
+msgstr "Күтуде"
+
+#: metrics/models.py:155
+msgid "Approved"
+msgstr "Мақұлданды"
+
+#: metrics/models.py:156
+msgid "Declined"
+msgstr "Қабылданбады"
+
+#: providers/models.py:23
+msgid "StatsBomb Open Data"
+msgstr "StatsBomb (ашық деректер)"
+
+#: providers/models.py:24
+msgid "StatsBomb (Hudl)"
+msgstr "StatsBomb (Hudl)"
+
+#: providers/models.py:25
+msgid "Catapult OpenField"
+msgstr "Catapult OpenField"
+
+#: providers/models.py:26
+msgid "IMPECT"
+msgstr "IMPECT"
+
+#: providers/models.py:27
+msgid "Wyscout (Hudl)"
+msgstr "Wyscout (Hudl)"
+
+#: providers/models.py:28
+msgid "SkillCorner"
+msgstr "SkillCorner"
+
+#: providers/models.py:29
+msgid "Manual entry"
+msgstr "Қолмен енгізу"
+
+#: providers/models.py:72
+msgid "Player"
+msgstr "Ойыншы"
+
+#: providers/models.py:73
+msgid "Team"
+msgstr "Команда"
+
+#: providers/models.py:74
+msgid "Match"
+msgstr "Матч"
+
+#: providers/models.py:75
+msgid "Competition"
+msgstr "Турнир"
+
+#: providers/models.py:76
+msgid "Season"
+msgstr "Маусым"
+
+#: providers/models.py:77
+msgid "Training session"
+msgstr "Жаттығу"
+
+#: providers/models.py:80
+msgid "Confirmed"
+msgstr "Расталды"
+
+#: providers/models.py:84
+msgid "New internal record created"
+msgstr "Жаңа жазба жасалды"
+
+#: providers/models.py:85
+msgid "Exact attribute match"
+msgstr "Деректер толық сәйкес"
+
+#: providers/models.py:86
+msgid "Fuzzy name match"
+msgstr "Ұқсас есім"
+
+#: providers/models.py:87
+msgid "Linked by a human"
+msgstr "Қолмен байланыстырылды"
+
+#: providers/models.py:88
+msgid "Demo link (test data, not the same person)"
+msgstr "Демо-байланыс (сынақ деректері, басқа адам)"

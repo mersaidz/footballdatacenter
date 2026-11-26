@@ -19,6 +19,7 @@ club_router.register('metric-sets', views.MetricSetViewSet, basename='metric-set
 urlpatterns = [
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('me/', views.MeView.as_view(), name='me'),
     path('clubs/', views.MyClubsView.as_view(), name='my_clubs'),
     path('clubs/<int:club_id>/metrics/catalogue/', views.MetricCatalogueView.as_view(), name='metric_catalogue'),
     path('clubs/<int:club_id>/', include(club_router.urls)),

@@ -18,28 +18,29 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from clubs.models import ClubOwnedModel
 
 
 class Category(models.TextChoices):
-    VOLUME = 'volume', 'Volume'
-    SPEED = 'speed', 'Speed & high-speed running'
-    ACCELERATION = 'acceleration', 'Accelerations & decelerations'
-    MULTIDIRECTIONAL = 'multidirectional', 'Multidirectional load'
-    MECHANICAL = 'mechanical', 'Mechanical load'
-    METABOLIC = 'metabolic', 'Metabolic power'
-    RHIE = 'rhie', 'Repeated high-intensity efforts'
-    INTENSITY = 'intensity', 'Intensity / density'
-    HEART_RATE = 'heart_rate', 'Heart rate'
-    LOAD = 'load', 'PlayerLoad & accelerometry'
-    OTHER = 'other', 'Other'
+    VOLUME = 'volume', _('Volume')
+    SPEED = 'speed', _('Speed & high-speed running')
+    ACCELERATION = 'acceleration', _('Accelerations & decelerations')
+    MULTIDIRECTIONAL = 'multidirectional', _('Multidirectional load')
+    MECHANICAL = 'mechanical', _('Mechanical load')
+    METABOLIC = 'metabolic', _('Metabolic power')
+    RHIE = 'rhie', _('Repeated high-intensity efforts')
+    INTENSITY = 'intensity', _('Intensity / density')
+    HEART_RATE = 'heart_rate', _('Heart rate')
+    LOAD = 'load', _('PlayerLoad & accelerometry')
+    OTHER = 'other', _('Other')
 
 
 class Aggregation(models.TextChoices):
-    SUM = 'sum', 'Sum (distances, counts, load)'
-    MAX = 'max', 'Maximum (peak speed, peak power)'
-    MEAN = 'weighted_mean', 'Time-weighted mean (rates, %, densities)'
+    SUM = 'sum', _('Sum (distances, counts, load)')
+    MAX = 'max', _('Maximum (peak speed, peak power)')
+    MEAN = 'weighted_mean', _('Time-weighted mean (rates, %, densities)')
 
 
 class ProviderMetric(ClubOwnedModel):
@@ -103,9 +104,9 @@ class MetricDefinition(ClubOwnedModel):
 
 class MetricSet(ClubOwnedModel):
     class Display(models.TextChoices):
-        ABSOLUTE = 'absolute', 'Absolute'
-        PER_MIN = 'per_min', 'Per minute'
-        PER_90 = 'per_90', 'Per 90'
+        ABSOLUTE = 'absolute', _('Absolute')
+        PER_MIN = 'per_min', _('Per minute')
+        PER_90 = 'per_90', _('Per 90')
 
     name = models.CharField(max_length=80)
     owner = models.ForeignKey(
@@ -132,15 +133,15 @@ class MetricSet(ClubOwnedModel):
         super().clean()
         keys = list(self.metric_keys or [])
         if not keys:
-            raise ValidationError({'metric_keys': 'Pick at least one metric.'})
+            raise ValidationError({'metric_keys': _('Pick at least one metric.')})
         if len(keys) > self.MAX_METRICS:
-            raise ValidationError({'metric_keys': f'At most {self.MAX_METRICS} metrics per set.'})
+            raise ValidationError({'metric_keys': _('At most %(n)s metrics per set.') % {'n': self.MAX_METRICS}})
         if len(set(keys)) != len(keys):
-            raise ValidationError({'metric_keys': 'A metric appears twice.'})
+            raise ValidationError({'metric_keys': _('A metric appears twice.')})
         known = set(MetricDefinition.objects.filter(club_id=self.club_id, key__in=keys).values_list('key', flat=True))
         missing = [k for k in keys if k not in known]
         if missing:
-            raise ValidationError({'metric_keys': f'Unknown metrics: {missing}'})
+            raise ValidationError({'metric_keys': _('Unknown metrics: %(keys)s') % {'keys': ', '.join(missing)}})
 
     def __str__(self):
         return self.name
@@ -150,9 +151,9 @@ class MetricRequest(ClubOwnedModel):
     """A coach asks S&C to track a catalogue parameter; S&C approves (tracking starts) or declines."""
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        APPROVED = 'approved', 'Approved'
-        DECLINED = 'declined', 'Declined'
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        DECLINED = 'declined', _('Declined')
 
     provider = models.CharField(max_length=40)
     provider_slug = models.CharField(max_length=150)

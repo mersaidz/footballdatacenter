@@ -4,6 +4,7 @@ Club-scoped access for every endpoint under /api/clubs/<club_id>/.
 - Not a member of the club          → 404 (not 403: don't reveal the club exists).
 - Member without the capability     → 403 (they know the club; the data is just not theirs).
 """
+from django.utils.translation import gettext_lazy as _
 from django.http import Http404
 from rest_framework.permissions import BasePermission
 
@@ -38,7 +39,7 @@ class ClubScopedMixin:
 
 
 class HasClubCapability(BasePermission):
-    message = 'Your role in this club does not grant access to this data.'
+    message = _('Your role in this club does not grant access to this data.')
 
     def has_permission(self, request, view):
         membership = getattr(view, 'membership', None)

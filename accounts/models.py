@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -37,6 +38,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150, blank=True)
+    language = models.CharField(max_length=5, choices=settings.LANGUAGES, default='ru',
+                                help_text='Interface language for this person.')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False, help_text='Django admin access only.')
     date_joined = models.DateTimeField(default=timezone.now)

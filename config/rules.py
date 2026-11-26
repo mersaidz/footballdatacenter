@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.utils import translation
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -25,3 +27,23 @@ class FDCJWTAuthentication(JWTAuthentication):
         if not universal_user_authentication_rule(user):
             raise AuthenticationFailed('User is inactive or deleted', code='user_not_found')
         return user
+
+    def authenticate(self, request):
+        result = super().authenticate(request)
+        if result is not None:
+            activate_language(request, result[0])
+        return result
+
+
+SUPPORTED = {code for code, _ in settings.LANGUAGES}
+
+
+def activate_language(request, user=None) -> str:
+    """?lang= wins (handy for links and demos), then the person's saved language, then the browser's."""
+    lang = request.GET.get('lang') if hasattr(request, 'GET') else None
+    if lang not in SUPPORTED:
+        lang = getattr(user, 'language', None)
+    if lang in SUPPORTED:
+        translation.activate(lang)
+        request.LANGUAGE_CODE = lang
+    return translation.get_language()

@@ -51,7 +51,7 @@ def test_coach_asks_sc_approves_and_tracking_starts(make_member, club, catalogue
     assert (md.unit, md.aggregation, md.enabled) == ('m', 'sum', True)
     assert sc.post(u(club, f"metrics/requests/{r.data['id']}/approve/")).status_code == 400
     again = coach.post(u(club, 'metrics/requests/'), body)
-    assert again.status_code == 400 and 'Already tracked' in str(again.data)
+    assert again.status_code == 400 and 'Уже отслеживается' in str(again.data)   # Russian by default
 
 
 def test_requests_are_private_to_their_author_and_declinable(make_member, club, catalogue):

@@ -1,7 +1,8 @@
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext as _
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -17,6 +18,21 @@ from providers.models import ExternalIdentity
 
 from . import serializers as s
 from .permissions import ClubScopedMixin, HasClubCapability
+
+
+class MeView(generics.RetrieveUpdateAPIView):
+    """GET/PATCH /api/me/ — my name and interface language (ru / en / kk)."""
+    serializer_class = s.MeSerializer
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_object(self):
+        return self.request.user
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        from config.rules import activate_language
+        translation.activate(user.language)      # answer in the language just chosen
+        activate_language(self.request, user)
 
 
 class MyClubsView(generics.ListAPIView):
@@ -67,7 +83,7 @@ class PlayerViewSet(ClubReadOnlyViewSet):
         from football.services.football_profile import football_profile
         data = football_profile(self.get_object(), provider=request.query_params.get('provider', 'impect'))
         if data is None:
-            return Response({'detail': 'No event data for this player yet.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': _('No event data for this player yet.')}, status=status.HTTP_404_NOT_FOUND)
         return Response(data)
 
 
@@ -239,7 +255,7 @@ class ExternalIdentityViewSet(ClubScopedMixin, viewsets.ReadOnlyModelViewSet):
     def reject(self, request, club_id=None, pk=None):
         identity = self.get_object()
         if identity.entity_type != ExternalIdentity.EntityType.PLAYER:
-            raise ValidationError('Only player links can be rejected in v1.')
+            raise ValidationError(_('Only player links can be rejected in v1.'))
         old_target = identity.object_id
         with transaction.atomic():
             old_player = get_object_or_404(Player, pk=old_target, club=self.club)
@@ -393,7 +409,7 @@ class MetricDefinitionViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.Ret
         pm = ProviderMetric.objects.filter(club=self.club, provider=data.pop('provider'),
                                            slug=data.pop('provider_slug')).first()
         if pm is None:
-            raise ValidationError({'provider_slug': 'Not in this club\'s provider catalogue (run a sync first).'})
+            raise ValidationError({'provider_slug': _('Not in this club\'s provider catalogue (run a sync first).')})
         md = enable_from_catalogue(self.club, pm, user=request.user, **data)
         return Response(self.get_serializer(md).data, status=status.HTTP_201_CREATED)
 
@@ -430,11 +446,11 @@ class MetricRequestViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.Create
         data = body.validated_data
         pm = ProviderMetric.objects.filter(club=self.club, provider=data['provider'], slug=data['provider_slug']).first()
         if pm is None:
-            raise ValidationError({'provider_slug': 'Not in this club\'s provider catalogue.'})
+            raise ValidationError({'provider_slug': _('Not in this club\'s provider catalogue.')})
         tracked = MetricDefinition.objects.filter(club=self.club, provider=pm.provider, provider_slug=pm.slug,
                                                   enabled=True).first()
         if tracked:
-            raise ValidationError({'provider_slug': f'Already tracked as "{tracked.label}".'})
+            raise ValidationError({'provider_slug': _('Already tracked as "%(label)s".') % {'label': tracked.label}})
         existing = MetricRequest.objects.filter(club=self.club, provider=pm.provider, provider_slug=pm.slug,
                                                 status=MetricRequest.Status.PENDING).first()
         if existing:                         # someone already asked: no duplicate in the S&C inbox
@@ -445,15 +461,15 @@ class MetricRequestViewSet(ClubScopedMixin, mixins.ListModelMixin, mixins.Create
 
     def _decide(self, request, pk, approve: bool):
         if not self.has_cap(Cap.MANAGE_METRICS):
-            raise PermissionDenied('Only S&C, analysts and club admins decide which metrics the club tracks.')
+            raise PermissionDenied(_('Only S&C, analysts and club admins decide which metrics the club tracks.'))
         mr = get_object_or_404(MetricRequest, club=self.club, pk=pk)
         if mr.status != MetricRequest.Status.PENDING:
-            raise ValidationError({'status': f'Already {mr.status}.'})
+            raise ValidationError({'status': _('Already %(status)s.') % {'status': mr.get_status_display()}})
         with transaction.atomic():
             if approve:
                 pm = ProviderMetric.objects.filter(club=self.club, provider=mr.provider, slug=mr.provider_slug).first()
                 if pm is None:
-                    raise ValidationError({'provider_slug': 'No longer in the provider catalogue.'})
+                    raise ValidationError({'provider_slug': _('No longer in the provider catalogue.')})
                 mr.metric = enable_from_catalogue(self.club, pm, user=request.user)
             mr.status = MetricRequest.Status.APPROVED if approve else MetricRequest.Status.DECLINED
             mr.decided_by, mr.decided_at = request.user, timezone.now()
@@ -492,14 +508,14 @@ class MetricSetViewSet(ClubScopedMixin, viewsets.ModelViewSet):
 
     def _check_can_edit(self, metric_set):
         if metric_set.owner_id is None and not self.has_cap(Cap.MANAGE_METRICS):
-            raise PermissionDenied('Only S&C, analysts and club admins change club-wide metric sets.')
+            raise PermissionDenied(_('Only S&C, analysts and club admins change club-wide metric sets.'))
         if metric_set.owner_id not in (None, self.request.user.pk):
             raise PermissionDenied
 
     def perform_create(self, serializer):
         scope = serializer.validated_data.pop('scope', 'personal')
         if scope == 'club' and not self.has_cap(Cap.MANAGE_METRICS):
-            raise PermissionDenied('Only S&C, analysts and club admins publish club-wide metric sets.')
+            raise PermissionDenied(_('Only S&C, analysts and club admins publish club-wide metric sets.'))
         is_default = serializer.validated_data.pop('is_default', False)
         obj = serializer.save(club=self.club, owner=None if scope == 'club' else self.request.user)
         if is_default:
@@ -549,13 +565,13 @@ class MetricSetViewSet(ClubScopedMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def install_preset(self, request, club_id=None):
         if not self.has_cap(Cap.MANAGE_METRICS):
-            raise PermissionDenied('Only S&C, analysts and club admins publish club-wide metric sets.')
+            raise PermissionDenied(_('Only S&C, analysts and club admins publish club-wide metric sets.'))
         key = request.data.get('preset')
         if key not in PRESETS:
-            raise ValidationError({'preset': f"Choose from: {', '.join(PRESETS)}"})
+            raise ValidationError({'preset': _('Choose from: %(options)s') % {'options': ', '.join(PRESETS)}})
         r = install_preset(self.club, key, make_default=bool(request.data.get('make_default')), user=request.user)
         if r.metric_set is None:
-            raise ValidationError({'preset': 'This provider account offers none of the preset metrics.'})
+            raise ValidationError({'preset': _('This provider account offers none of the preset metrics.')})
         data = self.get_serializer(r.metric_set).data
         data['skipped'] = r.skipped
         return Response(data, status=status.HTTP_201_CREATED)

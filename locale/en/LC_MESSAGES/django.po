@@ -1,0 +1,601 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-26 08:07+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: api/permissions.py:42
+msgid "Your role in this club does not grant access to this data."
+msgstr ""
+
+#: api/serializers.py:134
+msgid "Return date is before start date."
+msgstr ""
+
+#: api/views.py:86
+msgid "No event data for this player yet."
+msgstr ""
+
+#: api/views.py:258
+msgid "Only player links can be rejected in v1."
+msgstr ""
+
+#: api/views.py:412
+msgid "Not in this club's provider catalogue (run a sync first)."
+msgstr ""
+
+#: api/views.py:449
+msgid "Not in this club's provider catalogue."
+msgstr ""
+
+#: api/views.py:453
+#, python-format
+msgid "Already tracked as \"%(label)s\"."
+msgstr ""
+
+#: api/views.py:464
+msgid ""
+"Only S&C, analysts and club admins decide which metrics the club tracks."
+msgstr ""
+
+#: api/views.py:467
+#, python-format
+msgid "Already %(status)s."
+msgstr ""
+
+#: api/views.py:472
+msgid "No longer in the provider catalogue."
+msgstr ""
+
+#: api/views.py:511
+msgid "Only S&C, analysts and club admins change club-wide metric sets."
+msgstr ""
+
+#: api/views.py:518 api/views.py:568
+msgid "Only S&C, analysts and club admins publish club-wide metric sets."
+msgstr ""
+
+#: api/views.py:571
+#, python-format
+msgid "Choose from: %(options)s"
+msgstr ""
+
+#: api/views.py:574
+msgid "This provider account offers none of the preset metrics."
+msgstr ""
+
+#: clubs/models.py:75
+msgid "Cross-club reference is not allowed."
+msgstr ""
+
+#: clubs/models.py:85
+msgid "Male"
+msgstr ""
+
+#: clubs/models.py:86
+msgid "Female"
+msgstr ""
+
+#: clubs/models.py:104
+msgid "Left"
+msgstr ""
+
+#: clubs/models.py:105
+msgid "Right"
+msgstr ""
+
+#: clubs/models.py:106
+msgid "Both"
+msgstr ""
+
+#: clubs/models.py:109
+msgid "Goalkeeper"
+msgstr ""
+
+#: clubs/models.py:110
+msgid "Centre-back"
+msgstr ""
+
+#: clubs/models.py:111
+msgid "Full-back / Wing-back"
+msgstr ""
+
+#: clubs/models.py:112
+msgid "Defensive midfielder"
+msgstr ""
+
+#: clubs/models.py:113
+msgid "Central midfielder"
+msgstr ""
+
+#: clubs/models.py:114
+msgid "Attacking midfielder"
+msgstr ""
+
+#: clubs/models.py:115
+msgid "Winger"
+msgstr ""
+
+#: clubs/models.py:116
+msgid "Centre-forward"
+msgstr ""
+
+#: clubs/models.py:147
+msgid "Club admin"
+msgstr ""
+
+#: clubs/models.py:148
+msgid "Sporting director"
+msgstr ""
+
+#: clubs/models.py:149
+msgid "Head coach"
+msgstr ""
+
+#: clubs/models.py:150
+msgid "Assistant coach"
+msgstr ""
+
+#: clubs/models.py:151
+msgid "Performance / data analyst"
+msgstr ""
+
+#: clubs/models.py:152
+msgid "Sports scientist / S&C"
+msgstr ""
+
+#: clubs/models.py:153
+msgid "Physiotherapist"
+msgstr ""
+
+#: clubs/models.py:154
+msgid "Club doctor"
+msgstr ""
+
+#: clubs/models.py:155
+msgid "Scout"
+msgstr ""
+
+#: core/models.py:26
+msgid "Provider account connected"
+msgstr ""
+
+#: core/models.py:27
+msgid "Provider account updated"
+msgstr ""
+
+#: core/models.py:28
+msgid "Sync success"
+msgstr ""
+
+#: core/models.py:29
+msgid "Sync failed"
+msgstr ""
+
+#: core/models.py:30
+msgid "External identity confirmed"
+msgstr ""
+
+#: core/models.py:31
+msgid "External identity rejected"
+msgstr ""
+
+#: core/models.py:32
+msgid "Medical record viewed"
+msgstr ""
+
+#: core/models.py:33
+msgid "Medical record created/changed"
+msgstr ""
+
+#: core/models.py:34
+msgid "Staff membership changed"
+msgstr ""
+
+#: core/models.py:35
+msgid "Period role set by staff"
+msgstr ""
+
+#: football/models.py:57
+msgid "Scheduled"
+msgstr ""
+
+#: football/models.py:58
+msgid "Played"
+msgstr ""
+
+#: football/models.py:59
+msgid "Postponed"
+msgstr ""
+
+#: football/models.py:60
+msgid "Cancelled"
+msgstr ""
+
+#: football/models.py:141
+msgid "Session must end after it starts."
+msgstr ""
+
+#: football/models.py:151
+msgid "Pass"
+msgstr ""
+
+#: football/models.py:152
+msgid "Shot"
+msgstr ""
+
+#: football/models.py:153
+msgid "Carry"
+msgstr ""
+
+#: football/models.py:154
+msgid "Dribble"
+msgstr ""
+
+#: football/models.py:155
+msgid "Ball receipt"
+msgstr ""
+
+#: football/models.py:156
+msgid "Pressure"
+msgstr ""
+
+#: football/models.py:157
+msgid "Duel"
+msgstr ""
+
+#: football/models.py:158
+msgid "Interception"
+msgstr ""
+
+#: football/models.py:159
+msgid "Ball recovery"
+msgstr ""
+
+#: football/models.py:160
+msgid "Clearance"
+msgstr ""
+
+#: football/models.py:161
+msgid "Block"
+msgstr ""
+
+#: football/models.py:162
+msgid "Foul committed"
+msgstr ""
+
+#: football/models.py:163
+msgid "Foul won"
+msgstr ""
+
+#: football/models.py:164
+msgid "Goalkeeper action"
+msgstr ""
+
+#: football/models.py:165
+msgid "Miscontrol"
+msgstr ""
+
+#: football/models.py:166
+msgid "Dispossessed"
+msgstr ""
+
+#: football/models.py:167 football/models.py:269 metrics/models.py:37
+msgid "Other"
+msgstr ""
+
+#: football/models.py:266
+msgid "Full"
+msgstr ""
+
+#: football/models.py:267
+msgid "Partial"
+msgstr ""
+
+#: football/models.py:268
+msgid "Alternate (individual / RTP)"
+msgstr ""
+
+#: football/models.py:272
+msgid "Whole activity"
+msgstr ""
+
+#: football/models.py:273
+msgid "Match playing periods only"
+msgstr ""
+
+#: football/models.py:318
+msgid "Warm-up"
+msgstr ""
+
+#: football/models.py:319
+msgid "1st half"
+msgstr ""
+
+#: football/models.py:320
+msgid "2nd half"
+msgstr ""
+
+#: football/models.py:321
+msgid "Extra time 1"
+msgstr ""
+
+#: football/models.py:322
+msgid "Extra time 2"
+msgstr ""
+
+#: football/models.py:323
+msgid "Penalty shoot-out"
+msgstr ""
+
+#: football/models.py:324
+msgid "Segment inside another period"
+msgstr ""
+
+#: football/models.py:325
+msgid "Top-up / compensatory"
+msgstr ""
+
+#: football/models.py:326
+msgid "Recovery"
+msgstr ""
+
+#: football/models.py:327
+msgid "Rehab / return to play"
+msgstr ""
+
+#: football/models.py:328
+msgid "Drill"
+msgstr ""
+
+#: football/models.py:329 providers/models.py:81
+msgid "Needs review"
+msgstr ""
+
+#: football/models.py:332
+msgid "Provider tag"
+msgstr ""
+
+#: football/models.py:333
+msgid "Club mapping"
+msgstr ""
+
+#: football/models.py:334
+msgid "Name dictionary"
+msgstr ""
+
+#: football/models.py:335
+msgid "Match structure"
+msgstr ""
+
+#: football/models.py:336
+msgid "Default for training"
+msgstr ""
+
+#: football/models.py:337
+msgid "Set by staff"
+msgstr ""
+
+#: football/models.py:338
+msgid "Not resolved"
+msgstr ""
+
+#: football/models.py:417
+msgid "Available"
+msgstr ""
+
+#: football/models.py:418
+msgid "Modified training"
+msgstr ""
+
+#: football/models.py:419
+msgid "Unavailable"
+msgstr ""
+
+#: football/models.py:422
+msgid "Injury"
+msgstr ""
+
+#: football/models.py:423
+msgid "Illness"
+msgstr ""
+
+#: football/models.py:424
+msgid "Load management"
+msgstr ""
+
+#: football/models.py:425
+msgid "Personal"
+msgstr ""
+
+#: football/models.py:426
+msgid "Suspension"
+msgstr ""
+
+#: football/models.py:427
+msgid "International duty"
+msgstr ""
+
+#: metrics/models.py:27
+msgid "Volume"
+msgstr ""
+
+#: metrics/models.py:28
+msgid "Speed & high-speed running"
+msgstr ""
+
+#: metrics/models.py:29
+msgid "Accelerations & decelerations"
+msgstr ""
+
+#: metrics/models.py:30
+msgid "Multidirectional load"
+msgstr ""
+
+#: metrics/models.py:31
+msgid "Mechanical load"
+msgstr ""
+
+#: metrics/models.py:32
+msgid "Metabolic power"
+msgstr ""
+
+#: metrics/models.py:33
+msgid "Repeated high-intensity efforts"
+msgstr ""
+
+#: metrics/models.py:34
+msgid "Intensity / density"
+msgstr ""
+
+#: metrics/models.py:35
+msgid "Heart rate"
+msgstr ""
+
+#: metrics/models.py:36
+msgid "PlayerLoad & accelerometry"
+msgstr ""
+
+#: metrics/models.py:41
+msgid "Sum (distances, counts, load)"
+msgstr ""
+
+#: metrics/models.py:42
+msgid "Maximum (peak speed, peak power)"
+msgstr ""
+
+#: metrics/models.py:43
+msgid "Time-weighted mean (rates, %, densities)"
+msgstr ""
+
+#: metrics/models.py:107
+msgid "Absolute"
+msgstr ""
+
+#: metrics/models.py:108
+msgid "Per minute"
+msgstr ""
+
+#: metrics/models.py:109
+msgid "Per 90"
+msgstr ""
+
+#: metrics/models.py:136
+msgid "Pick at least one metric."
+msgstr ""
+
+#: metrics/models.py:138
+#, python-format
+msgid "At most %(n)s metrics per set."
+msgstr ""
+
+#: metrics/models.py:140
+msgid "A metric appears twice."
+msgstr ""
+
+#: metrics/models.py:144
+#, python-format
+msgid "Unknown metrics: %(keys)s"
+msgstr ""
+
+#: metrics/models.py:154
+msgid "Pending"
+msgstr ""
+
+#: metrics/models.py:155
+msgid "Approved"
+msgstr ""
+
+#: metrics/models.py:156
+msgid "Declined"
+msgstr ""
+
+#: providers/models.py:23
+msgid "StatsBomb Open Data"
+msgstr ""
+
+#: providers/models.py:24
+msgid "StatsBomb (Hudl)"
+msgstr ""
+
+#: providers/models.py:25
+msgid "Catapult OpenField"
+msgstr ""
+
+#: providers/models.py:26
+msgid "IMPECT"
+msgstr ""
+
+#: providers/models.py:27
+msgid "Wyscout (Hudl)"
+msgstr ""
+
+#: providers/models.py:28
+msgid "SkillCorner"
+msgstr ""
+
+#: providers/models.py:29
+msgid "Manual entry"
+msgstr ""
+
+#: providers/models.py:72
+msgid "Player"
+msgstr ""
+
+#: providers/models.py:73
+msgid "Team"
+msgstr ""
+
+#: providers/models.py:74
+msgid "Match"
+msgstr ""
+
+#: providers/models.py:75
+msgid "Competition"
+msgstr ""
+
+#: providers/models.py:76
+msgid "Season"
+msgstr ""
+
+#: providers/models.py:77
+msgid "Training session"
+msgstr ""
+
+#: providers/models.py:80
+msgid "Confirmed"
+msgstr ""
+
+#: providers/models.py:84
+msgid "New internal record created"
+msgstr ""
+
+#: providers/models.py:85
+msgid "Exact attribute match"
+msgstr ""
+
+#: providers/models.py:86
+msgid "Fuzzy name match"
+msgstr ""
+
+#: providers/models.py:87
+msgid "Linked by a human"
+msgstr ""
+
+#: providers/models.py:88
+msgid "Demo link (test data, not the same person)"
+msgstr ""

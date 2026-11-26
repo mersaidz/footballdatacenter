@@ -1,0 +1,607 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-26 08:07+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: api/permissions.py:42
+msgid "Your role in this club does not grant access to this data."
+msgstr "Ваша роль в клубе не даёт доступа к этим данным."
+
+#: api/serializers.py:134
+msgid "Return date is before start date."
+msgstr "Дата возвращения раньше даты начала."
+
+#: api/views.py:86
+msgid "No event data for this player yet."
+msgstr "По этому игроку пока нет событийных данных."
+
+#: api/views.py:258
+msgid "Only player links can be rejected in v1."
+msgstr "Пока можно отклонять только связи игроков."
+
+#: api/views.py:412
+msgid "Not in this club's provider catalogue (run a sync first)."
+msgstr ""
+"Нет в каталоге провайдера этого клуба (сначала запустите синхронизацию)."
+
+#: api/views.py:449
+msgid "Not in this club's provider catalogue."
+msgstr "Нет в каталоге провайдера этого клуба."
+
+#: api/views.py:453
+#, python-format
+msgid "Already tracked as \"%(label)s\"."
+msgstr "Уже отслеживается как «%(label)s»."
+
+#: api/views.py:464
+msgid ""
+"Only S&C, analysts and club admins decide which metrics the club tracks."
+msgstr ""
+"Решать, какие метрики отслеживает клуб, могут только S&C, аналитики и "
+"администраторы клуба."
+
+#: api/views.py:467
+#, python-format
+msgid "Already %(status)s."
+msgstr "Уже: %(status)s."
+
+#: api/views.py:472
+msgid "No longer in the provider catalogue."
+msgstr "Больше нет в каталоге провайдера."
+
+#: api/views.py:511
+msgid "Only S&C, analysts and club admins change club-wide metric sets."
+msgstr ""
+"Клубные наборы метрик меняют только S&C, аналитики и администраторы клуба."
+
+#: api/views.py:518 api/views.py:568
+msgid "Only S&C, analysts and club admins publish club-wide metric sets."
+msgstr ""
+"Публиковать клубные наборы метрик могут только S&C, аналитики и "
+"администраторы клуба."
+
+#: api/views.py:571
+#, python-format
+msgid "Choose from: %(options)s"
+msgstr "Выберите из: %(options)s"
+
+#: api/views.py:574
+msgid "This provider account offers none of the preset metrics."
+msgstr "В аккаунте провайдера нет ни одной метрики из этого набора."
+
+#: clubs/models.py:75
+msgid "Cross-club reference is not allowed."
+msgstr "Ссылки на данные другого клуба запрещены."
+
+#: clubs/models.py:85
+msgid "Male"
+msgstr "Мужчины"
+
+#: clubs/models.py:86
+msgid "Female"
+msgstr "Женщины"
+
+#: clubs/models.py:104
+msgid "Left"
+msgstr "Левая"
+
+#: clubs/models.py:105
+msgid "Right"
+msgstr "Правая"
+
+#: clubs/models.py:106
+msgid "Both"
+msgstr "Обе"
+
+#: clubs/models.py:109
+msgid "Goalkeeper"
+msgstr "Вратарь"
+
+#: clubs/models.py:110
+msgid "Centre-back"
+msgstr "Центральный защитник"
+
+#: clubs/models.py:111
+msgid "Full-back / Wing-back"
+msgstr "Крайний защитник"
+
+#: clubs/models.py:112
+msgid "Defensive midfielder"
+msgstr "Опорный полузащитник"
+
+#: clubs/models.py:113
+msgid "Central midfielder"
+msgstr "Центральный полузащитник"
+
+#: clubs/models.py:114
+msgid "Attacking midfielder"
+msgstr "Атакующий полузащитник"
+
+#: clubs/models.py:115
+msgid "Winger"
+msgstr "Вингер"
+
+#: clubs/models.py:116
+msgid "Centre-forward"
+msgstr "Центральный нападающий"
+
+#: clubs/models.py:147
+msgid "Club admin"
+msgstr "Администратор клуба"
+
+#: clubs/models.py:148
+msgid "Sporting director"
+msgstr "Спортивный директор"
+
+#: clubs/models.py:149
+msgid "Head coach"
+msgstr "Главный тренер"
+
+#: clubs/models.py:150
+msgid "Assistant coach"
+msgstr "Ассистент тренера"
+
+#: clubs/models.py:151
+msgid "Performance / data analyst"
+msgstr "Аналитик"
+
+#: clubs/models.py:152
+msgid "Sports scientist / S&C"
+msgstr "Спортивный учёный / S&C"
+
+#: clubs/models.py:153
+msgid "Physiotherapist"
+msgstr "Физиотерапевт"
+
+#: clubs/models.py:154
+msgid "Club doctor"
+msgstr "Врач клуба"
+
+#: clubs/models.py:155
+msgid "Scout"
+msgstr "Скаут"
+
+#: core/models.py:26
+msgid "Provider account connected"
+msgstr "Подключён аккаунт провайдера"
+
+#: core/models.py:27
+msgid "Provider account updated"
+msgstr "Аккаунт провайдера обновлён"
+
+#: core/models.py:28
+msgid "Sync success"
+msgstr "Синхронизация прошла"
+
+#: core/models.py:29
+msgid "Sync failed"
+msgstr "Синхронизация не удалась"
+
+#: core/models.py:30
+msgid "External identity confirmed"
+msgstr "Связь с провайдером подтверждена"
+
+#: core/models.py:31
+msgid "External identity rejected"
+msgstr "Связь с провайдером отклонена"
+
+#: core/models.py:32
+msgid "Medical record viewed"
+msgstr "Просмотрена медкарта"
+
+#: core/models.py:33
+msgid "Medical record created/changed"
+msgstr "Медкарта создана или изменена"
+
+#: core/models.py:34
+msgid "Staff membership changed"
+msgstr "Изменён состав штаба"
+
+#: core/models.py:35
+msgid "Period role set by staff"
+msgstr "Роль периода задана вручную"
+
+#: football/models.py:57
+msgid "Scheduled"
+msgstr "Запланирован"
+
+#: football/models.py:58
+msgid "Played"
+msgstr "Сыгран"
+
+#: football/models.py:59
+msgid "Postponed"
+msgstr "Перенесён"
+
+#: football/models.py:60
+msgid "Cancelled"
+msgstr "Отменён"
+
+#: football/models.py:141
+msgid "Session must end after it starts."
+msgstr "Сессия должна заканчиваться позже, чем начинается."
+
+#: football/models.py:151
+msgid "Pass"
+msgstr "Пас"
+
+#: football/models.py:152
+msgid "Shot"
+msgstr "Удар"
+
+#: football/models.py:153
+msgid "Carry"
+msgstr "Ведение"
+
+#: football/models.py:154
+msgid "Dribble"
+msgstr "Обводка"
+
+#: football/models.py:155
+msgid "Ball receipt"
+msgstr "Приём мяча"
+
+#: football/models.py:156
+msgid "Pressure"
+msgstr "Прессинг"
+
+#: football/models.py:157
+msgid "Duel"
+msgstr "Единоборство"
+
+#: football/models.py:158
+msgid "Interception"
+msgstr "Перехват"
+
+#: football/models.py:159
+msgid "Ball recovery"
+msgstr "Подбор"
+
+#: football/models.py:160
+msgid "Clearance"
+msgstr "Вынос"
+
+#: football/models.py:161
+msgid "Block"
+msgstr "Блок"
+
+#: football/models.py:162
+msgid "Foul committed"
+msgstr "Фол"
+
+#: football/models.py:163
+msgid "Foul won"
+msgstr "Заработанный фол"
+
+#: football/models.py:164
+msgid "Goalkeeper action"
+msgstr "Действие вратаря"
+
+#: football/models.py:165
+msgid "Miscontrol"
+msgstr "Неудачный приём"
+
+#: football/models.py:166
+msgid "Dispossessed"
+msgstr "Потеря мяча"
+
+#: football/models.py:167 football/models.py:269 metrics/models.py:37
+msgid "Other"
+msgstr "Другое"
+
+#: football/models.py:266
+msgid "Full"
+msgstr "Полностью"
+
+#: football/models.py:267
+msgid "Partial"
+msgstr "Частично"
+
+#: football/models.py:268
+msgid "Alternate (individual / RTP)"
+msgstr "Индивидуально / RTP"
+
+#: football/models.py:272
+msgid "Whole activity"
+msgstr "Вся активность"
+
+#: football/models.py:273
+msgid "Match playing periods only"
+msgstr "Только игровые периоды матча"
+
+#: football/models.py:318
+msgid "Warm-up"
+msgstr "Разминка"
+
+#: football/models.py:319
+msgid "1st half"
+msgstr "1-й тайм"
+
+#: football/models.py:320
+msgid "2nd half"
+msgstr "2-й тайм"
+
+#: football/models.py:321
+msgid "Extra time 1"
+msgstr "Доп. время 1"
+
+#: football/models.py:322
+msgid "Extra time 2"
+msgstr "Доп. время 2"
+
+#: football/models.py:323
+msgid "Penalty shoot-out"
+msgstr "Серия пенальти"
+
+#: football/models.py:324
+msgid "Segment inside another period"
+msgstr "Отрезок внутри периода"
+
+#: football/models.py:325
+msgid "Top-up / compensatory"
+msgstr "Добор нагрузки"
+
+#: football/models.py:326
+msgid "Recovery"
+msgstr "Восстановление"
+
+#: football/models.py:327
+msgid "Rehab / return to play"
+msgstr "Реабилитация / возвращение"
+
+#: football/models.py:328
+msgid "Drill"
+msgstr "Упражнение"
+
+#: football/models.py:329 providers/models.py:81
+msgid "Needs review"
+msgstr "Нужна проверка"
+
+#: football/models.py:332
+msgid "Provider tag"
+msgstr "Тег провайдера"
+
+#: football/models.py:333
+msgid "Club mapping"
+msgstr "Правило клуба"
+
+#: football/models.py:334
+msgid "Name dictionary"
+msgstr "Словарь названий"
+
+#: football/models.py:335
+msgid "Match structure"
+msgstr "Структура матча"
+
+#: football/models.py:336
+msgid "Default for training"
+msgstr "По умолчанию для тренировки"
+
+#: football/models.py:337
+msgid "Set by staff"
+msgstr "Задано вручную"
+
+#: football/models.py:338
+msgid "Not resolved"
+msgstr "Не определено"
+
+#: football/models.py:417
+msgid "Available"
+msgstr "Доступен"
+
+#: football/models.py:418
+msgid "Modified training"
+msgstr "Облегчённая тренировка"
+
+#: football/models.py:419
+msgid "Unavailable"
+msgstr "Недоступен"
+
+#: football/models.py:422
+msgid "Injury"
+msgstr "Травма"
+
+#: football/models.py:423
+msgid "Illness"
+msgstr "Болезнь"
+
+#: football/models.py:424
+msgid "Load management"
+msgstr "Контроль нагрузки"
+
+#: football/models.py:425
+msgid "Personal"
+msgstr "Личные причины"
+
+#: football/models.py:426
+msgid "Suspension"
+msgstr "Дисквалификация"
+
+#: football/models.py:427
+msgid "International duty"
+msgstr "Сборная"
+
+#: metrics/models.py:27
+msgid "Volume"
+msgstr "Объём"
+
+#: metrics/models.py:28
+msgid "Speed & high-speed running"
+msgstr "Скорость и HSR"
+
+#: metrics/models.py:29
+msgid "Accelerations & decelerations"
+msgstr "Ускорения и торможения"
+
+#: metrics/models.py:30
+msgid "Multidirectional load"
+msgstr "Разнонаправленная нагрузка (MDL)"
+
+#: metrics/models.py:31
+msgid "Mechanical load"
+msgstr "Механическая нагрузка"
+
+#: metrics/models.py:32
+msgid "Metabolic power"
+msgstr "Метаболическая мощность"
+
+#: metrics/models.py:33
+msgid "Repeated high-intensity efforts"
+msgstr "Повторные высокоинтенсивные усилия (RHIE)"
+
+#: metrics/models.py:34
+msgid "Intensity / density"
+msgstr "Интенсивность / плотность"
+
+#: metrics/models.py:35
+msgid "Heart rate"
+msgstr "Пульс"
+
+#: metrics/models.py:36
+msgid "PlayerLoad & accelerometry"
+msgstr "PlayerLoad и акселерометрия"
+
+#: metrics/models.py:41
+msgid "Sum (distances, counts, load)"
+msgstr "Сумма (дистанции, количество, нагрузка)"
+
+#: metrics/models.py:42
+msgid "Maximum (peak speed, peak power)"
+msgstr "Максимум (пиковая скорость, мощность)"
+
+#: metrics/models.py:43
+msgid "Time-weighted mean (rates, %, densities)"
+msgstr "Среднее, взвешенное по времени (темпы, %, плотность)"
+
+#: metrics/models.py:107
+msgid "Absolute"
+msgstr "Итог"
+
+#: metrics/models.py:108
+msgid "Per minute"
+msgstr "За минуту"
+
+#: metrics/models.py:109
+msgid "Per 90"
+msgstr "На 90 минут"
+
+#: metrics/models.py:136
+msgid "Pick at least one metric."
+msgstr "Выберите хотя бы одну метрику."
+
+#: metrics/models.py:138
+#, python-format
+msgid "At most %(n)s metrics per set."
+msgstr "Не больше %(n)s метрик в наборе."
+
+#: metrics/models.py:140
+msgid "A metric appears twice."
+msgstr "Метрика указана дважды."
+
+#: metrics/models.py:144
+#, python-format
+msgid "Unknown metrics: %(keys)s"
+msgstr "Неизвестные метрики: %(keys)s"
+
+#: metrics/models.py:154
+msgid "Pending"
+msgstr "Ожидает"
+
+#: metrics/models.py:155
+msgid "Approved"
+msgstr "Одобрено"
+
+#: metrics/models.py:156
+msgid "Declined"
+msgstr "Отклонено"
+
+#: providers/models.py:23
+msgid "StatsBomb Open Data"
+msgstr "StatsBomb (открытые данные)"
+
+#: providers/models.py:24
+msgid "StatsBomb (Hudl)"
+msgstr "StatsBomb (Hudl)"
+
+#: providers/models.py:25
+msgid "Catapult OpenField"
+msgstr "Catapult OpenField"
+
+#: providers/models.py:26
+msgid "IMPECT"
+msgstr "IMPECT"
+
+#: providers/models.py:27
+msgid "Wyscout (Hudl)"
+msgstr "Wyscout (Hudl)"
+
+#: providers/models.py:28
+msgid "SkillCorner"
+msgstr "SkillCorner"
+
+#: providers/models.py:29
+msgid "Manual entry"
+msgstr "Ручной ввод"
+
+#: providers/models.py:72
+msgid "Player"
+msgstr "Игрок"
+
+#: providers/models.py:73
+msgid "Team"
+msgstr "Команда"
+
+#: providers/models.py:74
+msgid "Match"
+msgstr "Матч"
+
+#: providers/models.py:75
+msgid "Competition"
+msgstr "Турнир"
+
+#: providers/models.py:76
+msgid "Season"
+msgstr "Сезон"
+
+#: providers/models.py:77
+msgid "Training session"
+msgstr "Тренировка"
+
+#: providers/models.py:80
+msgid "Confirmed"
+msgstr "Подтверждено"
+
+#: providers/models.py:84
+msgid "New internal record created"
+msgstr "Создана новая запись"
+
+#: providers/models.py:85
+msgid "Exact attribute match"
+msgstr "Точное совпадение данных"
+
+#: providers/models.py:86
+msgid "Fuzzy name match"
+msgstr "Похожее имя"
+
+#: providers/models.py:87
+msgid "Linked by a human"
+msgstr "Связано вручную"
+
+#: providers/models.py:88
+msgid "Demo link (test data, not the same person)"
+msgstr "Демо-связь (тестовые данные, другой человек)"

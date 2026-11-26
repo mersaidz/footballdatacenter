@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from clubs.models import ClubOwnedModel, Player, Team
 from core.crypto import EncryptedTextField
@@ -53,10 +54,10 @@ class Season(ClubOwnedModel):
 
 class Match(ClubOwnedModel):
     class Status(models.TextChoices):
-        SCHEDULED = 'scheduled', 'Scheduled'
-        PLAYED = 'played', 'Played'
-        POSTPONED = 'postponed', 'Postponed'
-        CANCELLED = 'cancelled', 'Cancelled'
+        SCHEDULED = 'scheduled', _('Scheduled')
+        PLAYED = 'played', _('Played')
+        POSTPONED = 'postponed', _('Postponed')
+        CANCELLED = 'cancelled', _('Cancelled')
 
     season = models.ForeignKey(Season, on_delete=models.PROTECT, related_name='matches', null=True, blank=True)
     home_team = models.ForeignKey(Team, on_delete=models.PROTECT, related_name='home_matches')
@@ -137,7 +138,7 @@ class TrainingSession(ClubOwnedModel):
     def clean(self):
         super().clean()
         if self.end and self.end <= self.start:
-            raise ValidationError({'end': 'Session must end after it starts.'})
+            raise ValidationError({'end': _('Session must end after it starts.')})
 
     def __str__(self):
         return f'{self.team} {self.md_code or "session"} {self.start:%Y-%m-%d}'
@@ -147,23 +148,23 @@ class Event(ClubOwnedModel):
     """On-ball (and pressure) events, normalised from event-data providers."""
 
     class Type(models.TextChoices):
-        PASS = 'pass', 'Pass'
-        SHOT = 'shot', 'Shot'
-        CARRY = 'carry', 'Carry'
-        DRIBBLE = 'dribble', 'Dribble'
-        BALL_RECEIPT = 'ball_receipt', 'Ball receipt'
-        PRESSURE = 'pressure', 'Pressure'
-        DUEL = 'duel', 'Duel'
-        INTERCEPTION = 'interception', 'Interception'
-        BALL_RECOVERY = 'ball_recovery', 'Ball recovery'
-        CLEARANCE = 'clearance', 'Clearance'
-        BLOCK = 'block', 'Block'
-        FOUL_COMMITTED = 'foul_committed', 'Foul committed'
-        FOUL_WON = 'foul_won', 'Foul won'
-        GOALKEEPER = 'goalkeeper', 'Goalkeeper action'
-        MISCONTROL = 'miscontrol', 'Miscontrol'
-        DISPOSSESSED = 'dispossessed', 'Dispossessed'
-        OTHER = 'other', 'Other'
+        PASS = 'pass', _('Pass')
+        SHOT = 'shot', _('Shot')
+        CARRY = 'carry', _('Carry')
+        DRIBBLE = 'dribble', _('Dribble')
+        BALL_RECEIPT = 'ball_receipt', _('Ball receipt')
+        PRESSURE = 'pressure', _('Pressure')
+        DUEL = 'duel', _('Duel')
+        INTERCEPTION = 'interception', _('Interception')
+        BALL_RECOVERY = 'ball_recovery', _('Ball recovery')
+        CLEARANCE = 'clearance', _('Clearance')
+        BLOCK = 'block', _('Block')
+        FOUL_COMMITTED = 'foul_committed', _('Foul committed')
+        FOUL_WON = 'foul_won', _('Foul won')
+        GOALKEEPER = 'goalkeeper', _('Goalkeeper action')
+        MISCONTROL = 'miscontrol', _('Miscontrol')
+        DISPOSSESSED = 'dispossessed', _('Dispossessed')
+        OTHER = 'other', _('Other')
 
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='events')
     team = models.ForeignKey(Team, on_delete=models.PROTECT)
@@ -262,14 +263,14 @@ class PlayerLoad(LoadMetrics):
     """
 
     class Participation(models.TextChoices):
-        FULL = 'full', 'Full'
-        PARTIAL = 'partial', 'Partial'
-        ALTERNATE = 'alternate', 'Alternate (individual / RTP)'
-        OTHER = 'other', 'Other'
+        FULL = 'full', _('Full')
+        PARTIAL = 'partial', _('Partial')
+        ALTERNATE = 'alternate', _('Alternate (individual / RTP)')
+        OTHER = 'other', _('Other')
 
     class Basis(models.TextChoices):
-        ACTIVITY = 'activity', 'Whole activity'
-        MATCH_PERIODS = 'match_periods', 'Match playing periods only'
+        ACTIVITY = 'activity', _('Whole activity')
+        MATCH_PERIODS = 'match_periods', _('Match playing periods only')
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='loads')
     match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name='loads')
@@ -314,27 +315,27 @@ class ActivityPeriod(ClubOwnedModel):
     """
 
     class Role(models.TextChoices):
-        WARM_UP = 'warm_up', 'Warm-up'
-        FIRST_HALF = 'first_half', '1st half'
-        SECOND_HALF = 'second_half', '2nd half'
-        EXTRA_TIME_1 = 'extra_time_1', 'Extra time 1'
-        EXTRA_TIME_2 = 'extra_time_2', 'Extra time 2'
-        PENALTIES = 'penalties', 'Penalty shoot-out'
-        SEGMENT = 'segment', 'Segment inside another period'
-        TOP_UP = 'top_up', 'Top-up / compensatory'
-        RECOVERY = 'recovery', 'Recovery'
-        REHAB = 'rehab', 'Rehab / return to play'
-        DRILL = 'drill', 'Drill'
-        UNKNOWN = 'unknown', 'Needs review'
+        WARM_UP = 'warm_up', _('Warm-up')
+        FIRST_HALF = 'first_half', _('1st half')
+        SECOND_HALF = 'second_half', _('2nd half')
+        EXTRA_TIME_1 = 'extra_time_1', _('Extra time 1')
+        EXTRA_TIME_2 = 'extra_time_2', _('Extra time 2')
+        PENALTIES = 'penalties', _('Penalty shoot-out')
+        SEGMENT = 'segment', _('Segment inside another period')
+        TOP_UP = 'top_up', _('Top-up / compensatory')
+        RECOVERY = 'recovery', _('Recovery')
+        REHAB = 'rehab', _('Rehab / return to play')
+        DRILL = 'drill', _('Drill')
+        UNKNOWN = 'unknown', _('Needs review')
 
     class Source(models.TextChoices):
-        TAG = 'tag', 'Provider tag'
-        CLUB = 'club', 'Club mapping'
-        DICTIONARY = 'dictionary', 'Name dictionary'
-        STRUCTURE = 'structure', 'Match structure'
-        DEFAULT = 'default', 'Default for training'
-        MANUAL = 'manual', 'Set by staff'
-        NONE = 'none', 'Not resolved'
+        TAG = 'tag', _('Provider tag')
+        CLUB = 'club', _('Club mapping')
+        DICTIONARY = 'dictionary', _('Name dictionary')
+        STRUCTURE = 'structure', _('Match structure')
+        DEFAULT = 'default', _('Default for training')
+        MANUAL = 'manual', _('Set by staff')
+        NONE = 'none', _('Not resolved')
 
     PLAYING_ROLES = (Role.FIRST_HALF, Role.SECOND_HALF, Role.EXTRA_TIME_1, Role.EXTRA_TIME_2)
 
@@ -413,17 +414,17 @@ class PlayerAvailability(ClubOwnedModel):
     """
 
     class Status(models.TextChoices):
-        AVAILABLE = 'available', 'Available'
-        MODIFIED = 'modified', 'Modified training'
-        UNAVAILABLE = 'unavailable', 'Unavailable'
+        AVAILABLE = 'available', _('Available')
+        MODIFIED = 'modified', _('Modified training')
+        UNAVAILABLE = 'unavailable', _('Unavailable')
 
     class Reason(models.TextChoices):
-        INJURY = 'injury', 'Injury'
-        ILLNESS = 'illness', 'Illness'
-        LOAD_MANAGEMENT = 'load_management', 'Load management'
-        PERSONAL = 'personal', 'Personal'
-        SUSPENSION = 'suspension', 'Suspension'
-        INTERNATIONAL = 'international', 'International duty'
+        INJURY = 'injury', _('Injury')
+        ILLNESS = 'illness', _('Illness')
+        LOAD_MANAGEMENT = 'load_management', _('Load management')
+        PERSONAL = 'personal', _('Personal')
+        SUSPENSION = 'suspension', _('Suspension')
+        INTERNATIONAL = 'international', _('International duty')
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='availability')
     status = models.CharField(max_length=12, choices=Status.choices)

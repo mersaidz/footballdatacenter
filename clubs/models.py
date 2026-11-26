@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from core.models import TimeStampedModel
 
@@ -71,7 +72,7 @@ class ClubOwnedModel(TimeStampedModel):
         for field_name in self._club_check_fields:
             related = getattr(self, field_name, None)
             if related is not None and getattr(related, 'club_id', None) not in (None, self.club_id):
-                raise ValidationError({field_name: 'Cross-club reference is not allowed.'})
+                raise ValidationError({field_name: _('Cross-club reference is not allowed.')})
 
 
 class Team(ClubOwnedModel):
@@ -81,8 +82,8 @@ class Team(ClubOwnedModel):
     """
 
     class Gender(models.TextChoices):
-        MALE = 'male', 'Male'
-        FEMALE = 'female', 'Female'
+        MALE = 'male', _('Male')
+        FEMALE = 'female', _('Female')
 
     name = models.CharField(max_length=150)
     short_name = models.CharField(max_length=40, blank=True)
@@ -100,19 +101,19 @@ class Team(ClubOwnedModel):
 
 class Player(ClubOwnedModel):
     class Foot(models.TextChoices):
-        LEFT = 'left', 'Left'
-        RIGHT = 'right', 'Right'
-        BOTH = 'both', 'Both'
+        LEFT = 'left', _('Left')
+        RIGHT = 'right', _('Right')
+        BOTH = 'both', _('Both')
 
     class Position(models.TextChoices):
-        GK = 'GK', 'Goalkeeper'
-        CB = 'CB', 'Centre-back'
-        FB = 'FB', 'Full-back / Wing-back'
-        DM = 'DM', 'Defensive midfielder'
-        CM = 'CM', 'Central midfielder'
-        AM = 'AM', 'Attacking midfielder'
-        W = 'W', 'Winger'
-        CF = 'CF', 'Centre-forward'
+        GK = 'GK', _('Goalkeeper')
+        CB = 'CB', _('Centre-back')
+        FB = 'FB', _('Full-back / Wing-back')
+        DM = 'DM', _('Defensive midfielder')
+        CM = 'CM', _('Central midfielder')
+        AM = 'AM', _('Attacking midfielder')
+        W = 'W', _('Winger')
+        CF = 'CF', _('Centre-forward')
 
     full_name = models.CharField(max_length=200)
     known_name = models.CharField(max_length=120, blank=True, help_text='Name used on shirts / by media.')
@@ -143,15 +144,15 @@ class StaffMembership(TimeStampedModel):
     """A user's role inside one club. Roles drive capabilities (clubs.permissions)."""
 
     class Role(models.TextChoices):
-        CLUB_ADMIN = 'club_admin', 'Club admin'
-        SPORTING_DIRECTOR = 'sporting_director', 'Sporting director'
-        HEAD_COACH = 'head_coach', 'Head coach'
-        ASSISTANT_COACH = 'assistant_coach', 'Assistant coach'
-        ANALYST = 'analyst', 'Performance / data analyst'
-        SPORTS_SCIENTIST = 'sports_scientist', 'Sports scientist / S&C'
-        PHYSIO = 'physio', 'Physiotherapist'
-        DOCTOR = 'doctor', 'Club doctor'
-        SCOUT = 'scout', 'Scout'
+        CLUB_ADMIN = 'club_admin', _('Club admin')
+        SPORTING_DIRECTOR = 'sporting_director', _('Sporting director')
+        HEAD_COACH = 'head_coach', _('Head coach')
+        ASSISTANT_COACH = 'assistant_coach', _('Assistant coach')
+        ANALYST = 'analyst', _('Performance / data analyst')
+        SPORTS_SCIENTIST = 'sports_scientist', _('Sports scientist / S&C')
+        PHYSIO = 'physio', _('Physiotherapist')
+        DOCTOR = 'doctor', _('Club doctor')
+        SCOUT = 'scout', _('Scout')
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='memberships')
     club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='memberships')

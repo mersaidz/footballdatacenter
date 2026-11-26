@@ -3,7 +3,7 @@
 A club-side football data platform: one place where a club's physical data (Catapult OpenField), event data (IMPECT, Wyscout, StatsBomb) and medical availability meet, behind one API with role-based access for the whole staff.
 
 ![Status](https://img.shields.io/badge/status-v0.2%20backend-blue)
-![Tests](https://img.shields.io/badge/tests-227%20passing-green)
+![Tests](https://img.shields.io/badge/tests-232%20passing-green)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Django](https://img.shields.io/badge/django-6.0-darkgreen)
 
@@ -95,6 +95,12 @@ Staff name periods however they like: "1st Half", "1half", "1 тайм", "Primei
 What is still unknown in a match goes to a review queue (`GET /periods/?needs_review=true`). One click (`POST /periods/{id}/assign_role/`) sets the role, teaches the club vocabulary, re-labels every period with the same name and recomputes the affected match loads. Staff decisions survive re-syncs. Sub-periods inside a half ("1st Half 0–15") become `segment` and are never counted twice.
 
 On the demo account the J01 recording is Warm Up 16.8' + 1st Half 49.9' + 2nd Half 52.3'. Match load now covers 102', not 119'.
+
+### Languages: Russian, English, Kazakh
+
+Russian is the default. Each person picks a language (`PATCH /api/me/ {"language": "kk"}`); `?lang=en` overrides it for one request (handy for demos), and `Accept-Language` is used when nothing is saved. Choice labels (roles, period roles, positions, metric categories…) and API messages are translated. Abbreviations analysts use in every language (HSR, ACWR, xG, RPE, MDL, RHIE, S&C) stay as they are.
+
+Translations live in `locale/translations.py` (English → Russian, Kazakh). After changing strings: `python manage.py makemessages -l ru -l kk -l en`, add the new lines to `translations.py`, then `python locale/build.py`. A test fails if any backend string is left untranslated.
 
 ### IMPECT: event data, positions, packing
 

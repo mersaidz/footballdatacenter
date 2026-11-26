@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from .sanitize import find_forbidden_keys
 
@@ -22,16 +23,16 @@ class AuditLog(models.Model):
     """
 
     class Action(models.TextChoices):
-        PROVIDER_CONNECTED = 'provider_connected', 'Provider account connected'
-        PROVIDER_UPDATED = 'provider_updated', 'Provider account updated'
-        SYNC_SUCCESS = 'sync_success', 'Sync success'
-        SYNC_FAILED = 'sync_failed', 'Sync failed'
-        IDENTITY_CONFIRMED = 'identity_confirmed', 'External identity confirmed'
-        IDENTITY_REJECTED = 'identity_rejected', 'External identity rejected'
-        MEDICAL_RECORD_VIEWED = 'medical_record_viewed', 'Medical record viewed'
-        MEDICAL_RECORD_CHANGED = 'medical_record_changed', 'Medical record created/changed'
-        MEMBERSHIP_CHANGED = 'membership_changed', 'Staff membership changed'
-        PERIOD_ROLE_CHANGED = 'period_role_changed', 'Period role set by staff'
+        PROVIDER_CONNECTED = 'provider_connected', _('Provider account connected')
+        PROVIDER_UPDATED = 'provider_updated', _('Provider account updated')
+        SYNC_SUCCESS = 'sync_success', _('Sync success')
+        SYNC_FAILED = 'sync_failed', _('Sync failed')
+        IDENTITY_CONFIRMED = 'identity_confirmed', _('External identity confirmed')
+        IDENTITY_REJECTED = 'identity_rejected', _('External identity rejected')
+        MEDICAL_RECORD_VIEWED = 'medical_record_viewed', _('Medical record viewed')
+        MEDICAL_RECORD_CHANGED = 'medical_record_changed', _('Medical record created/changed')
+        MEMBERSHIP_CHANGED = 'membership_changed', _('Staff membership changed')
+        PERIOD_ROLE_CHANGED = 'period_role_changed', _('Period role set by staff')
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     user_id_snapshot = models.PositiveBigIntegerField(null=True, blank=True)

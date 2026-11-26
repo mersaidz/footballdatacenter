@@ -13,19 +13,20 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from clubs.models import ClubOwnedModel
 from core.crypto import EncryptedTextField
 
 
 class Provider(models.TextChoices):
-    STATSBOMB_OPEN = 'statsbomb_open', 'StatsBomb Open Data'
-    STATSBOMB = 'statsbomb', 'StatsBomb (Hudl)'
-    CATAPULT_OPENFIELD = 'catapult_openfield', 'Catapult OpenField'
-    IMPECT = 'impect', 'IMPECT'
-    WYSCOUT = 'wyscout', 'Wyscout (Hudl)'
-    SKILLCORNER = 'skillcorner', 'SkillCorner'
-    MANUAL = 'manual', 'Manual entry'
+    STATSBOMB_OPEN = 'statsbomb_open', _('StatsBomb Open Data')
+    STATSBOMB = 'statsbomb', _('StatsBomb (Hudl)')
+    CATAPULT_OPENFIELD = 'catapult_openfield', _('Catapult OpenField')
+    IMPECT = 'impect', _('IMPECT')
+    WYSCOUT = 'wyscout', _('Wyscout (Hudl)')
+    SKILLCORNER = 'skillcorner', _('SkillCorner')
+    MANUAL = 'manual', _('Manual entry')
 
 
 class ProviderAccount(ClubOwnedModel):
@@ -68,23 +69,23 @@ class RawPayload(ClubOwnedModel):
 
 class ExternalIdentity(ClubOwnedModel):
     class EntityType(models.TextChoices):
-        PLAYER = 'player', 'Player'
-        TEAM = 'team', 'Team'
-        MATCH = 'match', 'Match'
-        COMPETITION = 'competition', 'Competition'
-        SEASON = 'season', 'Season'
-        TRAINING_SESSION = 'training_session', 'Training session'
+        PLAYER = 'player', _('Player')
+        TEAM = 'team', _('Team')
+        MATCH = 'match', _('Match')
+        COMPETITION = 'competition', _('Competition')
+        SEASON = 'season', _('Season')
+        TRAINING_SESSION = 'training_session', _('Training session')
 
     class Status(models.TextChoices):
-        CONFIRMED = 'confirmed', 'Confirmed'      # exact or human-verified
-        SUGGESTED = 'suggested', 'Needs review'   # fuzzy match, linked but flagged
+        CONFIRMED = 'confirmed', _('Confirmed')      # exact or human-verified
+        SUGGESTED = 'suggested', _('Needs review')   # fuzzy match, linked but flagged
 
     class Method(models.TextChoices):
-        CREATED = 'created', 'New internal record created'
-        EXACT = 'exact', 'Exact attribute match'
-        FUZZY = 'fuzzy', 'Fuzzy name match'
-        MANUAL = 'manual', 'Linked by a human'
-        DEMO = 'demo', 'Demo link (test data, not the same person)'
+        CREATED = 'created', _('New internal record created')
+        EXACT = 'exact', _('Exact attribute match')
+        FUZZY = 'fuzzy', _('Fuzzy name match')
+        MANUAL = 'manual', _('Linked by a human')
+        DEMO = 'demo', _('Demo link (test data, not the same person)')
 
     provider = models.CharField(max_length=40, choices=Provider.choices)
     entity_type = models.CharField(max_length=20, choices=EntityType.choices)

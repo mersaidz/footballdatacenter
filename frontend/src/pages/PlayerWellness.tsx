@@ -57,7 +57,7 @@ export function CheckinCard({ w, player, onSaved }: { w: PlayerWellnessData; pla
             {a.sleep_hours != null && <span>{t('col_sleep_h')}: <b style={{ color: 'var(--text)', fontWeight: 500 }}>{num(a.sleep_hours, 1)}</b></span>}
             {!!a.sore_areas?.length && <span>{t('col_sore')}: <b style={{ color: '#fecaca', fontWeight: 500 }}>{a.sore_areas.map(areaLabel).join(', ')}</b></span>}
           </div>
-          {a.comment && <div className="notice small" style={{ borderStyle: 'solid', borderColor: 'var(--line)', background: '#1c1c1c' }}>«{a.comment}»</div>}
+          {a.comment && <div className="notice small" style={{ borderStyle: 'solid', borderColor: 'var(--line)', background: 'var(--raised)' }}>«{a.comment}»</div>}
           {base && <span className="small faint">{t('wl_tick')}</span>}
         </div>}
       </>}

@@ -126,7 +126,7 @@ export default function PitchMap({ data, match, onMatch }: { data: MapData; matc
         </svg>
         {hover && (
           <div role="tooltip" style={{ position: 'absolute', left: Math.min(hover.px + 14, (box.current?.clientWidth || 400) - 230), top: Math.max(0, hover.py - 10),
-            width: 220, background: 'rgba(17,17,17,0.96)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', pointerEvents: 'none', fontSize: 12, lineHeight: 1.5 }}>
+            width: 220, background: 'rgba(23,26,33,0.96)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', pointerEvents: 'none', fontSize: 12, lineHeight: 1.5 }}>
             <b style={{ fontWeight: 600 }}>{hover.item.minute}′</b> <span className="muted">{mLabel(hover.item.match_id)}</span>
             {hover.kind === 'shot' ? <div>
               <span style={{ color: hover.item.goal ? COLOR.goal : 'var(--text-2)', fontWeight: 600 }}>{hover.item.goal ? t('goal_word') : t('no_goal')}</span> · xG {num(hover.item.xg, 2)}

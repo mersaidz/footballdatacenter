@@ -2,10 +2,10 @@ import { ReactNode, useState } from 'react';
 import { num, t } from '../i18n';
 
 export const LEVEL = {
-  reduce: { color: 'var(--red)', bg: 'rgba(248,113,113,0.12)' },
-  hold: { color: 'var(--amber)', bg: 'rgba(251,191,36,0.12)' },
-  build: { color: 'var(--blue)', bg: 'rgba(96,165,250,0.12)' },
-  plan: { color: 'var(--green)', bg: 'rgba(74,222,128,0.10)' },
+  reduce: { color: 'var(--red)', bg: 'rgba(242,119,122,0.13)' },
+  hold: { color: 'var(--amber)', bg: 'rgba(245,196,81,0.12)' },
+  build: { color: 'var(--blue)', bg: 'rgba(108,168,247,0.13)' },
+  plan: { color: 'var(--green)', bg: 'rgba(91,214,142,0.11)' },
 } as const;
 
 export const CAT_COLOR: Record<string, string> = {
@@ -119,7 +119,7 @@ export function InfoTip({ label, text, align = 'left' }: { label: string; text: 
           alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>?</span>
       </button>
       {open && (
-        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', [align]: 0, width: 280, zIndex: 20, background: 'rgba(17,17,17,0.97)',
+        <span role="tooltip" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', [align]: 0, width: 280, zIndex: 20, background: 'rgba(23,26,33,0.97)',
           border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', color: 'var(--text-2)', fontSize: 12, lineHeight: 1.5,
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>{text}</span>
       )}

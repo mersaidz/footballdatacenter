@@ -31,7 +31,7 @@ function useInstallable(token: string, name: string | undefined) {
     add('link', { rel: 'manifest', href: `/api/p/${encodeURIComponent(token)}/manifest/` });
     add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
     add('meta', { name: 'apple-mobile-web-app-title', content: 'FDC' });
-    add('meta', { name: 'theme-color', content: '#0a0a0a' });
+    add('meta', { name: 'theme-color', content: '#0F1115' });
     add('link', { rel: 'apple-touch-icon', href: '/static/icon-192.png' });
     document.title = `FDC · ${name}`;
     return () => document.querySelectorAll('[data-player]').forEach((el) => el.remove());

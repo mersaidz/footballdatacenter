@@ -28,7 +28,7 @@ function Scale({ item, value, onChange, big }: { item: Item; value: number | nul
         {[1, 2, 3, 4, 5].map((v) => (
           <button key={v} type="button" role="radio" aria-checked={value === v} aria-label={`${v} — ${answerWord(item, v)}`}
             onClick={() => onChange(v)} className={big ? 'big' : ''}
-            style={value === v ? { background: SCORE_COLOR[v], borderColor: SCORE_COLOR[v], color: '#0a0a0a' } : undefined}>{v}</button>
+            style={value === v ? { background: SCORE_COLOR[v], borderColor: SCORE_COLOR[v], color: 'var(--ink)' } : undefined}>{v}</button>
         ))}
       </div>
       <div className="scale-ends small faint"><span>{answerWord(item, 1)}</span><span>{answerWord(item, 5)}</span></div>
@@ -88,8 +88,8 @@ export function RpePicker({ value, onPick, busy }: { value: number | null; onPic
     <div className="rpe" role="radiogroup" aria-label={t('rpe_q')}>
       {Array.from({ length: 11 }, (_, i) => 10 - i).map((r) => (
         <button key={r} type="button" role="radio" aria-checked={value === r} disabled={busy} onClick={() => onPick(r)}
-          style={value === r ? { background: rpeColor(r), borderColor: rpeColor(r), color: '#0a0a0a' } : undefined}>
-          <b className="num" style={{ color: value === r ? '#0a0a0a' : rpeColor(r) }}>{r}</b><span>{words[r]}</span>
+          style={value === r ? { background: rpeColor(r), borderColor: rpeColor(r), color: 'var(--ink)' } : undefined}>
+          <b className="num" style={{ color: value === r ? 'var(--ink)' : rpeColor(r) }}>{r}</b><span>{words[r]}</span>
         </button>
       ))}
     </div>

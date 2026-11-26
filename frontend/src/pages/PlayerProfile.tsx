@@ -170,7 +170,7 @@ function FootballTab({ f }: { f: Football }) {
             <tr key={m.match_id} className="click" aria-selected={match === m.match_id}
               style={match === m.match_id ? { background: 'rgba(255,122,69,0.08)' } : undefined}
               onClick={() => { setMatch(match === m.match_id ? null : m.match_id); document.getElementById('season-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}><td>{day(m.date, { day: '2-digit', month: '2-digit', year: '2-digit' })}</td><td>{m.opponent} <span className="small faint">{m.home ? t('home') : t('away')}</span></td>
-              <td><span className="tag" style={{ color: '#0a0a0a', background: ({ W: '#4ade80', D: '#a3a3a3', L: '#f87171' } as Record<string, string>)[m.result] || '#a3a3a3' }}>{m.result}</span> {m.score}</td>
+              <td><span className="tag" style={{ color: 'var(--ink)', background: ({ W: '#4ade80', D: '#a3a3a3', L: '#f87171' } as Record<string, string>)[m.result] || '#a3a3a3' }}>{m.result}</span> {m.score}</td>
               <td className="right">{m.minutes}′</td><td className="right">{num(m.xg, 2)}</td><td className="right">{m.shots}</td><td className="right">{m.goals}</td>
               <td className="right">{num(m.packing)}</td><td className="right">{num(m.carrying_m)}</td><td className="right">{m.ball_losses}</td></tr>
           ))}</tbody>
@@ -215,7 +215,7 @@ export default function PlayerProfile() {
       <div className="page">
         <State loading={q.loading && !h} error={q.error} onRetry={q.reload}>
           {h && p && <>
-            <section className="card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, alignItems: 'center', background: 'linear-gradient(180deg,#1c1c1c,#161616)' }}>
+            <section className="card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, alignItems: 'center', background: 'linear-gradient(180deg,var(--raised),var(--card))' }}>
               <div style={{ display: 'flex', gap: 18, alignItems: 'center', flex: '1 1 340px' }}>
                 <div className="hero-num"><b>{p.shirt_number ?? '—'}</b><span className="small" style={{ color: 'var(--accent-text)', fontWeight: 600 }}>{p.position || ''}</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -12,11 +12,11 @@ export function reasonText(r: Reason) {
 
 export default function Today() {
   const [date, setDate] = useState('');
-  const [filter, setFilter] = useState<'all' | 'modify' | 'monitor' | 'ready'>('all');
+  const [filter, setFilter] = useState<'all' | 'reduce' | 'hold' | 'build' | 'plan'>('all');
   const nav = useNavigate();
   const q = useApi<SquadStatus>(clubPath(`squad-status/${date ? `?date=${date}` : ''}`), [date]);
   const s = q.data;
-  const counts = { modify: 0, monitor: 0, ready: 0 };
+  const counts = { reduce: 0, hold: 0, build: 0, plan: 0 };
   s?.players.forEach((p) => { counts[p.level] += 1; });
   const rows = (s?.players || []).filter((p) => filter === 'all' || p.level === filter);
   const md1 = s?.days_since_match === 1 && s.last_match;
@@ -37,7 +37,7 @@ export default function Today() {
         </div>
         <State loading={q.loading && !s} error={q.error} onRetry={q.reload}>
           <div className="grid" style={{ '--min': '200px' } as React.CSSProperties}>
-            {(['modify', 'monitor', 'ready'] as const).map((l) => (
+            {(['reduce', 'hold', 'build', 'plan'] as const).map((l) => (
               <button key={l} className="kpi" aria-pressed={filter === l} onClick={() => setFilter(filter === l ? 'all' : l)}
                 style={filter === l ? { background: LEVEL[l].bg, borderColor: LEVEL[l].color } : undefined}>
                 <span className="row small" style={{ color: 'var(--text-2)' }}><span className="dot" style={{ background: LEVEL[l].color }} />{t(`lvl_${l}`)}</span>
@@ -47,14 +47,14 @@ export default function Today() {
           </div>
           {md1 && s && (
             <section className="card">
-              <div className="head"><h2>{t('md1_groups')}</h2><span className="small muted">{s.last_match!.name}</span></div>
+              <div className="head"><h2>{t('md1_groups')}</h2><span className="small muted">{t('md1_hint', { m: s.last_match!.name })}</span></div>
               <div className="grid" style={{ '--min': '240px' } as React.CSSProperties}>
-                {[[t('recovery'), t('played60'), (m: number) => m >= 60, 'rgba(95,208,224,0.16)', '#9be3ec'],
-                  [t('topup'), t('under60'), (m: number) => m < 60, 'rgba(255,122,69,0.14)', '#ffb08f']].map(([title, hint, fn, bg, fg]) => {
+                {[[t('recovery_group'), t('played60'), (m: number) => m >= 60, 'rgba(95,208,224,0.16)', '#9be3ec'],
+                  [t('topup_group'), t('under60'), (m: number) => m < 60, 'rgba(255,122,69,0.14)', '#ffb08f']].map(([title, hint, fn, bg, fg]) => {
                   const ps = s.players.filter((p) => (fn as (m: number) => boolean)(p.last_match_minutes)).sort((a, b) => (a.shirt_number || 99) - (b.shirt_number || 99));
                   return (
                     <div key={title as string} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <span><b style={{ fontWeight: 500 }}>{title as string}</b> <span className="muted small">{hint as string} · {ps.length}</span></span>
+                      <span><b style={{ fontWeight: 500 }}>{title as string}</b> <span className="muted small">— {hint as string} · {ps.length}</span></span>
                       <div className="row" style={{ gap: 6 }}>{ps.map((p) => <Link key={p.player_id} to={`/players/${p.player_id}`} className="small" style={{ padding: '4px 8px', borderRadius: 8, background: bg as string, color: fg as string }}>{p.shirt_number ?? ''} {p.name}</Link>)}</div>
                     </div>
                   );

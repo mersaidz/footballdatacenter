@@ -52,8 +52,8 @@ def test_squad_status_flags_the_spike_and_skips_hsr_for_keepers(make_member, clu
     d = coach.get(u(club, 'squad-status/')).data
     assert d['as_of'] == '2026-08-05' and d['last_match']['name'] == 'S34' and d['days_since_match'] == 1
     by = {p['name']: p for p in d['players']}
-    assert by['Spiky Sam']['level'] == 'modify' and by['Spiky Sam']['reasons'][0]['code'] == 'acwr_dist_high'
-    assert by['Steady Eddie']['level'] == 'ready' and by['Steady Eddie']['reasons'] == []
+    assert by['Spiky Sam']['level'] == 'reduce' and by['Spiky Sam']['reasons'][0]['code'] == 'acwr_dist_high'
+    assert by['Steady Eddie']['level'] == 'plan' and by['Steady Eddie']['reasons'] == []
     assert by['Gil Keeper']['acwr_hsr'] is None and by['Gil Keeper']['last_match_minutes'] == 95
     assert d['players'][0]['name'] == 'Spiky Sam'                               # worst first
     old = coach.get(u(club, 'squad-status/?date=2026-07-10')).data
@@ -98,3 +98,15 @@ def test_scout_cannot_see_loads(make_member, club, season):
     _, scout = make_member(club, 'scout')
     assert scout.get(u(club, 'squad-status/')).status_code == 403
     assert scout.get(u(club, 'sessions/')).status_code == 403
+
+
+@pytest.mark.parametrize('ad,ah,idle,expect', [
+    (1.6, 1.0, 0, 'reduce'), (1.0, 1.6, 0, 'reduce'), (1.4, 1.0, 0, 'hold'), (1.0, 1.35, 0, 'hold'),
+    (0.7, 1.0, 0, 'build'), (1.0, 0.5, 0, 'build'), (1.0, 1.0, 4, 'build'), (1.0, 1.0, 0, 'plan'),
+    (1.6, 0.5, 0, 'reduce'), (1.4, 0.5, 0, 'hold'), (1.0, None, 0, 'plan'),
+])
+def test_load_action(ad, ah, idle, expect):
+    from datetime import date
+    from football.services.performance import load_action
+    level, reasons = load_action(ad, ah, idle, date(2026, 8, 1), False, date(2026, 7, 1))
+    assert level == expect and (reasons == []) == (expect == 'plan')

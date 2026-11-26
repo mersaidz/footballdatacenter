@@ -2,9 +2,10 @@ import { ReactNode } from 'react';
 import { num, t } from '../i18n';
 
 export const LEVEL = {
-  modify: { color: 'var(--red)', bg: 'rgba(248,113,113,0.12)' },
-  monitor: { color: 'var(--amber)', bg: 'rgba(251,191,36,0.12)' },
-  ready: { color: 'var(--green)', bg: 'rgba(74,222,128,0.10)' },
+  reduce: { color: 'var(--red)', bg: 'rgba(248,113,113,0.12)' },
+  hold: { color: 'var(--amber)', bg: 'rgba(251,191,36,0.12)' },
+  build: { color: 'var(--blue)', bg: 'rgba(96,165,250,0.12)' },
+  plan: { color: 'var(--green)', bg: 'rgba(74,222,128,0.10)' },
 } as const;
 
 export const CAT_COLOR: Record<string, string> = {
@@ -27,7 +28,7 @@ export function LevelBadge({ level }: { level: keyof typeof LEVEL }) {
 
 export function acwrColor(v: number | null) {
   if (v == null) return '#737373';
-  return v > 1.5 ? 'var(--red)' : (v > 1.3 || v < 0.8) ? 'var(--amber)' : 'var(--green)';
+  return v > 1.5 ? 'var(--red)' : v > 1.3 ? 'var(--amber)' : v < 0.8 ? 'var(--blue)' : 'var(--green)';
 }
 
 export function Gauge({ value }: { value: number | null }) {

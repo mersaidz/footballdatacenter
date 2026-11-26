@@ -5,6 +5,8 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    recovery: 'Восстановление',
+    lvl_reduce: 'Снизить нагрузку', lvl_hold: 'Не наращивать', lvl_build: 'Догрузить', lvl_plan: 'По плану', hint_reduce: 'Скачок нагрузки, повышенный риск травмы', hint_hold: 'Нагрузка растёт быстро, держать уровень', hint_build: 'Недогружен или возвращается', hint_plan: 'Всё в норме', r_acwr_hsr_rising: 'ACWR HSR растёт: {v}', md1_groups: 'Тренировка после матча (MD+1)', md1_hint: 'Кто сколько сыграл в {m} — такую тренировку и проводим', recovery_group: 'Восстановительная', topup_group: 'Компенсаторная', played60: 'сыграли 60′+', under60: 'сыграли меньше 60′', status_rules: 'Снизить нагрузку — ACWR выше 1,5. Не наращивать — 1,3–1,5. Догрузить — ниже 0,8, HSR ниже 0,6 или 3+ дня без сессий. ACWR — нагрузка 7 дней к 28 (EWMA).',
     tab_overview: 'Обзор', sig_hrv: 'HRV', sig_sleep: 'Сон', sig_avail: 'Доступность', not_connected: 'Не подключено', available: 'Доступен', no_injury: 'Открытых травм нет', st_unavailable: 'Недоступен', st_modified: 'Облегчённая тренировка', this_week: 'Эта неделя', last_match_phys: 'Последний матч · физика', latest_ball: 'Последний матч · с мячом', rank_in_squad: '{r} из {n} в составе', not_measured: 'Не измерялось', minutes_on_pitch: 'минут на поле', leg_avg: 'Средняя позиция', leg_goal: 'Гол', leg_shot: 'Удар (размер — xG)', leg_carry: 'Прогрессивное ведение (10 м+)', attack_lr: 'Атака слева направо', checkin: 'Утренний опросник', recovery_soon: 'HRV, пульс покоя и сон из Whoop / Oura появятся после подключения.', checkin_soon: 'Ответы игроков (сон, энергия, болезненность, стресс, настроение) и RPE после сессии появятся после подключения приложения игрока.', packing_note: 'соперников обыграно', carry_note: 'метров к воротам', losses_note: 'потери мяча', prog_carries: 'Прогрессивные ведения', xg_note: '{s} ударов, {g} голов', no_match_data: 'Нет данных о матчах', source_real: 'OpenField · реальные', 
     brand_sub: 'Платформа данных клуба', nav_today: 'Сегодня', nav_sessions: 'Сессии', nav_week: 'Микроцикл', nav_players: 'Игроки',
     nav_settings: 'Настройки', logout: 'Выйти', loading: 'Загрузка…', error: 'Не удалось загрузить', retry: 'Повторить', empty: 'Пока пусто',
@@ -12,15 +14,15 @@ const D = {
     no_club: 'У вас нет доступа ни к одному клубу. Попросите администратора добавить вас.',
     // today
     today_title: 'Статус состава', as_of: 'На дату', day_after: 'День после матча', days_after: 'дн. после матча',
-    lvl_modify: 'Коррекция', lvl_monitor: 'Наблюдение', lvl_ready: 'Готов', all: 'Все',
-    hint_modify: 'Скорректировать сессию', hint_monitor: 'Проверить перед тренировкой', hint_ready: 'Тренируется по плану',
+    all: 'Все',
+   
     col_status: 'Статус', col_player: 'Игрок', col_why: 'Почему', col_acwr_d: 'ACWR дистанция', col_acwr_h: 'ACWR HSR',
     col_week: 'Км за неделю', col_vs_prev: 'К прошлой неделе', col_last_match: 'Последний матч', in_range: 'В норме',
     r_acwr_dist_high: 'ACWR дистанции {v}', r_acwr_hsr_high: 'ACWR HSR {v}', r_acwr_dist_rising: 'ACWR дистанции растёт: {v}',
     r_underloaded: 'Недогружен, ACWR {v}', r_low_hsr: 'Мало HSR, ACWR {v}', r_no_session: 'Нет сессий с {d}',
-    r_short_history: 'короткая история (с {d})', md1_groups: 'Группы на MD+1', recovery: 'Восстановление', topup: 'Добор',
-    played60: '60′+ на поле', under60: 'меньше 60′',
-    status_rules: 'Коррекция — ACWR выше 1,5. Наблюдение — ACWR 1,3–1,5, ниже 0,8, HSR ниже 0,6 или нет сессий 3+ дня. ACWR — экспоненциальная нагрузка 7 дней к 28.',
+    r_short_history: 'короткая история (с {d})',
+   
+   
     // sessions
     sessions_title: 'История сессий', f_all: 'Все', f_matches: 'Матчи', f_trainings: 'Тренировки', from: 'С', to: 'По',
     week_of: 'Неделя с {d}', players_n: 'игроков: {n}', avg_full: 'среднее по полностью участвовавшим',
@@ -57,21 +59,23 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    recovery: 'Recovery',
+    lvl_reduce: 'Reduce load', lvl_hold: 'Hold load', lvl_build: 'Build up', lvl_plan: 'As planned', hint_reduce: 'Load spike, higher injury risk', hint_hold: 'Rising fast, keep the level', hint_build: 'Under-loaded or returning', hint_plan: 'All in range', r_acwr_hsr_rising: 'HSR ACWR rising: {v}', md1_groups: 'Session after the match (MD+1)', md1_hint: 'What each player does follows his minutes in {m}', recovery_group: 'Recovery', topup_group: 'Compensatory', played60: 'played 60′+', under60: 'played under 60′', status_rules: 'Reduce load: ACWR above 1.5. Hold load: 1.3–1.5. Build up: below 0.8, HSR below 0.6 or 3+ days without a session. ACWR = 7 vs 28 days (EWMA).',
     tab_overview: 'Overview', sig_hrv: 'HRV', sig_sleep: 'Sleep', sig_avail: 'Availability', not_connected: 'Not connected', available: 'Available', no_injury: 'No open injury', st_unavailable: 'Unavailable', st_modified: 'Modified training', this_week: 'This week', last_match_phys: 'Last match · physical', latest_ball: 'Latest match · on the ball', rank_in_squad: '{r} of {n} in the squad', not_measured: 'Not measured', minutes_on_pitch: 'minutes on the pitch', leg_avg: 'Average position', leg_goal: 'Goal', leg_shot: 'Shot (size = xG)', leg_carry: 'Progressive carry (10 m+)', attack_lr: 'Attacking left to right', checkin: 'Morning check-in', recovery_soon: 'HRV, resting heart rate and sleep from Whoop / Oura appear once connected.', checkin_soon: 'Player answers (sleep, energy, soreness, stress, mood) and session RPE appear once the player app is connected.', packing_note: 'opponents bypassed', carry_note: 'metres towards goal', losses_note: 'turnovers', prog_carries: 'Progressive carries', xg_note: '{s} shots, {g} goals', no_match_data: 'No match data', source_real: 'OpenField · real', 
     brand_sub: 'Club data platform', nav_today: 'Today', nav_sessions: 'Sessions', nav_week: 'Microcycle', nav_players: 'Players',
     nav_settings: 'Settings', logout: 'Log out', loading: 'Loading…', error: 'Could not load', retry: 'Retry', empty: 'Nothing here yet',
     login_title: 'Sign in', email: 'Email', password: 'Password', login_btn: 'Sign in', bad_credentials: 'Wrong email or password',
     no_club: 'You don’t have access to any club yet. Ask an admin to add you.',
     today_title: 'Squad Status', as_of: 'As of', day_after: 'Day after the match', days_after: 'days after the match',
-    lvl_modify: 'Modify', lvl_monitor: 'Monitor', lvl_ready: 'Ready', all: 'All',
-    hint_modify: 'Adjust today’s session', hint_monitor: 'Check before training', hint_ready: 'Train as planned',
+    all: 'All',
+   
     col_status: 'Status', col_player: 'Player', col_why: 'Why', col_acwr_d: 'ACWR distance', col_acwr_h: 'ACWR HSR',
     col_week: 'Week km', col_vs_prev: 'vs prev week', col_last_match: 'Last match', in_range: 'Within range',
     r_acwr_dist_high: 'Distance ACWR {v}', r_acwr_hsr_high: 'HSR ACWR {v}', r_acwr_dist_rising: 'Distance ACWR rising: {v}',
     r_underloaded: 'Underloaded, ACWR {v}', r_low_hsr: 'Low HSR exposure, ACWR {v}', r_no_session: 'No session since {d}',
-    r_short_history: 'short history (since {d})', md1_groups: 'MD+1 groups', recovery: 'Recovery', topup: 'Top-up',
-    played60: '60′+ played', under60: 'under 60′',
-    status_rules: 'Modify: ACWR above 1.5. Monitor: ACWR 1.3–1.5, below 0.8, HSR below 0.6 or no session for 3+ days. ACWR = exponentially weighted 7 vs 28 days.',
+    r_short_history: 'short history (since {d})',
+   
+   
     sessions_title: 'Session History', f_all: 'All', f_matches: 'Matches', f_trainings: 'Training', from: 'From', to: 'To',
     week_of: 'Week of {d}', players_n: '{n} players', avg_full: 'average of full participants',
     t_match: 'Match', t_training: 'Training', minutes_short: 'min', col_dur: 'Time', col_dist: 'Distance', col_hsr: 'HSR', col_spr: 'Sprint',
@@ -103,21 +107,23 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    recovery: 'Қалпына келу',
+    lvl_reduce: 'Жүктемені азайту', lvl_hold: 'Арттырмау', lvl_build: 'Жүктемені толықтыру', lvl_plan: 'Жоспар бойынша', hint_reduce: 'Жүктеменің күрт өсуі, жарақат қаупі жоғары', hint_hold: 'Жүктеме тез өсуде, деңгейді сақтау', hint_build: 'Жүктеме аз немесе қайта оралуда', hint_plan: 'Бәрі қалыпты', r_acwr_hsr_rising: 'HSR ACWR өсуде: {v}', md1_groups: 'Матчтан кейінгі жаттығу (MD+1)', md1_hint: '{m} матчында кім қанша ойнады — соған сай жаттығу', recovery_group: 'Қалпына келтіру', topup_group: 'Толықтыру жаттығуы', played60: '60′+ ойнады', under60: '60′-тан аз ойнады', status_rules: 'Азайту — ACWR 1,5-тен жоғары. Арттырмау — 1,3–1,5. Толықтыру — 0,8-ден төмен, HSR 0,6-дан төмен немесе 3+ күн сессиясыз. ACWR — 7 күннің 28 күнге қатынасы (EWMA).',
     tab_overview: 'Шолу', sig_hrv: 'HRV', sig_sleep: 'Ұйқы', sig_avail: 'Қолжетімділік', not_connected: 'Қосылмаған', available: 'Дайын', no_injury: 'Ашық жарақат жоқ', st_unavailable: 'Дайын емес', st_modified: 'Жеңілдетілген жаттығу', this_week: 'Осы апта', last_match_phys: 'Соңғы матч · физика', latest_ball: 'Соңғы матч · доппен', rank_in_squad: 'құрамда {n} ішінде {r}-орын', not_measured: 'Өлшенбеген', minutes_on_pitch: 'алаңдағы минут', leg_avg: 'Орташа позиция', leg_goal: 'Гол', leg_shot: 'Соққы (өлшемі — xG)', leg_carry: 'Прогрессивті доп жүргізу (10 м+)', attack_lr: 'Шабуыл солдан оңға', checkin: 'Таңғы сауалнама', recovery_soon: 'Whoop / Oura-дан HRV, тыныштықтағы пульс және ұйқы қосылғаннан кейін шығады.', checkin_soon: 'Ойыншы жауаптары (ұйқы, қуат, ауырсыну, стресс, көңіл-күй) және сессия RPE ойыншы қосымшасы қосылғаннан кейін шығады.', packing_note: 'қарсылас өтілді', carry_note: 'қақпаға қарай метр', losses_note: 'доп жоғалту', prog_carries: 'Прогрессивті доп жүргізу', xg_note: '{s} соққы, {g} гол', no_match_data: 'Матч деректері жоқ', source_real: 'OpenField · нақты', 
     brand_sub: 'Клубтың деректер платформасы', nav_today: 'Бүгін', nav_sessions: 'Сессиялар', nav_week: 'Микроцикл', nav_players: 'Ойыншылар',
     nav_settings: 'Баптаулар', logout: 'Шығу', loading: 'Жүктелуде…', error: 'Жүктеу мүмкін болмады', retry: 'Қайталау', empty: 'Әзірге бос',
     login_title: 'Кіру', email: 'Эл. пошта', password: 'Құпиясөз', login_btn: 'Кіру', bad_credentials: 'Пошта немесе құпиясөз қате',
     no_club: 'Сізде әзірге ешбір клубқа қол жеткізу жоқ. Әкімшіден қосуды сұраңыз.',
     today_title: 'Құрам жағдайы', as_of: 'Күні', day_after: 'Матчтан кейінгі күн', days_after: 'күн матчтан кейін',
-    lvl_modify: 'Түзету', lvl_monitor: 'Бақылау', lvl_ready: 'Дайын', all: 'Барлығы',
-    hint_modify: 'Бүгінгі сессияны түзету', hint_monitor: 'Жаттығу алдында тексеру', hint_ready: 'Жоспар бойынша',
+    all: 'Барлығы',
+   
     col_status: 'Күйі', col_player: 'Ойыншы', col_why: 'Себебі', col_acwr_d: 'ACWR қашықтық', col_acwr_h: 'ACWR HSR',
     col_week: 'Апталық км', col_vs_prev: 'Өткен аптаға', col_last_match: 'Соңғы матч', in_range: 'Қалыпты',
     r_acwr_dist_high: 'Қашықтық ACWR {v}', r_acwr_hsr_high: 'HSR ACWR {v}', r_acwr_dist_rising: 'Қашықтық ACWR өсуде: {v}',
     r_underloaded: 'Жүктеме аз, ACWR {v}', r_low_hsr: 'HSR аз, ACWR {v}', r_no_session: '{d} бастап сессия жоқ',
-    r_short_history: 'қысқа тарих ({d} бастап)', md1_groups: 'MD+1 топтары', recovery: 'Қалпына келу', topup: 'Толықтыру',
-    played60: '60′+ алаңда', under60: '60′-тан аз',
-    status_rules: 'Түзету — ACWR 1,5-тен жоғары. Бақылау — ACWR 1,3–1,5, 0,8-ден төмен, HSR 0,6-дан төмен немесе 3+ күн сессия жоқ. ACWR — 7 күннің 28 күнге экспоненциалды қатынасы.',
+    r_short_history: 'қысқа тарих ({d} бастап)',
+   
+   
     sessions_title: 'Сессиялар тарихы', f_all: 'Барлығы', f_matches: 'Матчтар', f_trainings: 'Жаттығулар', from: 'Бастап', to: 'Дейін',
     week_of: '{d} аптасы', players_n: 'ойыншы: {n}', avg_full: 'толық қатысқандардың орташасы',
     t_match: 'Матч', t_training: 'Жаттығу', minutes_short: 'мин', col_dur: 'Уақыт', col_dist: 'Қашықтық', col_hsr: 'HSR', col_spr: 'Спринт',

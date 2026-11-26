@@ -80,7 +80,7 @@ export function useApi<T = any>(path: string | null, key: unknown[] = []) {
 // --- types (only what the screens use) ---
 export interface Reason { code: string; value?: number; date?: string }
 export interface SquadPlayer {
-  player_id: number; name: string; shirt_number: number | null; position: string; level: 'modify' | 'monitor' | 'ready';
+  player_id: number; name: string; shirt_number: number | null; position: string; level: 'reduce' | 'hold' | 'build' | 'plan';
   reasons: Reason[]; acwr_distance: number | null; acwr_hsr: number | null; week_distance: number;
   week_change_pct: number | null; last_match_minutes: number; last_session: string;
 }

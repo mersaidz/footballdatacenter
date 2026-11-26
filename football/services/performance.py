@@ -21,7 +21,10 @@ METRICS = ('dist', 'hsr', 'spr', 'acc', 'dec', 'pl')
 FIELD = {'dist': 'total_distance_m', 'hsr': 'hsr_distance_m', 'spr': 'sprint_distance_m', 'acc': 'accelerations',
          'dec': 'decelerations', 'pl': 'player_load'}
 LAMBDA_ACUTE, LAMBDA_CHRONIC = 2 / 8, 2 / 29          # EWMA, 7 and 28 days
-MODIFY_ABOVE, MONITOR_ABOVE, UNDERLOAD_BELOW, LOW_HSR_BELOW = 1.5, 1.3, 0.8, 0.6
+REDUCE_ABOVE, HOLD_ABOVE, BUILD_BELOW, BUILD_HSR_BELOW = 1.5, 1.3, 0.8, 0.6
+# What to do with today's load — everyone can train, the status says how much:
+#   reduce: a spike (ACWR > 1.5)   hold: rising fast (1.3–1.5)   build: under-loaded or returning   plan: in range
+LEVELS = ('reduce', 'hold', 'build', 'plan')
 NO_SESSION_DAYS, SHORT_HISTORY_DAYS = 3, 21
 MATCH_REF_MIN = 45                                    # matches that define a player's match demand
 
@@ -99,6 +102,28 @@ def goalkeepers(team: Team) -> set[int]:
 TEAM_SESSION_MIN_PLAYERS = 5      # a session with 1-2 players (a sensor test, a rehab run) doesn't move "today"
 
 
+def load_action(ad, ah, days_idle, last, short_history, first) -> tuple[str, list[dict]]:
+    """Status + reasons for one player. A spike outranks "rising", which outranks "under-loaded"."""
+    reasons, found = [], set()
+    if days_idle >= NO_SESSION_DAYS:
+        reasons.append({'code': 'no_session', 'date': last.isoformat()}); found.add('build')
+    for value, high, rising in ((ad, 'acwr_dist_high', 'acwr_dist_rising'), (ah, 'acwr_hsr_high', 'acwr_hsr_rising')):
+        if value is None:
+            continue
+        if value > REDUCE_ABOVE:
+            reasons.append({'code': high, 'value': value}); found.add('reduce')
+        elif value > HOLD_ABOVE:
+            reasons.append({'code': rising, 'value': value}); found.add('hold')
+    if ad is not None and ad < BUILD_BELOW:
+        reasons.append({'code': 'underloaded', 'value': ad}); found.add('build')
+    if ah is not None and ah < BUILD_HSR_BELOW:
+        reasons.append({'code': 'low_hsr', 'value': ah}); found.add('build')
+    level = next((lvl for lvl in LEVELS if lvl in found), 'plan')
+    if short_history and level != 'plan':
+        reasons.append({'code': 'short_history', 'date': first.isoformat()})
+    return level, reasons
+
+
 def last_session_day(team: Team) -> date | None:
     ts = (TrainingSession.objects.filter(team=team).annotate(n=Count('loads'))
           .filter(n__gte=TEAM_SESSION_MIN_PLAYERS).order_by('-start').first()
@@ -133,25 +158,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         week = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(7) <= d < as_of)
         prev = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(14) <= d < as_of - timedelta(7))
         first, last = mine[0].day, mine[-1].day
-        reasons, level = [], 'ready'
-        if ad is not None and ad > MODIFY_ABOVE:
-            level = 'modify'; reasons.append({'code': 'acwr_dist_high', 'value': ad})
-        if ah is not None and ah > MODIFY_ABOVE:
-            level = 'modify'; reasons.append({'code': 'acwr_hsr_high', 'value': ah})
-        if level != 'modify':
-            if ad is not None and MONITOR_ABOVE < ad <= MODIFY_ABOVE:
-                level = 'monitor'; reasons.append({'code': 'acwr_dist_rising', 'value': ad})
-            if ad is not None and ad < UNDERLOAD_BELOW:
-                level = 'monitor'; reasons.append({'code': 'underloaded', 'value': ad})
-            if ah is not None and ah < LOW_HSR_BELOW:
-                level = 'monitor'; reasons.append({'code': 'low_hsr', 'value': ah})
-        if (as_of - last).days >= NO_SESSION_DAYS:
-            reasons.insert(0, {'code': 'no_session', 'date': last.isoformat()})
-            if level == 'ready':
-                level = 'monitor'
-        short = (as_of - first).days < SHORT_HISTORY_DAYS
-        if short and level != 'ready':
-            reasons.append({'code': 'short_history', 'date': first.isoformat()})
+        level, reasons = load_action(ad, ah, (as_of - last).days, last, (as_of - first).days < SHORT_HISTORY_DAYS, first)
         lm = next((r for r in mine if r.is_match and r.day == last_match), None)
         out.append({
             'player_id': p.pk, 'name': p.display_name, 'shirt_number': p.shirt_number, 'position': p.primary_position,
@@ -159,15 +166,15 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
         })
-    order = {'modify': 0, 'monitor': 1, 'ready': 2}
+    order = {lvl: i for i, lvl in enumerate(LEVELS)}
     out.sort(key=lambda s: (order[s['level']], -(s['acwr_distance'] or 0)))
     return {
         'as_of': as_of.isoformat(),
         'days_since_match': (as_of - last_match).days if last_match else None,
         'last_match': {'session_id': last_match_session.session_id, 'date': last_match.isoformat(),
                        'name': last_match_session.name, 'md': last_match_session.md} if last_match_session else None,
-        'thresholds': {'modify_above': MODIFY_ABOVE, 'monitor_above': MONITOR_ABOVE,
-                       'underload_below': UNDERLOAD_BELOW, 'low_hsr_below': LOW_HSR_BELOW},
+        'thresholds': {'reduce_above': REDUCE_ABOVE, 'hold_above': HOLD_ABOVE,
+                       'build_below': BUILD_BELOW, 'build_hsr_below': BUILD_HSR_BELOW, 'build_after_days': NO_SESSION_DAYS},
         'players': out,
     }
 

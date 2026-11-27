@@ -143,3 +143,17 @@ def test_availability_shapes_the_day(make_member, club, season):
     d = coach.get(u(club, 'squad-status/')).data
     spike_row = next(p for p in d['players'] if p['name'] == 'Spiky Sam')
     assert spike_row['level'] != 'out' and spike_row['reasons'][0]['code'] == 'returning'
+
+
+def test_keepers_are_judged_on_playerload_and_dives(make_member, club, season):
+    """A keeper barely runs: his load is PlayerLoad, his 'HSR' is dives (when the club tracks them)."""
+    _, _, (gk, _, _) = season
+    loads = PlayerLoad.objects.filter(player=gk).select_related('training_session').order_by('training_session__start')
+    for i, pl in enumerate(loads):
+        pl.extra_metrics = {'total_dive_load': 300 if i >= 28 else 100}   # last week: three times the dive load
+        pl.save(update_fields=['extra_metrics'])
+    _, coach = make_member(club, 'head_coach')
+    row = next(p for p in coach.get(u(club, 'squad-status/')).data['players'] if p['name'] == 'Gil Keeper')
+    assert row['is_gk'] and row['acwr_basis'] == 'player_load' and row['acwr_hsr'] is None
+    assert 0.8 < row['acwr_distance'] < 1.3                        # PlayerLoad steady
+    assert row['acwr_dives'] > 1.5 and row['level'] == 'reduce' and row['reasons'][0]['code'] == 'gk_dives_high'

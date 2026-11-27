@@ -29,6 +29,7 @@ LEVELS = ('reduce', 'hold', 'build', 'plan')
 VMAX_SHARE, VMAX_EXPOSURE_DAYS, VMAX_MIN_SESSIONS = 0.9, 7, 5
 RETURNING_DAYS = 7          # after an episode closes, the player is "returning": build up gradually
 NO_SESSION_DAYS, SHORT_HISTORY_DAYS = 3, 21
+GK_DIVE_KEYS = ('total_dive_load', 'total_goalkeeping_dives')   # first one the club tracks
 MATCH_REF_MIN = 45                                    # matches that define a player's match demand
 
 
@@ -50,6 +51,11 @@ class Row:
     vmax: float | None
 
 
+def _dive(pl) -> float | None:
+    extra = pl.extra_metrics or {}
+    return next((float(extra[k]) for k in GK_DIVE_KEYS if extra.get(k) is not None), None)
+
+
 def team_rows(team: Team, start: date | None = None, end: date | None = None) -> list[Row]:
     qs = (PlayerLoad.objects.filter(club=team.club, training_session__team=team)
           .select_related('training_session').order_by('training_session__start'))
@@ -62,7 +68,7 @@ def team_rows(team: Team, start: date | None = None, end: date | None = None) ->
         ts = pl.training_session
         rows.append(Row(pl.player_id, ts.start.date(), ts.pk, ts.session_type == 'match', _f(pl.duration_min),
                         pl.participation or '', ts.md_code or '', ts.name or '',
-                        {m: _f(getattr(pl, FIELD[m])) for m in METRICS},
+                        {**{m: _f(getattr(pl, FIELD[m])) for m in METRICS}, 'dive': _dive(pl)},
                         None if pl.quality_flags else (float(pl.max_speed_kmh) if pl.max_speed_kmh else None)))
     return rows
 
@@ -138,6 +144,29 @@ def max_speed_exposure(mine: list[Row], as_of: date) -> dict | None:
     recent = [r.vmax for r in speeds if r.day >= as_of - timedelta(VMAX_EXPOSURE_DAYS)]
     return {'top': round(top, 1), 'last_date': last.isoformat(), 'days': (as_of - last).days,
             'best_7d_pct': round(max(recent) / top * 100) if recent else None}
+
+
+def keeper_load(days: list[date], mine: list[Row]) -> tuple[float | None, float | None]:
+    """Keepers: PlayerLoad instead of distance (they barely run), dives instead of HSR (when the club tracks them)."""
+    pl, dive = defaultdict(float), defaultdict(float)
+    has_dive = sum(1 for r in mine if r.vals.get('dive') is not None) >= 5
+    for r in mine:
+        pl[r.day] += r.vals['pl']
+        if r.vals.get('dive') is not None:
+            dive[r.day] += r.vals['dive']
+    return ewma(days, pl)[-1], (ewma(days, dive)[-1] if has_dive else None)
+
+
+def apply_dives(level: str, reasons: list[dict], a_dive: float | None) -> str:
+    if a_dive is None:
+        return level
+    if a_dive > REDUCE_ABOVE:
+        reasons.append({'code': 'gk_dives_high', 'value': a_dive})
+        return 'reduce'
+    if a_dive > HOLD_ABOVE:
+        reasons.append({'code': 'gk_dives_rising', 'value': a_dive})
+        return min(level, 'hold', key=LEVELS.index)
+    return level
 
 
 def apply_max_speed(level: str, reasons: list[dict], ms: dict | None, days_idle: int) -> str:
@@ -220,14 +249,19 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
     out = []
     for p in players:
         mine = [r for r in rows if r.player_id == p.pk]
-        ad = ewma(days, daily[p.pk]['dist'])[-1]
-        ah = None if p.pk in gk else ewma(days, daily[p.pk]['hsr'])[-1]
+        is_gk = p.pk in gk
+        if is_gk:
+            ad, a_dive = keeper_load(days, mine)
+            ah = None
+        else:
+            ad, ah, a_dive = ewma(days, daily[p.pk]['dist'])[-1], ewma(days, daily[p.pk]['hsr'])[-1], None
         week = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(7) <= d < as_of)
         prev = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(14) <= d < as_of - timedelta(7))
         first, last = mine[0].day, mine[-1].day
         level, reasons = load_action(ad, ah, (as_of - last).days, last, (as_of - first).days < SHORT_HISTORY_DAYS, first)
         ms = None if p.pk in gk else max_speed_exposure(mine, as_of)
         level = apply_max_speed(level, reasons, ms, (as_of - last).days)
+        level = apply_dives(level, reasons, a_dive)
         w = feel.get(p.pk)
         level = apply_wellness(level, reasons, w)
         level = apply_availability(level, reasons, current.get(p.pk), back.get(p.pk))
@@ -236,6 +270,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         out.append({
             'player_id': p.pk, 'name': p.display_name, 'shirt_number': p.shirt_number, 'position': p.primary_position,
             'level': level, 'reasons': reasons, 'acwr_distance': ad, 'acwr_hsr': ah,
+            'is_gk': is_gk, 'acwr_basis': 'player_load' if is_gk else 'distance', 'acwr_dives': a_dive,
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
             'wellness': w, 'max_speed': ms,
@@ -290,7 +325,9 @@ def player_history(player: Player, as_of: date | None = None) -> dict:
         'days': [{'date': d.isoformat(), 'distance': round(by_day[d]['dist']), 'hsr': round(by_day[d]['hsr']),
                   'md': meta.get(d, ('', False, None))[0], 'is_match': meta.get(d, ('', False, None))[1],
                   'session_id': meta.get(d, ('', False, None))[2]} for d in days],
-        'acwr_distance': ewma(days, {d: v['dist'] for d, v in by_day.items()}),
+        # keepers: PlayerLoad (they barely run), as on the squad status
+        'acwr_distance': ewma(days, {d: v['pl' if player.pk in gk else 'dist'] for d, v in by_day.items()}),
+        'acwr_basis': 'player_load' if player.pk in gk else 'distance',
         'acwr_hsr': None if player.pk in gk else ewma(days, {d: v['hsr'] for d, v in by_day.items()}),
         'md_profile': md_profile, 'match_log': match_log,
         'reference': {m: round(v) for m, v in ref.items()},

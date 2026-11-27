@@ -67,6 +67,17 @@ CATAPULT_METRICS: dict[str, dict] = {
     'rhie_average_bout_recovery': dict(zero_is_missing=True, label='RHIE Bout Recovery (mean)', short_label='Bout Rec', category=C.RHIE,
                                        aggregation=MEAN, higher_is_better=False, unit='s', multiplier=1.0, decimals=0),
     # Acceleration load
+    # Goalkeeping (Catapult GK algorithm): dives, dive load, jumps, getting up
+    'total_goalkeeping_dives': dict(label='Dives', short_label='Dives', category=C.GOALKEEPING, aggregation=SUM, unit='n', decimals=0),
+    'total_dive_load': dict(zero_is_missing=True, label='Dive Load', short_label='Dive Load', category=C.GOALKEEPING, aggregation=SUM,
+                            unit='AU', decimals=0),
+    'total_dive_load_high_intensity': dict(label='Dive Load (high intensity)', short_label='Hi Dive', category=C.GOALKEEPING,
+                                           aggregation=SUM, unit='AU', decimals=0),
+    'total_dives_left': dict(label='Dives left', short_label='Dives L', category=C.GOALKEEPING, aggregation=SUM, unit='n', decimals=0),
+    'total_dives_right': dict(label='Dives right', short_label='Dives R', category=C.GOALKEEPING, aggregation=SUM, unit='n', decimals=0),
+    'total_jumps': dict(label='Jumps', short_label='Jumps', category=C.GOALKEEPING, aggregation=SUM, unit='n', decimals=0),
+    'explosive_efforts': dict(label='Explosive efforts', short_label='Expl', category=C.ACCELERATION, aggregation=SUM, unit='n',
+                              decimals=0),
     'total_acceleration_load': dict(zero_is_missing=True, short_label='Acc Load', category=C.ACCELERATION, aggregation=SUM, unit='AU',
                                     decimals=0),
 }
@@ -97,6 +108,9 @@ PRESETS: dict[str, Preset] = {p.key: p for p in [
            ['duration', 'hsr_distance', 'sprint_distance', 'rhie_bout_count', 'rhie_average_effort_count',
             'rhie_max_effort_count', 'rhie_average_effort_duration', 'rhie_average_effort_recovery',
             'rhie_average_bout_recovery']),
+    Preset('goalkeeper', 'Goalkeepers', 'Dives left and right, dive load, jumps and explosive efforts: what a keeper actually does.',
+           ['duration', 'total_goalkeeping_dives', 'total_dives_left', 'total_dives_right', 'total_dive_load',
+            'total_dive_load_high_intensity', 'total_jumps', 'explosive_efforts', 'accelerations', 'player_load']),
 ]}
 
 

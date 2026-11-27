@@ -251,7 +251,7 @@ export default function PlayerProfile() {
               <div className="grid" style={{ '--min': '300px' } as React.CSSProperties}>
                 <section className="card">
                   <div className="head"><h2>{t('tab_load')}</h2><span className="small muted">{t('source_real')}</span></div>
-                  <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><b className="num" style={{ fontSize: 36, fontWeight: 700, color: acwrColor(last(h.acwr_distance)) }}>{num(last(h.acwr_distance), 2)}</b><span className="muted">{t('col_acwr_d')}</span></div>
+                  <div className="row" style={{ alignItems: 'baseline', gap: 10 }}><b className="num" style={{ fontSize: 36, fontWeight: 700, color: acwrColor(last(h.acwr_distance)) }}>{num(last(h.acwr_distance), 2)}</b><span className="muted">{st?.is_gk ? 'ACWR PlayerLoad' : t('col_acwr_d')}</span></div>
                   <div style={{ position: 'relative', height: 8, borderRadius: 4, background: 'rgba(var(--fg-rgb),0.08)' }}>
                     <span style={{ position: 'absolute', left: '32%', width: '20%', top: 0, bottom: 0, background: 'rgba(74,222,128,0.25)' }} />
                     <span style={{ position: 'absolute', left: '60%', top: -3, bottom: -3, width: 2, background: 'rgba(248,113,113,0.7)' }} />

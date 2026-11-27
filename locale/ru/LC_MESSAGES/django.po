@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 18:39+0000\n"
+"POT-Creation-Date: 2026-11-27 18:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,57 +30,57 @@ msgstr "Дата возвращения раньше даты начала."
 msgid "No event data for this player yet."
 msgstr "По этому игроку пока нет событийных данных."
 
-#: api/views.py:258
+#: api/views.py:262
 msgid "Only player links can be rejected in v1."
 msgstr "Пока можно отклонять только связи игроков."
 
-#: api/views.py:412
+#: api/views.py:416
 msgid "Not in this club's provider catalogue (run a sync first)."
 msgstr ""
 "Нет в каталоге провайдера этого клуба (сначала запустите синхронизацию)."
 
-#: api/views.py:449
+#: api/views.py:453
 msgid "Not in this club's provider catalogue."
 msgstr "Нет в каталоге провайдера этого клуба."
 
-#: api/views.py:453
+#: api/views.py:457
 #, python-format
 msgid "Already tracked as \"%(label)s\"."
 msgstr "Уже отслеживается как «%(label)s»."
 
-#: api/views.py:464
+#: api/views.py:468
 msgid ""
 "Only S&C, analysts and club admins decide which metrics the club tracks."
 msgstr ""
 "Решать, какие метрики отслеживает клуб, могут только S&C, аналитики и "
 "администраторы клуба."
 
-#: api/views.py:467
+#: api/views.py:471
 #, python-format
 msgid "Already %(status)s."
 msgstr "Уже: %(status)s."
 
-#: api/views.py:472
+#: api/views.py:476
 msgid "No longer in the provider catalogue."
 msgstr "Больше нет в каталоге провайдера."
 
-#: api/views.py:511
+#: api/views.py:515
 msgid "Only S&C, analysts and club admins change club-wide metric sets."
 msgstr ""
 "Клубные наборы метрик меняют только S&C, аналитики и администраторы клуба."
 
-#: api/views.py:518 api/views.py:568
+#: api/views.py:522 api/views.py:572
 msgid "Only S&C, analysts and club admins publish club-wide metric sets."
 msgstr ""
 "Публиковать клубные наборы метрик могут только S&C, аналитики и "
 "администраторы клуба."
 
-#: api/views.py:571
+#: api/views.py:575
 #, python-format
 msgid "Choose from: %(options)s"
 msgstr "Выберите из: %(options)s"
 
-#: api/views.py:574
+#: api/views.py:578
 msgid "This provider account offers none of the preset metrics."
 msgstr "В аккаунте провайдера нет ни одной метрики из этого набора."
 
@@ -308,7 +308,7 @@ msgstr "Неудачный приём"
 msgid "Dispossessed"
 msgstr "Потеря мяча"
 
-#: football/models.py:167 football/models.py:269 metrics/models.py:37
+#: football/models.py:167 football/models.py:269 metrics/models.py:38
 msgid "Other"
 msgstr "Другое"
 
@@ -556,57 +556,62 @@ msgstr "Пульс"
 msgid "PlayerLoad & accelerometry"
 msgstr "PlayerLoad и акселерометрия"
 
-#: metrics/models.py:41
+#: metrics/models.py:37
+#| msgid "Goalkeeper"
+msgid "Goalkeeping"
+msgstr "Вратарские действия"
+
+#: metrics/models.py:42
 msgid "Sum (distances, counts, load)"
 msgstr "Сумма (дистанции, количество, нагрузка)"
 
-#: metrics/models.py:42
+#: metrics/models.py:43
 msgid "Maximum (peak speed, peak power)"
 msgstr "Максимум (пиковая скорость, мощность)"
 
-#: metrics/models.py:43
+#: metrics/models.py:44
 msgid "Time-weighted mean (rates, %, densities)"
 msgstr "Среднее, взвешенное по времени (темпы, %, плотность)"
 
-#: metrics/models.py:107
+#: metrics/models.py:108
 msgid "Absolute"
 msgstr "Итог"
 
-#: metrics/models.py:108
+#: metrics/models.py:109
 msgid "Per minute"
 msgstr "За минуту"
 
-#: metrics/models.py:109
+#: metrics/models.py:110
 msgid "Per 90"
 msgstr "На 90 минут"
 
-#: metrics/models.py:136
+#: metrics/models.py:137
 msgid "Pick at least one metric."
 msgstr "Выберите хотя бы одну метрику."
 
-#: metrics/models.py:138
+#: metrics/models.py:139
 #, python-format
 msgid "At most %(n)s metrics per set."
 msgstr "Не больше %(n)s метрик в наборе."
 
-#: metrics/models.py:140
+#: metrics/models.py:141
 msgid "A metric appears twice."
 msgstr "Метрика указана дважды."
 
-#: metrics/models.py:144
+#: metrics/models.py:145
 #, python-format
 msgid "Unknown metrics: %(keys)s"
 msgstr "Неизвестные метрики: %(keys)s"
 
-#: metrics/models.py:154
+#: metrics/models.py:155
 msgid "Pending"
 msgstr "Ожидает"
 
-#: metrics/models.py:155
+#: metrics/models.py:156
 msgid "Approved"
 msgstr "Одобрено"
 
-#: metrics/models.py:156
+#: metrics/models.py:157
 msgid "Declined"
 msgstr "Отклонено"
 
@@ -687,7 +692,6 @@ msgid "Demo link (test data, not the same person)"
 msgstr "Демо-связь (тестовые данные, другой человек)"
 
 #: wellness/api.py:75
-#| msgid "Training session"
 msgid "Unknown session."
 msgstr "Неизвестная тренировка."
 

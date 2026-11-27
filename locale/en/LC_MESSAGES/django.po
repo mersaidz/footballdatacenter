@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 18:39+0000\n"
+"POT-Creation-Date: 2026-11-27 18:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,51 +30,51 @@ msgstr ""
 msgid "No event data for this player yet."
 msgstr ""
 
-#: api/views.py:258
+#: api/views.py:262
 msgid "Only player links can be rejected in v1."
 msgstr ""
 
-#: api/views.py:412
+#: api/views.py:416
 msgid "Not in this club's provider catalogue (run a sync first)."
 msgstr ""
 
-#: api/views.py:449
+#: api/views.py:453
 msgid "Not in this club's provider catalogue."
 msgstr ""
 
-#: api/views.py:453
+#: api/views.py:457
 #, python-format
 msgid "Already tracked as \"%(label)s\"."
 msgstr ""
 
-#: api/views.py:464
+#: api/views.py:468
 msgid ""
 "Only S&C, analysts and club admins decide which metrics the club tracks."
 msgstr ""
 
-#: api/views.py:467
+#: api/views.py:471
 #, python-format
 msgid "Already %(status)s."
 msgstr ""
 
-#: api/views.py:472
+#: api/views.py:476
 msgid "No longer in the provider catalogue."
 msgstr ""
 
-#: api/views.py:511
+#: api/views.py:515
 msgid "Only S&C, analysts and club admins change club-wide metric sets."
 msgstr ""
 
-#: api/views.py:518 api/views.py:568
+#: api/views.py:522 api/views.py:572
 msgid "Only S&C, analysts and club admins publish club-wide metric sets."
 msgstr ""
 
-#: api/views.py:571
+#: api/views.py:575
 #, python-format
 msgid "Choose from: %(options)s"
 msgstr ""
 
-#: api/views.py:574
+#: api/views.py:578
 msgid "This provider account offers none of the preset metrics."
 msgstr ""
 
@@ -302,7 +302,7 @@ msgstr ""
 msgid "Dispossessed"
 msgstr ""
 
-#: football/models.py:167 football/models.py:269 metrics/models.py:37
+#: football/models.py:167 football/models.py:269 metrics/models.py:38
 msgid "Other"
 msgstr ""
 
@@ -550,57 +550,61 @@ msgstr ""
 msgid "PlayerLoad & accelerometry"
 msgstr ""
 
-#: metrics/models.py:41
-msgid "Sum (distances, counts, load)"
+#: metrics/models.py:37
+msgid "Goalkeeping"
 msgstr ""
 
 #: metrics/models.py:42
-msgid "Maximum (peak speed, peak power)"
+msgid "Sum (distances, counts, load)"
 msgstr ""
 
 #: metrics/models.py:43
+msgid "Maximum (peak speed, peak power)"
+msgstr ""
+
+#: metrics/models.py:44
 msgid "Time-weighted mean (rates, %, densities)"
 msgstr ""
 
-#: metrics/models.py:107
+#: metrics/models.py:108
 msgid "Absolute"
 msgstr ""
 
-#: metrics/models.py:108
+#: metrics/models.py:109
 msgid "Per minute"
 msgstr ""
 
-#: metrics/models.py:109
+#: metrics/models.py:110
 msgid "Per 90"
 msgstr ""
 
-#: metrics/models.py:136
+#: metrics/models.py:137
 msgid "Pick at least one metric."
 msgstr ""
 
-#: metrics/models.py:138
+#: metrics/models.py:139
 #, python-format
 msgid "At most %(n)s metrics per set."
 msgstr ""
 
-#: metrics/models.py:140
+#: metrics/models.py:141
 msgid "A metric appears twice."
 msgstr ""
 
-#: metrics/models.py:144
+#: metrics/models.py:145
 #, python-format
 msgid "Unknown metrics: %(keys)s"
 msgstr ""
 
-#: metrics/models.py:154
+#: metrics/models.py:155
 msgid "Pending"
 msgstr ""
 
-#: metrics/models.py:155
+#: metrics/models.py:156
 msgid "Approved"
 msgstr ""
 
-#: metrics/models.py:156
+#: metrics/models.py:157
 msgid "Declined"
 msgstr ""
 

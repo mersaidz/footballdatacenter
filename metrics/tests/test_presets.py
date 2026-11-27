@@ -59,7 +59,7 @@ def test_command_installs_all(club, full_catalogue, capsys):
     call_command('metrics', '--club', club.slug, '--install', 'all', '--default-preset', 'sc-daily')
     out = capsys.readouterr().out
     assert 'S&C Daily' in out and 'club default' in out
-    assert MetricSet.objects.filter(club=club, owner__isnull=True).count() == 4
+    assert MetricSet.objects.filter(club=club, owner__isnull=True).count() == len(PRESETS)
 
 
 def test_api_presets_and_install(make_member, club, full_catalogue):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 18:39+0000\n"
+"POT-Creation-Date: 2026-11-27 18:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,58 +30,58 @@ msgstr "Оралу күні басталу күнінен ерте."
 msgid "No event data for this player yet."
 msgstr "Бұл ойыншы бойынша оқиға деректері әлі жоқ."
 
-#: api/views.py:258
+#: api/views.py:262
 msgid "Only player links can be rejected in v1."
 msgstr "Әзірге тек ойыншы байланыстарын қабылдамауға болады."
 
-#: api/views.py:412
+#: api/views.py:416
 msgid "Not in this club's provider catalogue (run a sync first)."
 msgstr ""
 "Бұл клубтың провайдер каталогында жоқ (алдымен синхрондауды іске қосыңыз)."
 
-#: api/views.py:449
+#: api/views.py:453
 msgid "Not in this club's provider catalogue."
 msgstr "Бұл клубтың провайдер каталогында жоқ."
 
-#: api/views.py:453
+#: api/views.py:457
 #, python-format
 msgid "Already tracked as \"%(label)s\"."
 msgstr "«%(label)s» ретінде бақыланып жатыр."
 
-#: api/views.py:464
+#: api/views.py:468
 msgid ""
 "Only S&C, analysts and club admins decide which metrics the club tracks."
 msgstr ""
 "Клуб қандай метрикаларды бақылайтынын тек S&C, аналитиктер және клуб "
 "әкімшілері шешеді."
 
-#: api/views.py:467
+#: api/views.py:471
 #, python-format
 msgid "Already %(status)s."
 msgstr "Бұрыннан: %(status)s."
 
-#: api/views.py:472
+#: api/views.py:476
 msgid "No longer in the provider catalogue."
 msgstr "Провайдер каталогында енді жоқ."
 
-#: api/views.py:511
+#: api/views.py:515
 msgid "Only S&C, analysts and club admins change club-wide metric sets."
 msgstr ""
 "Клубтық метрика жиынтықтарын тек S&C, аналитиктер және клуб әкімшілері "
 "өзгертеді."
 
-#: api/views.py:518 api/views.py:568
+#: api/views.py:522 api/views.py:572
 msgid "Only S&C, analysts and club admins publish club-wide metric sets."
 msgstr ""
 "Клубтық метрика жиынтықтарын тек S&C, аналитиктер және клуб әкімшілері "
 "жариялайды."
 
-#: api/views.py:571
+#: api/views.py:575
 #, python-format
 msgid "Choose from: %(options)s"
 msgstr "Мыналардан таңдаңыз: %(options)s"
 
-#: api/views.py:574
+#: api/views.py:578
 msgid "This provider account offers none of the preset metrics."
 msgstr "Провайдер аккаунтында бұл жиынтықтың бірде-бір метрикасы жоқ."
 
@@ -309,7 +309,7 @@ msgstr "Сәтсіз қабылдау"
 msgid "Dispossessed"
 msgstr "Допты жоғалту"
 
-#: football/models.py:167 football/models.py:269 metrics/models.py:37
+#: football/models.py:167 football/models.py:269 metrics/models.py:38
 msgid "Other"
 msgstr "Басқа"
 
@@ -557,57 +557,62 @@ msgstr "Жүрек соғысы"
 msgid "PlayerLoad & accelerometry"
 msgstr "PlayerLoad және акселерометрия"
 
-#: metrics/models.py:41
+#: metrics/models.py:37
+#| msgid "Goalkeeper"
+msgid "Goalkeeping"
+msgstr "Қақпашы әрекеттері"
+
+#: metrics/models.py:42
 msgid "Sum (distances, counts, load)"
 msgstr "Қосынды (қашықтық, саны, жүктеме)"
 
-#: metrics/models.py:42
+#: metrics/models.py:43
 msgid "Maximum (peak speed, peak power)"
 msgstr "Максимум (ең жоғары жылдамдық, қуат)"
 
-#: metrics/models.py:43
+#: metrics/models.py:44
 msgid "Time-weighted mean (rates, %, densities)"
 msgstr "Уақыт бойынша өлшенген орташа (қарқын, %, тығыздық)"
 
-#: metrics/models.py:107
+#: metrics/models.py:108
 msgid "Absolute"
 msgstr "Жиыны"
 
-#: metrics/models.py:108
+#: metrics/models.py:109
 msgid "Per minute"
 msgstr "Минутына"
 
-#: metrics/models.py:109
+#: metrics/models.py:110
 msgid "Per 90"
 msgstr "90 минутқа"
 
-#: metrics/models.py:136
+#: metrics/models.py:137
 msgid "Pick at least one metric."
 msgstr "Кемінде бір метриканы таңдаңыз."
 
-#: metrics/models.py:138
+#: metrics/models.py:139
 #, python-format
 msgid "At most %(n)s metrics per set."
 msgstr "Бір жиынтықта %(n)s метрикадан аспауы керек."
 
-#: metrics/models.py:140
+#: metrics/models.py:141
 msgid "A metric appears twice."
 msgstr "Метрика екі рет көрсетілген."
 
-#: metrics/models.py:144
+#: metrics/models.py:145
 #, python-format
 msgid "Unknown metrics: %(keys)s"
 msgstr "Белгісіз метрикалар: %(keys)s"
 
-#: metrics/models.py:154
+#: metrics/models.py:155
 msgid "Pending"
 msgstr "Күтуде"
 
-#: metrics/models.py:155
+#: metrics/models.py:156
 msgid "Approved"
 msgstr "Мақұлданды"
 
-#: metrics/models.py:156
+#: metrics/models.py:157
 msgid "Declined"
 msgstr "Қабылданбады"
 
@@ -688,7 +693,6 @@ msgid "Demo link (test data, not the same person)"
 msgstr "Демо-байланыс (сынақ деректері, басқа адам)"
 
 #: wellness/api.py:75
-#| msgid "Training session"
 msgid "Unknown session."
 msgstr "Белгісіз жаттығу."
 

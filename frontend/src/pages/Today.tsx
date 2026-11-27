@@ -78,7 +78,7 @@ export default function Today() {
               <div className="grid" style={{ '--min': '240px' } as React.CSSProperties}>
                 {[[t('recovery_group'), t('played60'), (m: number) => m >= 60, 'rgba(95,208,224,0.16)', 'var(--teal-text)'],
                   [t('topup_group'), t('under60'), (m: number) => m < 60, 'rgba(255,122,69,0.14)', 'var(--accent-text)']].map(([title, hint, fn, bg, fg]) => {
-                  const ps = training.filter((p) => (fn as (m: number) => boolean)(p.last_match_minutes)).sort((a, b) => (a.shirt_number || 99) - (b.shirt_number || 99));
+                  const ps = training.filter((p) => !p.is_gk && (fn as (m: number) => boolean)(p.last_match_minutes)).sort((a, b) => (a.shirt_number || 99) - (b.shirt_number || 99));
                   return (
                     <div key={title as string} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <span><b style={{ fontWeight: 500 }}>{title as string}</b> <span className="muted small">— {hint as string} · {ps.length}</span></span>
@@ -87,13 +87,17 @@ export default function Today() {
                   );
                 })}
               </div>
+              {training.some((p) => p.is_gk) && (
+                <span className="row small" style={{ gap: 6 }}><b style={{ fontWeight: 500, fontSize: 14 }}>{t('gk_group')}</b> <span className="muted">— {t('gk_group_hint')}</span>
+                  {training.filter((p) => p.is_gk).map((p) => <Link key={p.player_id} to={`/players/${p.player_id}`} style={{ padding: '4px 8px', borderRadius: 8, background: 'rgba(var(--fg-rgb),0.08)' }}>{p.shirt_number ?? ''} {p.name}</Link>)}</span>
+              )}
             </section>
           )}
           <section className="card flush">
             <div className="head"><h2>{t('nav_players')}</h2>
               <span className="row small muted" style={{ gap: 14 }}>
                 {s?.wellness && <Link to="/wellness" style={{ color: 'var(--accent-text)' }}>{t('wl_answered', { a: s.wellness.answered, n: s.wellness.squad })}</Link>}
-                <InfoTip label={t('how_counted')} text={t('status_rules')} align="right" /></span></div>
+                <InfoTip label={t('how_counted')} text={t('status_rules') + t('gk_rules')} align="right" /></span></div>
             <div className="scroll">
               <table>
                 <thead><tr>
@@ -108,8 +112,10 @@ export default function Today() {
                       <td><Link to={`/players/${p.player_id}`} style={{ fontWeight: 500 }} onClick={(e) => e.stopPropagation()}>{p.name}</Link>{p.position === 'GK' && <span className="small faint"> GK</span>}</td>
                       <td style={{ whiteSpace: 'normal', minWidth: 240, maxWidth: 420, color: 'var(--text-2)' }}>{p.reasons.length ? reasonsLine(p.reasons) : t('in_range')}</td>
                       <td><FeelBadge a={p.wellness} /></td>
-                      <td><Gauge value={p.acwr_distance} /></td>
-                      <td>{p.acwr_hsr == null ? <span className="faint">—</span> : <Gauge value={p.acwr_hsr} />}</td>
+                      <td title={p.is_gk ? t('gk_basis') : undefined}><span className="row" style={{ gap: 6, flexWrap: 'nowrap' }}><Gauge value={p.acwr_distance} />{p.is_gk && <span className="tag" style={{ color: 'var(--muted)', background: 'rgba(var(--fg-rgb),0.08)' }}>{t('tag_pl')}</span>}</span></td>
+                      <td>{p.is_gk
+                        ? (p.acwr_dives == null ? <span className="faint">—</span> : <span className="row" style={{ gap: 6, flexWrap: 'nowrap' }}><Gauge value={p.acwr_dives} /><span className="tag" style={{ color: 'var(--muted)', background: 'rgba(var(--fg-rgb),0.08)' }}>{t('tag_dives')}</span></span>)
+                        : (p.acwr_hsr == null ? <span className="faint">—</span> : <Gauge value={p.acwr_hsr} />)}</td>
                       <td className="right">{num(p.week_distance / 1000, 1)}</td>
                       <td className="right" style={{ color: 'var(--text-2)' }}>{p.week_change_pct == null ? '—' : `${p.week_change_pct > 0 ? '+' : ''}${p.week_change_pct}%`}</td>
                       <td className="right">{p.last_match_minutes ? `${p.last_match_minutes}′` : '—'}</td>

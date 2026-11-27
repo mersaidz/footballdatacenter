@@ -34,6 +34,7 @@ class Category(models.TextChoices):
     INTENSITY = 'intensity', _('Intensity / density')
     HEART_RATE = 'heart_rate', _('Heart rate')
     LOAD = 'load', _('PlayerLoad & accelerometry')
+    GOALKEEPING = 'goalkeeping', _('Goalkeeping')
     OTHER = 'other', _('Other')
 
 

@@ -64,6 +64,18 @@ export async function api<T = any>(path: string, init: RequestInit = {}, retry =
   return r.status === 204 ? (undefined as T) : r.json();
 }
 
+/** Download a file the API builds (PDF, Excel) with the user's token, then hand it to the browser. */
+export async function download(path: string, filename: string) {
+  const go = () => fetch(`/api/${path.replace(/^\//, '')}`, { headers: { Authorization: `Bearer ${store.get(ACCESS)}`, 'Accept-Language': getLang() } });
+  let r = await go();
+  if (r.status === 401 && await refresh()) r = await go();
+  if (!r.ok) throw new ApiError(r.status, r.statusText);
+  const url = URL.createObjectURL(await r.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 export const clubPath = (p: string) => `clubs/${auth.club()}/${p.replace(/^\//, '')}`;
 
 /** Load data for a component; re-runs when `key` changes. */

@@ -26,6 +26,7 @@ urlpatterns = [
     path('clubs/', views.MyClubsView.as_view(), name='my_clubs'),
     path('clubs/<int:club_id>/metrics/catalogue/', views.MetricCatalogueView.as_view(), name='metric_catalogue'),
     path('clubs/<int:club_id>/squad-status/', views_app.SquadStatusView.as_view(), name='squad_status'),
+    path('clubs/<int:club_id>/reports/daily.<str:fmt>', views_app.DailyReportView.as_view(), name='daily_report'),
     path('clubs/<int:club_id>/microcycle/', views_app.MicrocycleView.as_view(), name='microcycle'),
     path('clubs/<int:club_id>/players/<int:pk>/load-history/', views_app.PlayerHistoryView.as_view(), name='load_history'),
     path('clubs/<int:club_id>/wellness/', wellness.SquadWellnessView.as_view(), name='squad_wellness'),

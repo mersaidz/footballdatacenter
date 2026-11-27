@@ -157,3 +157,19 @@ def test_keepers_are_judged_on_playerload_and_dives(make_member, club, season):
     assert row['is_gk'] and row['acwr_basis'] == 'player_load' and row['acwr_hsr'] is None
     assert 0.8 < row['acwr_distance'] < 1.3                        # PlayerLoad steady
     assert row['acwr_dives'] > 1.5 and row['level'] == 'reduce' and row['reasons'][0]['code'] == 'gk_dives_high'
+
+
+def test_daily_report_pdf_and_excel(make_member, club, season):
+    from io import BytesIO
+    from openpyxl import load_workbook
+    _, coach = make_member(club, 'head_coach')
+    r = coach.get(u(club, 'reports/daily.pdf?lang=kk'))
+    assert r.status_code == 200 and r['Content-Type'] == 'application/pdf' and r.content[:4] == b'%PDF'
+    assert 'attachment; filename="status-2026-08-05.pdf"' == r['Content-Disposition']
+    x = coach.get(u(club, 'reports/daily.xlsx?lang=ru'))
+    ws = load_workbook(BytesIO(x.content)).active
+    names = [ws.cell(row=i, column=3).value for i in range(6, 9)]
+    assert set(names) == {'Spiky Sam', 'Steady Eddie', 'Gil Keeper'} and ws.cell(row=6, column=1).value == 'Снизить нагрузку'
+    assert coach.get(u(club, 'reports/daily.doc')).status_code == 404
+    _, scout = make_member(club, 'scout')
+    assert scout.get(u(club, 'reports/daily.pdf')).status_code == 403

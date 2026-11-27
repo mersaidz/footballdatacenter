@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { clubPath, Reason, SquadStatus, useApi } from '../api';
-import { day, num, t } from '../i18n';
-import { Gauge, InfoTip, LEVEL, LevelBadge, State } from '../components/ui';
+import { clubPath, download, Reason, SquadStatus, useApi } from '../api';
+import { DEMO } from '../demo';
+
+import { day, getLang, num, t } from '../i18n';
+import { Gauge, Icon, ICONS, InfoTip, LEVEL, LevelBadge, State } from '../components/ui';
 import { FeelBadge } from './Wellness';
 
 /** Plain words, not formulas: "Нагрузка в 1,7 раза выше привычной", "Плохо спал, мало сил". */
@@ -49,6 +51,11 @@ export default function Today() {
         <span className="grow" />
         <label className="small" htmlFor="asof">{t('as_of')}</label>
         <input id="asof" className="input" type="date" value={date || s?.as_of || ''} onChange={(e) => setDate(e.target.value)} />
+        {!DEMO && s?.as_of && (['pdf', 'xlsx'] as const).map((f) => (
+          <button key={f} type="button" className="pill" title={t('download_hint')} onClick={() => {
+            download(clubPath(`reports/daily.${f}?date=${s.as_of}&lang=${getLang()}`), `status-${s.as_of}.${f}`).catch(() => alert(t('download_failed')));
+          }}><Icon d={ICONS.download} />{t(f === 'pdf' ? 'download_pdf' : 'download_xlsx')}</button>
+        ))}
       </header>
       <div className="page">
         <div>

@@ -141,3 +141,26 @@ class PlayerHistoryView(_LoadView):
         return Response({'player': {'id': player.pk, 'name': player.display_name, 'shirt_number': player.shirt_number,
                                     'position': player.primary_position, 'foot': player.preferred_foot},
                          **perf.player_history(player, _date(request.query_params.get('to')))})
+
+
+class DailyReportView(_LoadView):
+    """GET /clubs/{id}/reports/daily.pdf|xlsx?date=YYYY-MM-DD&lang=ru — the squad status as a document."""
+
+    def get(self, request, club_id=None, fmt='pdf'):
+        from django.http import HttpResponse
+        from django.utils.translation import get_language
+        from reports import daily
+
+        if fmt not in ('pdf', 'xlsx'):
+            raise NotFound()
+        team = _team(self)
+        lang = request.query_params.get('lang') or (get_language() or 'ru')[:2]
+        data = daily.build(team, _date(request.query_params.get('date')), lang)
+        name = f"status-{data['as_of'].isoformat()}"
+        if fmt == 'xlsx':
+            body, ctype = daily.xlsx(data), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        else:
+            body, ctype = daily.pdf(data), 'application/pdf'
+        resp = HttpResponse(body, content_type=ctype)
+        resp['Content-Disposition'] = f'attachment; filename="{name}.{fmt}"'
+        return resp

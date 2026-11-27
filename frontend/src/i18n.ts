@@ -5,6 +5,10 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    download_pdf: 'PDF',
+    download_xlsx: 'Excel',
+    download_hint: 'Скачать статус дня',
+    download_failed: 'Не удалось сформировать отчёт',
     r_gk_dives_high: 'Нагрузка нырков в {v} раза выше привычной',
     r_gk_dives_rising: 'Нагрузка нырков быстро растёт',
     tag_pl: 'PL',
@@ -202,6 +206,10 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    download_pdf: 'PDF',
+    download_xlsx: 'Excel',
+    download_hint: 'Download the day status',
+    download_failed: 'Could not build the report',
     r_gk_dives_high: 'Dive load {v}× his usual',
     r_gk_dives_rising: 'Dive load rising fast',
     tag_pl: 'PL',
@@ -393,6 +401,10 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    download_pdf: 'PDF',
+    download_xlsx: 'Excel',
+    download_hint: 'Күн мәртебесін жүктеу',
+    download_failed: 'Есеп жасалмады',
     r_gk_dives_high: 'Сүңгу жүктемесі әдеттегіден {v} есе жоғары',
     r_gk_dives_rising: 'Сүңгу жүктемесі тез өсіп келеді',
     tag_pl: 'PL',

@@ -6,6 +6,9 @@ Pull activities and per-athlete load from Catapult OpenField.
   python manage.py sync_openfield --club demo --team "First Team" --from 2026-09-01 --to 2026-11-30
 
 Token: ProviderAccount.api_key for the club, else OPENFIELD_API_TOKEN from .env.
+A club's own token is entered once, hidden, and stored encrypted (never in .env or the shell history):
+
+  python manage.py sync_openfield --club elimai --create-club --set-token
 Read-only — the token only needs "Summary Data" scope.
 """
 from datetime import datetime, time, timedelta, timezone
@@ -29,6 +32,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--club', required=True, help='Club slug')
         parser.add_argument('--create-club', action='store_true')
+        parser.add_argument('--set-token', action='store_true',
+                            help="Ask for this club's OpenField API token (hidden input) and store it encrypted")
         parser.add_argument('--team', default='First Team', help="Club's own team these athletes belong to")
         parser.add_argument('--days', type=int, default=90, help='Look-back window (ignored with --from)')
         parser.add_argument('--from', dest='date_from', help='YYYY-MM-DD')
@@ -54,6 +59,14 @@ class Command(BaseCommand):
             self.stdout.write(f'Created own team "{team.name}"')
 
         account, _ = ProviderAccount.objects.get_or_create(club=club, provider=Provider.CATAPULT_OPENFIELD)
+        if opts['set_token']:
+            import getpass
+            token = getpass.getpass(f'OpenField API token for {club.name} (input hidden): ').strip()
+            if not token:
+                raise CommandError('No token entered.')
+            account.api_key = token
+            account.save(update_fields=['api_key', 'updated_at'])
+            self.stdout.write(self.style.SUCCESS('Token saved (encrypted).'))
         changed = False
         for opt, key in (('hsr_threshold', 'hsr_threshold_kmh'), ('sprint_threshold', 'sprint_threshold_kmh')):
             if opts[opt] is not None:

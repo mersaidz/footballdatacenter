@@ -8,6 +8,7 @@ from datetime import date
 
 T: dict[str, dict[str, str]] = {
     'ru': {
+        'r_acwr_accdec_high': 'Рывков и торможений в {v} раза больше привычного', 'r_acwr_accdec_rising': 'Рывков и торможений быстро становится больше',
         'title': 'Статус состава', 'generated': 'Сформировано {t}', 'page': 'стр. {n}',
         'day_after': 'День после матча: {m}', 'days_after': '{n} дн. после матча: {m}',
         'lvl_reduce': 'Снизить нагрузку', 'lvl_hold': 'Не наращивать', 'lvl_build': 'Догрузить', 'lvl_plan': 'По плану',
@@ -37,10 +38,11 @@ T: dict[str, dict[str, str]] = {
         'st_modified': 'облегчённая', 'st_unavailable': 'не тренируется',
         'rules': 'Снизить нагрузку: ACWR выше 1,5. Не наращивать: 1,3–1,5 или самочувствие ниже обычного. Догрузить: ниже 0,8, '
                  'мало HSR, 3+ дня без тренировок или давно не было бега на 90% Vmax. ACWR: нагрузка 7 дней к 28 (EWMA). '
-                 'Вратари: PlayerLoad вместо дистанции. Ответы на опрос в отчёт не попадают, только общий уровень.',
+                 'Ускорения и торможения (от 3 м/с²) по тем же порогам. Вратари: PlayerLoad вместо дистанции. Ответы на опрос в отчёт не попадают, только общий уровень.',
         'sheet': 'Статус', 'weekdays': 'пн вт ср чт пт сб вс',
     },
     'en': {
+        'r_acwr_accdec_high': 'Accelerations and decelerations {v}× his usual', 'r_acwr_accdec_rising': 'Accelerations and decelerations rising fast',
         'title': 'Squad status', 'generated': 'Generated {t}', 'page': 'page {n}',
         'day_after': 'Day after the match: {m}', 'days_after': '{n} days after the match: {m}',
         'lvl_reduce': 'Reduce load', 'lvl_hold': 'Hold load', 'lvl_build': 'Build up', 'lvl_plan': 'As planned', 'lvl_out': 'Not training',
@@ -68,11 +70,12 @@ T: dict[str, dict[str, str]] = {
         'av_suspension': 'suspension', 'av_international': 'international duty', 'av_other': 'no reason given',
         'st_modified': 'modified', 'st_unavailable': 'not training',
         'rules': 'Reduce: ACWR above 1.5. Hold: 1.3–1.5 or feeling below usual. Build: below 0.8, little HSR, 3+ days without '
-                 'sessions or no run at 90% Vmax for a week. ACWR: 7-day to 28-day load (EWMA). Keepers: PlayerLoad instead of '
+                 'sessions or no run at 90% Vmax for a week. ACWR: 7-day to 28-day load (EWMA). Accelerations and decelerations (from 3 m/s²) use the same thresholds. Keepers: PlayerLoad instead of '
                  'distance. Check-in answers are not printed, only the overall level.',
         'sheet': 'Status', 'weekdays': 'Mon Tue Wed Thu Fri Sat Sun',
     },
     'kk': {
+        'r_acwr_accdec_high': 'Жылдамдату мен тежеу әдеттегіден {v} есе көп', 'r_acwr_accdec_rising': 'Жылдамдату мен тежеу тез көбейіп келеді',
         'title': 'Құрам мәртебесі', 'generated': 'Жасалды {t}', 'page': '{n}-бет',
         'day_after': 'Матчтан кейінгі күн: {m}', 'days_after': 'Матчтан кейін {n} күн: {m}',
         'lvl_reduce': 'Жүктемені азайту', 'lvl_hold': 'Арттырмау', 'lvl_build': 'Жүктемені қосу', 'lvl_plan': 'Жоспар бойынша',
@@ -102,7 +105,7 @@ T: dict[str, dict[str, str]] = {
         'st_modified': 'жеңілдетілген', 'st_unavailable': 'жаттықпайды',
         'rules': 'Азайту: ACWR 1,5-тен жоғары. Арттырмау: 1,3–1,5 немесе хал-ахуал әдеттегіден төмен. Қосу: 0,8-ден төмен, HSR аз, '
                  '3+ күн жаттығусыз немесе апта бойы 90% Vmax жүгіріс болмаған. ACWR: 7 күндік жүктеменің 28 күндікке қатынасы (EWMA). '
-                 'Қақпашылар: қашықтықтың орнына PlayerLoad. Сауалнама жауаптары басылмайды, тек жалпы деңгей.',
+                 'Жылдамдату мен тежеу (3 м/с²-тан) сол шектермен. Қақпашылар: қашықтықтың орнына PlayerLoad. Сауалнама жауаптары басылмайды, тек жалпы деңгей.',
         'sheet': 'Мәртебе', 'weekdays': 'дс сс ср бс жм сн жк',
     },
 }

@@ -260,6 +260,7 @@ export default function PlayerProfile() {
                   <div className="grid" style={{ '--min': '110px' } as React.CSSProperties}>
                     {[[t('col_acwr_h'), h.acwr_hsr ? num(last(h.acwr_hsr), 2) : '—'], [t('this_week'), `${num(now / 1000, 1)} km`],
                       [t('col_vs_prev'), prev ? `${now >= prev ? '+' : ''}${Math.round((now / prev - 1) * 100)}%` : '—'], [t('match_demand'), `${num((h.reference.dist || 0) / 1000, 1)} km`],
+                      ...(st?.acwr_accdec != null ? [[t('col_acwr_acc'), num(st.acwr_accdec, 2)]] : []),
                       ...(st?.max_speed ? [[t('vmax_exposure'), t('days_ago', { n: st.max_speed.days }), t('vmax_top', { v: num(st.max_speed.top, 1) })]] : [])].map(([l, v, hint]) => (
                       <div key={l}><span className="small muted">{l}</span><b className="num" style={{ display: 'block', fontSize: 16, fontWeight: 600,
                         color: l === t('vmax_exposure') && (st?.max_speed?.days ?? 0) >= 7 ? 'var(--amber)' : undefined }}>{v}</b>

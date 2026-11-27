@@ -104,7 +104,7 @@ export default function Today() {
             <div className="head"><h2>{t('nav_players')}</h2>
               <span className="row small muted" style={{ gap: 14 }}>
                 {s?.wellness && <Link to="/wellness" style={{ color: 'var(--accent-text)' }}>{t('wl_answered', { a: s.wellness.answered, n: s.wellness.squad })}</Link>}
-                <InfoTip label={t('how_counted')} text={t('status_rules') + t('gk_rules')} align="right" /></span></div>
+                <InfoTip label={t('how_counted')} text={t('status_rules') + t('accdec_rules') + t('gk_rules')} align="right" /></span></div>
             <div className="scroll">
               <table>
                 <thead><tr>

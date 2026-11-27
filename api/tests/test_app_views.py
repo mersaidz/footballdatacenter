@@ -173,3 +173,15 @@ def test_daily_report_pdf_and_excel(make_member, club, season):
     assert coach.get(u(club, 'reports/daily.doc')).status_code == 404
     _, scout = make_member(club, 'scout')
     assert scout.get(u(club, 'reports/daily.pdf')).status_code == 403
+
+
+def test_accel_decel_spike_counts_even_when_distance_is_steady(make_member, club, season):
+    _, _, (_, steady, _) = season
+    for pl in PlayerLoad.objects.filter(player=steady).select_related('training_session'):
+        if pl.training_session.start >= DAY0 + timedelta(days=28):
+            pl.accelerations, pl.decelerations = 60, 60                   # last week: three times the braking work
+            pl.save(update_fields=['accelerations', 'decelerations'])
+    _, coach = make_member(club, 'head_coach')
+    row = next(p for p in coach.get(u(club, 'squad-status/')).data['players'] if p['name'] == 'Steady Eddie')
+    assert 0.8 < row['acwr_distance'] < 1.3 and row['acwr_accdec'] > 1.5
+    assert row['level'] == 'reduce' and row['reasons'][0]['code'] == 'acwr_accdec_high'

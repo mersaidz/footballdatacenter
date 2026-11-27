@@ -157,6 +157,29 @@ def keeper_load(days: list[date], mine: list[Row]) -> tuple[float | None, float 
     return ewma(days, pl)[-1], (ewma(days, dive)[-1] if has_dive else None)
 
 
+def accdec_load(days: list[date], mine: list[Row]) -> float | None:
+    """High-intensity accelerations + decelerations (OpenField bands: ≥ +3 / ≤ −3 m/s²) — the eccentric, braking load."""
+    if sum(1 for r in mine if r.vals['acc'] or r.vals['dec']) < 5:
+        return None
+    daily = defaultdict(float)
+    for r in mine:
+        daily[r.day] += r.vals['acc'] + r.vals['dec']
+    return ewma(days, daily)[-1]
+
+
+def apply_accdec(level: str, reasons: list[dict], a: float | None) -> str:
+    """A jump in braking and changes of pace hurts muscles and tendons even when distance looks normal."""
+    if a is None:
+        return level
+    if a > REDUCE_ABOVE:
+        reasons.append({'code': 'acwr_accdec_high', 'value': a})
+        return 'reduce'
+    if a > HOLD_ABOVE:
+        reasons.append({'code': 'acwr_accdec_rising', 'value': a})
+        return min(level, 'hold', key=LEVELS.index)
+    return level
+
+
 def apply_dives(level: str, reasons: list[dict], a_dive: float | None) -> str:
     if a_dive is None:
         return level
@@ -252,9 +275,10 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         is_gk = p.pk in gk
         if is_gk:
             ad, a_dive = keeper_load(days, mine)
-            ah = None
+            ah = a_acc = None
         else:
             ad, ah, a_dive = ewma(days, daily[p.pk]['dist'])[-1], ewma(days, daily[p.pk]['hsr'])[-1], None
+        a_acc = None if is_gk else accdec_load(days, mine)
         week = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(7) <= d < as_of)
         prev = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(14) <= d < as_of - timedelta(7))
         first, last = mine[0].day, mine[-1].day
@@ -262,6 +286,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         ms = None if p.pk in gk else max_speed_exposure(mine, as_of)
         level = apply_max_speed(level, reasons, ms, (as_of - last).days)
         level = apply_dives(level, reasons, a_dive)
+        level = apply_accdec(level, reasons, a_acc)
         w = feel.get(p.pk)
         level = apply_wellness(level, reasons, w)
         level = apply_availability(level, reasons, current.get(p.pk), back.get(p.pk))
@@ -270,7 +295,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         out.append({
             'player_id': p.pk, 'name': p.display_name, 'shirt_number': p.shirt_number, 'position': p.primary_position,
             'level': level, 'reasons': reasons, 'acwr_distance': ad, 'acwr_hsr': ah,
-            'is_gk': is_gk, 'acwr_basis': 'player_load' if is_gk else 'distance', 'acwr_dives': a_dive,
+            'is_gk': is_gk, 'acwr_basis': 'player_load' if is_gk else 'distance', 'acwr_dives': a_dive, 'acwr_accdec': a_acc,
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
             'wellness': w, 'max_speed': ms,

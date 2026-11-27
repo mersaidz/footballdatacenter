@@ -5,6 +5,10 @@ const KEY = 'fdc.lang';
 
 const D = {
   ru: {
+    r_acwr_accdec_high: 'Рывков и торможений в {v} раза больше привычного',
+    r_acwr_accdec_rising: 'Рывков и торможений быстро становится больше',
+    col_acwr_acc: 'ACWR ускор./торм.',
+    accdec_rules: ' Ускорения и торможения (от 3 м/с²) считаются так же: выше 1,5 — снизить, 1,3–1,5 — не наращивать.',
     download_pdf: 'PDF',
     download_xlsx: 'Excel',
     download_hint: 'Скачать статус дня',
@@ -206,6 +210,10 @@ const D = {
     installed: 'установлен', choose_metrics: 'Выберите до 12 метрик', role: 'Роль', club: 'Клуб', cancel: 'Отмена',
   },
   en: {
+    r_acwr_accdec_high: 'Accelerations and decelerations {v}× his usual',
+    r_acwr_accdec_rising: 'Accelerations and decelerations rising fast',
+    col_acwr_acc: 'ACWR acc/dec',
+    accdec_rules: ' Accelerations and decelerations (from 3 m/s²) work the same way: above 1.5 reduce, 1.3–1.5 hold.',
     download_pdf: 'PDF',
     download_xlsx: 'Excel',
     download_hint: 'Download the day status',
@@ -401,6 +409,10 @@ const D = {
     installed: 'installed', choose_metrics: 'Pick up to 12 metrics', role: 'Role', club: 'Club', cancel: 'Cancel',
   },
   kk: {
+    r_acwr_accdec_high: 'Жылдамдату мен тежеу әдеттегіден {v} есе көп',
+    r_acwr_accdec_rising: 'Жылдамдату мен тежеу тез көбейіп келеді',
+    col_acwr_acc: 'ACWR жылд./теж.',
+    accdec_rules: ' Жылдамдату мен тежеу (3 м/с²-тан) дәл солай: 1,5-тен жоғары — азайту, 1,3–1,5 — арттырмау.',
     download_pdf: 'PDF',
     download_xlsx: 'Excel',
     download_hint: 'Күн мәртебесін жүктеу',

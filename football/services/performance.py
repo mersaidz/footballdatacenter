@@ -25,6 +25,8 @@ REDUCE_ABOVE, HOLD_ABOVE, BUILD_BELOW, BUILD_HSR_BELOW = 1.5, 1.3, 0.8, 0.6
 # What to do with today's load — everyone can train, the status says how much:
 #   reduce: a spike (ACWR > 1.5)   hold: rising fast (1.3–1.5)   build: under-loaded or returning   plan: in range
 LEVELS = ('reduce', 'hold', 'build', 'plan')
+# Max-speed exposure: hamstrings need regular running close to top speed (≥90% of the player's own Vmax).
+VMAX_SHARE, VMAX_EXPOSURE_DAYS, VMAX_MIN_SESSIONS = 0.9, 7, 5
 RETURNING_DAYS = 7          # after an episode closes, the player is "returning": build up gradually
 NO_SESSION_DAYS, SHORT_HISTORY_DAYS = 3, 21
 MATCH_REF_MIN = 45                                    # matches that define a player's match demand
@@ -125,6 +127,27 @@ def load_action(ad, ah, days_idle, last, short_history, first) -> tuple[str, lis
     return level, reasons
 
 
+def max_speed_exposure(mine: list[Row], as_of: date) -> dict | None:
+    """The player's top speed (clean GPS only) and when he last ran at ≥90% of it."""
+    speeds = [r for r in mine if r.vmax]
+    if len(speeds) < VMAX_MIN_SESSIONS:
+        return None
+    top = max(r.vmax for r in speeds)
+    hit = [r.day for r in speeds if r.vmax >= VMAX_SHARE * top]
+    last = max(hit)
+    recent = [r.vmax for r in speeds if r.day >= as_of - timedelta(VMAX_EXPOSURE_DAYS)]
+    return {'top': round(top, 1), 'last_date': last.isoformat(), 'days': (as_of - last).days,
+            'best_7d_pct': round(max(recent) / top * 100) if recent else None}
+
+
+def apply_max_speed(level: str, reasons: list[dict], ms: dict | None, days_idle: int) -> str:
+    """No run near top speed for a week → add a short sprint block ('build'); not on a day to reduce."""
+    if not ms or ms['days'] < VMAX_EXPOSURE_DAYS or days_idle >= NO_SESSION_DAYS or level == 'reduce':
+        return level
+    reasons.append({'code': 'no_max_speed', 'value': ms['days'], 'date': ms['last_date']})
+    return 'build' if level == 'plan' else level
+
+
 def apply_wellness(level: str, reasons: list[dict], w: dict | None) -> str:
     """
     How the player feels can only make the day more careful: low → at least "hold", very low → "reduce".
@@ -203,6 +226,8 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         prev = sum(v for d, v in daily[p.pk]['dist'].items() if as_of - timedelta(14) <= d < as_of - timedelta(7))
         first, last = mine[0].day, mine[-1].day
         level, reasons = load_action(ad, ah, (as_of - last).days, last, (as_of - first).days < SHORT_HISTORY_DAYS, first)
+        ms = None if p.pk in gk else max_speed_exposure(mine, as_of)
+        level = apply_max_speed(level, reasons, ms, (as_of - last).days)
         w = feel.get(p.pk)
         level = apply_wellness(level, reasons, w)
         level = apply_availability(level, reasons, current.get(p.pk), back.get(p.pk))
@@ -213,7 +238,7 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
             'level': level, 'reasons': reasons, 'acwr_distance': ad, 'acwr_hsr': ah,
             'week_distance': round(week), 'week_change_pct': round((week / prev - 1) * 100) if prev else None,
             'last_match_minutes': round(lm.minutes) if lm else 0, 'last_session': last.isoformat(),
-            'wellness': w,
+            'wellness': w, 'max_speed': ms,
             'availability': {'status': ep.status, 'reason': ep.reason,
                              'expected_return': ep.expected_return.isoformat() if ep.expected_return else None} if ep else None,
         })
@@ -224,7 +249,8 @@ def squad_status(team: Team, as_of: date | None = None) -> dict:
         'days_since_match': (as_of - last_match).days if last_match else None,
         'last_match': {'session_id': last_match_session.session_id, 'date': last_match.isoformat(),
                        'name': last_match_session.name, 'md': last_match_session.md} if last_match_session else None,
-        'thresholds': {'reduce_above': REDUCE_ABOVE, 'hold_above': HOLD_ABOVE,
+        'thresholds': {'reduce_above': REDUCE_ABOVE, 'hold_above': HOLD_ABOVE, 'vmax_share': VMAX_SHARE,
+                       'vmax_days': VMAX_EXPOSURE_DAYS,
                        'build_below': BUILD_BELOW, 'build_hsr_below': BUILD_HSR_BELOW, 'build_after_days': NO_SESSION_DAYS},
         'wellness': {'answered': len(feel), 'squad': len(out)},
         'players': out,

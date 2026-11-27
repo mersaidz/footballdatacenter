@@ -88,6 +88,7 @@ export interface SquadPlayer {
   player_id: number; name: string; shirt_number: number | null; position: string; level: 'reduce' | 'hold' | 'build' | 'plan' | 'out';
   reasons: Reason[]; acwr_distance: number | null; acwr_hsr: number | null; week_distance: number;
   week_change_pct: number | null; last_match_minutes: number; last_session: string; wellness: Feel | null;
+  max_speed: { top: number; last_date: string; days: number; best_7d_pct: number | null } | null;
   availability: { status: 'modified' | 'unavailable'; reason: string; expected_return: string | null } | null;
 }
 export interface SquadStatus {

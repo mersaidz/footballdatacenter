@@ -16,7 +16,7 @@ export function reasonText(r: Reason) {
   const why = t(`av_${r.reason || 'other'}` as never);
   if (r.code === 'unavailable') { const s = r.date ? t('r_unavailable', { why, d: day(r.date) }) : t('r_unavailable_nodate', { why }); return s.charAt(0).toUpperCase() + s.slice(1); }
   if (r.code === 'modified') return t('r_modified', { why });
-  const v = r.value != null ? num(r.value, 1) : '';
+  const v = r.value != null ? num(r.value, r.code === 'no_max_speed' ? 0 : 1) : '';
   const d = r.date ? day(r.date) : '';
   return t(`r_${r.code}` as never, { v, d });
 }

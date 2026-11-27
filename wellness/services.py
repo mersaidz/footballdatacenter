@@ -97,3 +97,44 @@ def recent_sessions(player, today: date, days: int = 2) -> list[TrainingSession]
         return []
     return list(TrainingSession.objects.filter(team_id=player.current_team_id, start__date__gte=today - timedelta(days),
                                                start__date__lte=today).order_by('-start'))
+
+
+MONOTONY_HIGH, HARDER_THAN_USUAL = 2.0, 1.25
+
+
+def internal_load(player, end: date) -> dict:
+    """
+    Foster's session-RPE family for the 7 days up to `end`:
+      week load (sum of sRPE), monotony (daily mean / SD, rest days count as 0; > 2 = every day alike),
+      strain (load × monotony); and "felt harder than usual": sRPE per km of his last rated session
+      against his own 28-day average (≥ 1.25× is an early sign of fatigue or illness).
+    """
+    entries = list(RpeEntry.objects.filter(player=player, date__gt=end - timedelta(35), date__lte=end)
+                   .select_related('session').order_by('date'))
+    for e in entries:
+        link_rpe(e)
+    loads = {pl.training_session_id: pl for pl in PlayerLoad.objects.filter(
+        player=player, training_session_id__in=[e.session_id for e in entries if e.session_id])}
+    daily, ratios = {}, []
+    for e in entries:
+        pl = loads.get(e.session_id)
+        mins = float(pl.duration_min) if pl and pl.duration_min else None
+        if mins:
+            daily[e.date] = daily.get(e.date, 0) + e.rpe * mins
+            km = float(pl.total_distance_m or 0) / 1000
+            if km >= 1:
+                ratios.append((e.date, e.rpe * mins / km))
+    week = [daily.get(end - timedelta(k), 0) for k in range(7)]
+    load = sum(week)
+    sd = pstdev(week)
+    monotony = round(mean(week) / sd, 2) if load and sd else None
+    out = {'week_load': round(load), 'monotony': monotony, 'strain': round(load * monotony) if monotony else None,
+           'monotony_high': bool(monotony and monotony > MONOTONY_HIGH), 'harder': None}
+    if ratios:
+        last_day, last = ratios[-1]
+        before = [r for d, r in ratios[:-1] if d >= last_day - timedelta(28)]
+        if len(before) >= 4:
+            usual = mean(before)
+            out['harder'] = {'date': last_day.isoformat(), 'ratio': round(last / usual, 2),
+                             'flag': last >= HARDER_THAN_USUAL * usual}
+    return out

@@ -211,3 +211,33 @@ def test_default_day_is_today_unless_answers_are_old(squad):
     assert svc.default_day(a.club, today) == today - timedelta(40)
     WellnessCheckin.objects.create(club=a.club, player=a, date=today - timedelta(1), **GOOD)
     assert svc.default_day(a.club, today) == today
+
+
+def test_internal_load_monotony_and_felt_harder(club, squad):
+    team, a, _ = squad
+    end = timezone.localdate()
+    for k in range(20, -1, -1):
+        d = end - timedelta(k)
+        if d.weekday() == 6:
+            continue                                                    # a rest day a week
+        s = TrainingSession.objects.create(club=club, team=team, session_type='training', name=f'S{k}',
+                                           start=datetime(d.year, d.month, d.day, 9, tzinfo=tz.utc))
+        PlayerLoad.objects.create(club=club, player=a, training_session=s, provider='catapult_openfield',
+                                  duration_min=60, total_distance_m=6000)
+        RpeEntry.objects.create(club=club, player=a, date=d, session=s, rpe=8 if k == 0 else 5)
+    out = svc.internal_load(a, end)
+    assert out['week_load'] == 5 * 300 + 480 and out['monotony'] and out['strain']
+    assert out['harder']['flag'] is True and out['harder']['ratio'] == 1.6   # 8 vs his usual 5 for the same work
+
+
+def test_max_speed_exposure_rule():
+    from football.services.performance import Row, apply_max_speed, max_speed_exposure
+    day0 = date(2026, 8, 1)
+    rows = [Row(1, day0 + timedelta(i), i, False, 60, 'full', '', '', {}, v)
+            for i, v in enumerate([33.0, 30.0, 28.0, 27.5, 28.0, 27.0, 26.0, 27.0, 28.0, 27.0])]
+    ms = max_speed_exposure(rows, day0 + timedelta(10))
+    assert ms['top'] == 33.0 and ms['last_date'] == '2026-08-02' and ms['days'] == 9   # 30.0 ≥ 90% of 33
+    r = []
+    assert apply_max_speed('plan', r, ms, 1) == 'build' and r[0]['code'] == 'no_max_speed'
+    assert apply_max_speed('reduce', [], ms, 1) == 'reduce'             # never add sprints on a day to reduce
+    assert apply_max_speed('plan', [], ms, 5) == 'plan'                 # idle players: "no sessions" says it

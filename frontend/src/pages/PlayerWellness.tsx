@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { clubPath, useApi } from '../api';
 import { scoreText, answerWord, areaLabel, ITEMS, rpeColor, SCORE_COLOR } from '../components/Checkin';
-import { Bars, LineChart, State } from '../components/ui';
+import { Bars, InfoTip, LineChart, State } from '../components/ui';
 import { day, Key, num, t } from '../i18n';
 import { Answer, EntryDialog, FeelBadge } from './Wellness';
 
@@ -11,6 +11,8 @@ export interface PlayerWellnessData {
   baseline: ({ n: number; total: [number, number] } & Record<string, [number, number] | number>) | null;
   latest: Answer | null; history: Answer[];
   rpe: { date: string; rpe: number; minutes: number | null; srpe: number | null; session_id: number | null; session_name: string | null; source: string }[];
+  internal?: { week_load: number; monotony: number | null; strain: number | null; monotony_high: boolean;
+    harder: { date: string; ratio: number; flag: boolean } | null };
 }
 
 export const usePlayerWellness = (id: string) => useApi<PlayerWellnessData>(clubPath(`players/${id}/wellness/?days=28`), [id]);
@@ -91,11 +93,20 @@ export function WellnessTrend({ w }: { w: PlayerWellnessData }) {
 export function InternalLoad({ w }: { w: PlayerWellnessData }) {
   const ds = dates(w.from, w.to);
   const byDay = Object.fromEntries(w.rpe.map((r) => [r.date, r]));
-  const withSrpe = w.rpe.filter((r) => r.srpe != null);
-  const week = withSrpe.filter((r) => r.date > ds[ds.length - 8]).reduce((s, r) => s + (r.srpe || 0), 0);
   return (
     <section className="card">
-      <div className="head"><h2>{t('internal_load')}</h2><span className="small muted">{t('internal_hint')}{withSrpe.length ? ` · ${t('this_week').toLowerCase()} ${num(week)} AU` : ''}</span></div>
+      <div className="head"><h2>{t('internal_load')}</h2><span className="small muted">{t('internal_hint')}</span></div>
+      {w.internal && w.rpe.length > 0 && (
+        <div className="grid" style={{ '--min': '150px' } as React.CSSProperties}>
+          <div><span className="small muted">{t('il_week')}</span><b className="num" style={{ display: 'block', fontSize: 20, fontWeight: 600 }}>{num(w.internal.week_load)} AU</b></div>
+          <div><InfoTip label={t('il_monotony')} text={t('il_monotony_hint')} />
+            <b className="num" style={{ display: 'block', fontSize: 20, fontWeight: 600, color: w.internal.monotony_high ? 'var(--amber)' : undefined }}>{num(w.internal.monotony, 2)}</b></div>
+          <div><span className="small muted">{t('il_strain')}</span><b className="num" style={{ display: 'block', fontSize: 20, fontWeight: 600 }}>{num(w.internal.strain)}</b></div>
+          {w.internal.harder && <div><InfoTip label={t('il_harder')} text={t('il_harder_hint', { r: num(w.internal.harder.ratio, 2) })} />
+            <b className="num" style={{ display: 'block', fontSize: 20, fontWeight: 600, color: w.internal.harder.flag ? 'var(--amber)' : undefined }}>
+              {w.internal.harder.flag ? `×${num(w.internal.harder.ratio, 2)}` : t('il_as_usual')}</b></div>}
+        </div>
+      )}
       {!w.rpe.length ? <p className="muted" style={{ margin: 0 }}>{t('rpe_none')}</p> :
         <Bars height={150} items={ds.map((d, i) => { const r = byDay[d]; return {
           value: r ? (r.srpe ?? r.rpe * 60) : 0, color: r ? rpeColor(r.rpe) : 'transparent',

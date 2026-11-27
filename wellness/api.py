@@ -254,6 +254,7 @@ class PlayerWellnessView(_StaffView):
             'latest': history[-1] if history else None,
             'history': history, 'rpe': rpe,
             'answered_days': len(checkins), 'items': ITEMS,
+            'internal': svc.internal_load(player, end),
         })
 
 

@@ -106,10 +106,10 @@ export default function Today() {
                 {s?.wellness && <Link to="/wellness" style={{ color: 'var(--accent-text)' }}>{t('wl_answered', { a: s.wellness.answered, n: s.wellness.squad })}</Link>}
                 <InfoTip label={t('how_counted')} text={t('status_rules') + t('accdec_rules') + t('gk_rules')} align="right" /></span></div>
             <div className="scroll">
-              <table>
+              <table className="dense">
                 <thead><tr>
                   <th>{t('col_status')}</th><th>#</th><th>{t('col_player')}</th><th>{t('col_why')}</th><th>{t('col_feel')}</th><th>{t('col_acwr_d')}</th>
-                  <th>{t('col_acwr_h')}</th><th className="right">{t('col_week')}</th><th className="right">{t('col_vs_prev')}</th><th className="right">{t('col_last_match')}</th>
+                  <th>{t('col_acwr_h')}</th><th>{t('col_acwr_acc')}</th><th className="right">{t('col_week')}</th><th className="right">{t('col_vs_prev')}</th><th className="right">{t('col_last_match')}</th>
                 </tr></thead>
                 <tbody>
                   {rows.map((p) => (
@@ -117,12 +117,13 @@ export default function Today() {
                       <td><LevelBadge level={p.level} /></td>
                       <td className="muted">{p.shirt_number ?? ''}</td>
                       <td><Link to={`/players/${p.player_id}`} style={{ fontWeight: 500 }} onClick={(e) => e.stopPropagation()}>{p.name}</Link>{p.position === 'GK' && <span className="small faint"> GK</span>}</td>
-                      <td style={{ whiteSpace: 'normal', minWidth: 240, maxWidth: 420, color: 'var(--text-2)' }}>{p.reasons.length ? reasonsLine(p.reasons) : t('in_range')}</td>
-                      <td><FeelBadge a={p.wellness} /></td>
+                      <td style={{ whiteSpace: 'normal', minWidth: 200, maxWidth: 320, color: 'var(--text-2)' }}>{p.reasons.length ? reasonsLine(p.reasons) : t('in_range')}</td>
+                      <td><FeelBadge a={p.wellness} compact /></td>
                       <td title={p.is_gk ? t('gk_basis') : undefined}><span className="row" style={{ gap: 6, flexWrap: 'nowrap' }}><Gauge value={p.acwr_distance} />{p.is_gk && <span className="tag" style={{ color: 'var(--muted)', background: 'rgba(var(--fg-rgb),0.08)' }}>{t('tag_pl')}</span>}</span></td>
                       <td>{p.is_gk
                         ? (p.acwr_dives == null ? <span className="faint">—</span> : <span className="row" style={{ gap: 6, flexWrap: 'nowrap' }}><Gauge value={p.acwr_dives} /><span className="tag" style={{ color: 'var(--muted)', background: 'rgba(var(--fg-rgb),0.08)' }}>{t('tag_dives')}</span></span>)
                         : (p.acwr_hsr == null ? <span className="faint">—</span> : <Gauge value={p.acwr_hsr} />)}</td>
+                      <td>{p.acwr_accdec == null ? <span className="faint">—</span> : <Gauge value={p.acwr_accdec} />}</td>
                       <td className="right">{num(p.week_distance / 1000, 1)}</td>
                       <td className="right" style={{ color: 'var(--text-2)' }}>{p.week_change_pct == null ? '—' : `${p.week_change_pct > 0 ? '+' : ''}${p.week_change_pct}%`}</td>
                       <td className="right">{p.last_match_minutes ? `${p.last_match_minutes}′` : '—'}</td>

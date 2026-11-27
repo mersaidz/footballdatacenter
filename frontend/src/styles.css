@@ -134,3 +134,7 @@ tr.out td:not(:first-child):not(:nth-child(3)):not(:nth-child(4)) { opacity: 0.4
 
 .demo-bar { padding: 8px 24px; font-size: 12px; color: var(--text-2); background: var(--accent-soft); border-bottom: 1px solid var(--line-soft); }
 .demo-bar a { color: var(--accent-text); text-decoration: underline; }
+/* dense tables (Today): headers wrap, gauges shorter, so the whole squad fits a laptop screen */
+table.dense th { white-space: normal; vertical-align: bottom; min-width: 0; }
+table.dense td, table.dense th { padding-left: 8px; padding-right: 8px; }
+table.dense .gauge { width: 44px; }

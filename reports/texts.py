@@ -8,6 +8,7 @@ from datetime import date
 
 T: dict[str, dict[str, str]] = {
     'ru': {
+        'col_acwr_a': 'ACWR уск./торм.',
         'r_acwr_accdec_high': 'Рывков и торможений в {v} раза больше привычного', 'r_acwr_accdec_rising': 'Рывков и торможений быстро становится больше',
         'title': 'Статус состава', 'generated': 'Сформировано {t}', 'page': 'стр. {n}',
         'day_after': 'День после матча: {m}', 'days_after': '{n} дн. после матча: {m}',
@@ -42,6 +43,7 @@ T: dict[str, dict[str, str]] = {
         'sheet': 'Статус', 'weekdays': 'пн вт ср чт пт сб вс',
     },
     'en': {
+        'col_acwr_a': 'ACWR acc/dec',
         'r_acwr_accdec_high': 'Accelerations and decelerations {v}× his usual', 'r_acwr_accdec_rising': 'Accelerations and decelerations rising fast',
         'title': 'Squad status', 'generated': 'Generated {t}', 'page': 'page {n}',
         'day_after': 'Day after the match: {m}', 'days_after': '{n} days after the match: {m}',
@@ -75,6 +77,7 @@ T: dict[str, dict[str, str]] = {
         'sheet': 'Status', 'weekdays': 'Mon Tue Wed Thu Fri Sat Sun',
     },
     'kk': {
+        'col_acwr_a': 'ACWR жылд./теж.',
         'r_acwr_accdec_high': 'Жылдамдату мен тежеу әдеттегіден {v} есе көп', 'r_acwr_accdec_rising': 'Жылдамдату мен тежеу тез көбейіп келеді',
         'title': 'Құрам мәртебесі', 'generated': 'Жасалды {t}', 'page': '{n}-бет',
         'day_after': 'Матчтан кейінгі күн: {m}', 'days_after': 'Матчтан кейін {n} күн: {m}',

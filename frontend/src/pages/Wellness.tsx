@@ -23,12 +23,14 @@ export const FEEL = {
   very_low: { color: 'var(--red)', bg: 'rgba(248,113,113,0.12)' },
 } as const;
 
-export function FeelBadge({ a }: { a: Answer | null }) {
-  if (!a) return <span className="small faint">{t('wl_none')}</span>;
+/** compact: only the score, the words go to the tooltip (dense tables). */
+export function FeelBadge({ a, compact }: { a: Answer | null; compact?: boolean }) {
+  if (!a) return <span className="small faint">{compact ? '—' : t('wl_none')}</span>;
   const f = FEEL[a.level];
+  const words = t(`wl_${a.level}` as Key) + (a.normal != null ? `, ${t('wl_usual', { n: num(a.normal, 0) })}` : '');
   return (
-    <span className="badge" style={{ color: f.color, background: f.bg }} title={a.normal != null ? t('wl_usual', { n: num(a.normal, 0) }) : undefined}>
-      <span className="dot" style={{ background: f.color, width: 7, height: 7 }} />{a.total}/25 · {t(`wl_${a.level}` as Key)}
+    <span className="badge" style={{ color: f.color, background: f.bg }} title={words}>
+      <span className="dot" style={{ background: f.color, width: 7, height: 7 }} />{a.total}/25{compact ? '' : ` · ${t(`wl_${a.level}` as Key)}`}
     </span>
   );
 }

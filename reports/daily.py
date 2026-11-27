@@ -144,7 +144,7 @@ def pdf(data: dict) -> bytes:
         story += [KeepTogether(block), Spacer(1, 8)]
 
     # the table
-    header = [w('col_status'), w('col_no'), w('col_player'), w('col_why'), w('col_feel'), w('col_acwr_d'), w('col_acwr_h'),
+    header = [w('col_status'), w('col_no'), w('col_player'), w('col_why'), w('col_feel'), w('col_acwr_d'), w('col_acwr_h'), w('col_acwr_a'),
               w('col_week'), w('col_vs_prev'), w('col_last')]
     body = [[Paragraph(h, ParagraphStyle('th', parent=small, fontName='FDC-B')) for h in header]]
     styles = []
@@ -164,13 +164,14 @@ def pdf(data: dict) -> bytes:
             col(r['feel_text'], FEEL_COLOR.get(r['feel_level'], MUTED)),
             Paragraph(acwr_d, base),
             col(w.num(ah, 2), acwr_color(ah)),
+            col(w.num(r.get('acwr_accdec'), 2), acwr_color(r.get('acwr_accdec'))),
             col(w.num(r['week_distance'] / 1000, 1), ink),
             col('—' if change is None else f"{'+' if change > 0 else ''}{change}%", MUTED),
             col(f"{r['last_match_minutes']}′" if r['last_match_minutes'] else '—', ink),
         ])
         if i % 2 == 0:
             styles.append(('BACKGROUND', (0, i), (-1, i), C('#F6F7F9')))
-    cw = [0.115, 0.03, 0.14, 0.295, 0.105, 0.07, 0.065, 0.06, 0.065, 0.055]
+    cw = [0.11, 0.028, 0.13, 0.26, 0.1, 0.065, 0.06, 0.07, 0.055, 0.06, 0.052]
     table = Table(body, colWidths=[width * x for x in cw], repeatRows=1)
     table.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, 0), 0.8, C(INK)), ('LINEBELOW', (0, 1), (-1, -1), 0.3, C(LINE)),
@@ -213,7 +214,7 @@ def xlsx(data: dict) -> bytes:
     ws['A2'] = f"{w('col_date')}: {d.strftime('%d.%m.%Y')}" + (f".  {data['context']}" if data['context'] else '')
     ws['A3'] = '   '.join(f"{w('lvl_' + lvl)}: {data['counts'][lvl]}" for lvl in LEVELS + ('out',))
     header = [w('col_status'), w('col_no'), w('col_player'), w('col_pos'), w('col_why'), w('col_feel_total'), w('col_feel_usual'),
-              w('col_feel'), w('col_acwr_d'), w('col_acwr_h'), w('col_week'), w('col_vs_prev'), w('col_last'), w('col_avail'),
+              w('col_feel'), w('col_acwr_d'), w('col_acwr_h'), w('col_acwr_a'), w('col_week'), w('col_vs_prev'), w('col_last'), w('col_avail'),
               w('col_return')]
     top = 5
     for c, h in enumerate(header, start=1):
@@ -223,19 +224,19 @@ def xlsx(data: dict) -> bytes:
     for i, r in enumerate(data['rows'], start=top + 1):
         values = [r['status_text'], r['shirt_number'], r['name'], 'GK' if r.get('is_gk') else r['position'], r['why'],
                   r['feel_total'], r['feel_usual'], w('feel_' + r['feel_level']) if r['feel_level'] else w('feel_none'),
-                  r['acwr_distance'], r.get('acwr_dives') if r.get('is_gk') else r['acwr_hsr'], round(r['week_distance'] / 1000, 1),
+                  r['acwr_distance'], r.get('acwr_dives') if r.get('is_gk') else r['acwr_hsr'], r.get('acwr_accdec'), round(r['week_distance'] / 1000, 1),
                   (r['week_change_pct'] / 100) if r['week_change_pct'] is not None else None, r['last_match_minutes'] or None,
                   r['avail_text'], date.fromisoformat(r['return']) if r['return'] else None]
         for c, v in enumerate(values, start=1):
             ws.cell(row=i, column=c, value=v)
         ws.cell(row=i, column=1).fill = PatternFill('solid', fgColor=STATUS_TINT[r['level']][1:])
         ws.cell(row=i, column=1).font = Font(bold=True, color=STATUS_COLOR[r['level']][1:])
-        for c in (9, 10):
+        for c in (9, 10, 11):
             ws.cell(row=i, column=c).number_format = '0.00'
-        ws.cell(row=i, column=12).number_format = '+0%;-0%;0%'
-        ws.cell(row=i, column=15).number_format = 'DD.MM.YYYY'
+        ws.cell(row=i, column=13).number_format = '+0%;-0%;0%'
+        ws.cell(row=i, column=16).number_format = 'DD.MM.YYYY'
         ws.cell(row=i, column=5).alignment = Alignment(wrap_text=True, vertical='top')
-    widths = [18, 5, 22, 8, 48, 12, 9, 14, 10, 10, 10, 12, 10, 14, 11]
+    widths = [18, 5, 22, 8, 48, 12, 9, 14, 10, 10, 12, 10, 12, 10, 14, 11]
     for c, wdt in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(c)].width = wdt
     ws.freeze_panes = ws.cell(row=top + 1, column=4)
